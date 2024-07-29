@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
 import "../src/Hoku.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract HokuTest is Test {
     Hoku public token;
@@ -13,7 +14,7 @@ contract HokuTest is Test {
         deployer = address(this);
         user = address(0x123);
 
-        token = new Hoku();
+        token = new Hoku("Hoku", "tHOKU");
     }
 
     function testMinting() public {
@@ -27,8 +28,22 @@ contract HokuTest is Test {
     function testOnlyOwnerCanMint() public {
         uint256 mintAmount = 1000 * 10 ** 18;
 
+        // deployer mints to user
+        token.mint(user, mintAmount);
+
+        assertEq(token.balanceOf(user), mintAmount);
+    }
+
+    function testImpersonatorCannotMint() public {
+        uint256 mintAmount = 1000 * 10 ** 18;
+
         vm.prank(user); // Impersonate the user
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Ownable.OwnableUnauthorizedAccount.selector,
+                user
+            )
+        );
         token.mint(user, mintAmount);
     }
 }
