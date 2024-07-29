@@ -38,12 +38,7 @@ contract HokuTest is Test {
         uint256 mintAmount = 1000 * 10 ** 18;
 
         vm.prank(user); // Impersonate the user
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Ownable.OwnableUnauthorizedAccount.selector,
-                user
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, user));
         token.mint(user, mintAmount);
     }
 }
