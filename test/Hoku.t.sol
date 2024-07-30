@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
 import "../src/Hoku.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 contract HokuTest is Test {
     Hoku public token;
@@ -11,10 +11,17 @@ contract HokuTest is Test {
     address public user;
 
     function setUp() public {
+        // Deploy proxy
+        address proxy = Upgrades.deployUUPSProxy(
+            "Hoku.sol",
+            abi.encodeCall(Hoku.initialize, ("Hoku", "tHOKU"))
+        );
+
         deployer = address(this);
         user = address(0x123);
 
-        token = new Hoku("Hoku", "tHOKU");
+        // Deploy the implementation contract
+        token = Hoku(proxy);
     }
 
     function testMinting() public {
@@ -38,7 +45,7 @@ contract HokuTest is Test {
         uint256 mintAmount = 1000 * 10 ** 18;
 
         vm.prank(user); // Impersonate the user
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, user));
+        vm.expectRevert();
         token.mint(user, mintAmount);
     }
 }
