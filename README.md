@@ -18,5 +18,5 @@ PRIVATE_KEY=<...> forge script script/Hoku.s.sol:HokuScript --rpc-url <rpc_url> 
 
 To get 5e18 tokens on a given address:
 ```sh
-curl -X POST -H 'Content-Type: application/json' 'http://<faucet host>/send' --data-raw '{"address":"0x419db756b0421ec057cec38a31bc7fd06c178d30"}'
+curl -X POST -H 'Content-Type: application/json' 'http://<faucet host>/send' --data-raw '{"address":"0xfoobar"}'
 ```
