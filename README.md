@@ -14,9 +14,11 @@ PRIVATE_KEY=<...> forge script script/Hoku.s.sol:HokuScript --rpc-url <rpc_url> 
 |base sepolia|0xd02Bc370Ac6D40B57B8D64578c85132dF59f0109|
 
 
-## Usage
+## [Faucet](https://github.com/hokunet/faucet) Usage
 
 To get 5e18 tokens on a given address:
+
+
 ```sh
 curl -X POST -H 'Content-Type: application/json' 'http://<faucet host>/send' --data-raw '{"address":"0xfoobar"}'
 ```
