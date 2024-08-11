@@ -7,9 +7,9 @@ import {DeployScript} from "../script/Hoku.s.sol";
 import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
 
 contract HokuTest is Test {
-    Hoku public token;
-    address public user;
-    address public testerAddress;
+    Hoku internal token;
+    address internal user;
+    address internal testerAddress;
 
     function setUp() public {
         testerAddress = address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
