@@ -11,12 +11,12 @@ contract DeployScript is Script {
 
     function setUp() public {}
 
-    function proxy() public view returns(address) {
+    function proxy() public view returns (address) {
         return proxyAddress;
     }
 
-    function run(Hoku.Environment env) public returns(Hoku) {
-        if(vm.envExists(PRIVATE_KEY)) {
+    function run(Hoku.Environment env) public returns (Hoku) {
+        if (vm.envExists(PRIVATE_KEY)) {
             uint256 privateKey = vm.envUint(PRIVATE_KEY);
             vm.startBroadcast(privateKey);
         } else if (env == Hoku.Environment.Local) {
@@ -24,10 +24,7 @@ contract DeployScript is Script {
         } else {
             revert("PRIVATE_KEY not set in non-local environment");
         }
-        proxyAddress = Upgrades.deployUUPSProxy(
-            "Hoku.sol",
-            abi.encodeCall(Hoku.initialize, (env))
-        );
+        proxyAddress = Upgrades.deployUUPSProxy("Hoku.sol", abi.encodeCall(Hoku.initialize, (env)));
         vm.stopBroadcast();
 
         // Check implementation

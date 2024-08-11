@@ -5,7 +5,8 @@ import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/contracts/to
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from
+    "@openzeppelin/contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol";
 
 contract Hoku is
     ERC20Upgradeable,
@@ -25,11 +26,9 @@ contract Hoku is
         _disableInitializers();
     }
 
-    function initialize(
-        Environment env
-    ) public initializer {
+    function initialize(Environment env) public initializer {
         string memory symbol = "lHOKU";
-        if(env == Environment.Testnet) {
+        if (env == Environment.Testnet) {
             symbol = "tHOKU";
         } else if (env == Environment.Mainnet) {
             symbol = "HOKU";
