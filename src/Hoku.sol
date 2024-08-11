@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import {PausableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol";
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/utils/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol";
 
 contract Hoku is
     ERC20Upgradeable,
@@ -14,16 +14,27 @@ contract Hoku is
     ReentrancyGuardUpgradeable,
     UUPSUpgradeable
 {
+    enum Environment {
+        Local,
+        Testnet,
+        Mainnet
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
     function initialize(
-        string memory name,
-        string memory symbol
+        Environment env
     ) public initializer {
-        __ERC20_init(name, symbol);
+        string memory symbol = "lHOKU";
+        if(env == Environment.Testnet) {
+            symbol = "tHOKU";
+        } else if (env == Environment.Mainnet) {
+            symbol = "HOKU";
+        }
+        __ERC20_init("Hoku", symbol);
         __Ownable_init(msg.sender);
         __Pausable_init();
         __ReentrancyGuard_init();

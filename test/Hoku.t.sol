@@ -2,31 +2,27 @@
 pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
-import "../src/Hoku.sol";
-import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import {Hoku} from "../src/Hoku.sol";
+import {DeployScript} from "../script/Hoku.s.sol";
+import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
 
 contract HokuTest is Test {
     Hoku public token;
-    address public deployer;
     address public user;
+    address public testerAddress;
 
     function setUp() public {
-        // Deploy proxy
-        address proxy = Upgrades.deployUUPSProxy(
-            "Hoku.sol",
-            abi.encodeCall(Hoku.initialize, ("Hoku", "tHOKU"))
-        );
+        testerAddress = address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
+        DeployScript deployer = new DeployScript();
+        token = deployer.run(Hoku.Environment.Local);
 
-        deployer = address(this);
         user = address(0x123);
-
-        // Deploy the implementation contract
-        token = Hoku(proxy);
     }
 
     function testMinting() public {
         uint256 mintAmount = 1000 * 10 ** 18;
 
+        vm.prank(testerAddress);
         token.mint(user, mintAmount);
 
         assertEq(token.balanceOf(user), mintAmount);
@@ -36,6 +32,7 @@ contract HokuTest is Test {
         uint256 mintAmount = 1000 * 10 ** 18;
 
         // deployer mints to user
+        vm.prank(testerAddress);
         token.mint(user, mintAmount);
 
         assertEq(token.balanceOf(user), mintAmount);

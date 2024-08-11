@@ -2,28 +2,39 @@
 pragma solidity ^0.8.23;
 
 import {Script, console2} from "forge-std/Script.sol";
-import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
 import {Hoku} from "../src/Hoku.sol";
 
 contract DeployScript is Script {
+    string constant PRIVATE_KEY = "PRIVATE_KEY";
+    address public proxyAddress;
+
     function setUp() public {}
 
-    function run() public {
-        // Get proxy owner account
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+    function proxy() public view returns(address) {
+        return proxyAddress;
+    }
 
-        // Deploy proxy and initialize implementation
-        vm.startBroadcast(deployerPrivateKey);
-        address proxy = Upgrades.deployUUPSProxy(
+    function run(Hoku.Environment env) public returns(Hoku) {
+        if(vm.envExists(PRIVATE_KEY)) {
+            uint256 privateKey = vm.envUint(PRIVATE_KEY);
+            vm.startBroadcast(privateKey);
+        } else if (env == Hoku.Environment.Local) {
+            vm.startBroadcast();
+        } else {
+            revert("PRIVATE_KEY not set in non-local environment");
+        }
+        proxyAddress = Upgrades.deployUUPSProxy(
             "Hoku.sol",
-            abi.encodeCall(Hoku.initialize, ("Hoku", "tHOKU"))
+            abi.encodeCall(Hoku.initialize, (env))
         );
         vm.stopBroadcast();
-        console2.log("proxy address: ", proxy);
 
         // Check implementation
-        address implAddr = Upgrades.getImplementationAddress(proxy);
-        console2.log("implementation address: ", implAddr);
+        address implAddr = Upgrades.getImplementationAddress(proxyAddress);
+
+        Hoku hoku = Hoku(proxyAddress);
+        return hoku;
     }
 }
 
