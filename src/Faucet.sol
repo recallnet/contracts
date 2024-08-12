@@ -4,6 +4,8 @@ pragma solidity ^0.8.26;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+error TryLater();
+
 contract Faucet is Ownable {
     /// Address of the token that this faucet drips
     IERC20 public token;
@@ -22,7 +24,9 @@ contract Faucet is Ownable {
     /// @param _recipient The address of the tokens recipient
     /// @param _amount The amount of tokens required from the faucet
     function drip(address _recipient, uint256 _amount) external {
-        require(nextRequestAt[_recipient] <= block.timestamp, "TRY_LATER");
+        if (nextRequestAt[_recipient] > block.timestamp) {
+            revert TryLater();
+        }
 
         token.transfer(_recipient, _amount);
 

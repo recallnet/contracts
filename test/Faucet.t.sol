@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {Test, Vm} from "forge-std/Test.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {Faucet} from "../src/Faucet.sol";
+import {Faucet, TryLater} from "../src/Faucet.sol";
 import {Hoku} from "../src/Hoku.sol";
 import {DeployScript} from "../script/Hoku.s.sol";
 
@@ -30,9 +30,10 @@ contract FaucetTest is Test {
         assertEq(token.balanceOf(wallet.addr), 100);
     }
 
-    function testFail_DripTransferNoDelay() public {
+    function test_DripTransferNoDelayFail() public {
         faucet.drip(wallet.addr, 100);
 
+        vm.expectRevert(TryLater.selector);
         faucet.drip(wallet.addr, 100);
     }
 
