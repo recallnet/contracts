@@ -1,10 +1,30 @@
 # Hoku ERC20 Contracts
 
+## Build 
+```shell
+forge build
+```
+
 ## Deploy
 
+### Local
 ```shell
-PRIVATE_KEY=<...> forge script script/Hoku.s.sol:HokuScript --rpc-url <rpc_url>  --broadcast -vvvv
+PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url <...>  --broadcast -vv
+vv
 ```
+
+### Testnet
+```shell
+PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url <...>  --broadcast -vv
+vv
+```
+
+### Mainnet
+```shell
+PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript 2 --sig 'run(uint8)' --rpc-url <...>  --broadcast -vv
+vv
+```
+
 
 ## Deployments
 
