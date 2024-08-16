@@ -1,6 +1,11 @@
 # Hoku ERC20 Contracts
 
-## Build 
+## Install
+```shell
+forge install
+```
+
+## Build
 ```shell
 forge build
 ```
