@@ -6,16 +6,17 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {Faucet, TryLater} from "../src/Faucet.sol";
 import {Hoku} from "../src/Hoku.sol";
+import {Utilities} from "../src/Utilities.sol";
 import {DeployScript} from "../script/Hoku.s.sol";
 
-contract FaucetTest is Test {
+contract FaucetTest is Test, Utilities {
     Faucet internal faucet;
     Hoku internal token;
     Vm.Wallet internal wallet;
 
     function setUp() public virtual {
         DeployScript deployer = new DeployScript();
-        token = deployer.run(Hoku.Environment.Local);
+        token = deployer.run(Environment.Local);
         wallet = vm.createWallet("test");
         faucet = new Faucet(IERC20(token));
         vm.prank(address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38));

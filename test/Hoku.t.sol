@@ -3,44 +3,39 @@ pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
 import {Hoku} from "../src/Hoku.sol";
+import {Utilities} from "../src/Utilities.sol";
 import {DeployScript} from "../script/Hoku.s.sol";
 import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
 
-contract HokuTest is Test {
+contract HokuTest is Test, Utilities {
     Hoku internal token;
     address internal user;
-    address internal testerAddress;
+    uint256 constant mintAmount = 1000 * 10 ** 18;
+    address constant tester = address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
 
     function setUp() public {
-        testerAddress = address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
         DeployScript deployer = new DeployScript();
-        token = deployer.run(Hoku.Environment.Local);
+        token = deployer.run(Environment.Local);
 
         user = address(0x123);
     }
 
     function testMinting() public {
-        uint256 mintAmount = 1000 * 10 ** 18;
-
-        vm.prank(testerAddress);
+        vm.prank(tester);
         token.mint(user, mintAmount);
 
         assertEq(token.balanceOf(user), mintAmount);
     }
 
     function testOnlyOwnerCanMint() public {
-        uint256 mintAmount = 1000 * 10 ** 18;
-
         // deployer mints to user
-        vm.prank(testerAddress);
+        vm.prank(tester);
         token.mint(user, mintAmount);
 
         assertEq(token.balanceOf(user), mintAmount);
     }
 
     function testImpersonatorCannotMint() public {
-        uint256 mintAmount = 1000 * 10 ** 18;
-
         vm.prank(user); // Impersonate the user
         vm.expectRevert();
         token.mint(user, mintAmount);
