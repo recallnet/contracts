@@ -4,8 +4,9 @@ pragma solidity ^0.8.23;
 import {Script, console2} from "forge-std/Script.sol";
 import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
 import {Hoku} from "../src/Hoku.sol";
+import {Utilities} from "../src/Utilities.sol";
 
-contract DeployScript is Script {
+contract DeployScript is Script, Utilities {
     string constant PRIVATE_KEY = "PRIVATE_KEY";
     address public proxyAddress;
 
@@ -15,11 +16,11 @@ contract DeployScript is Script {
         return proxyAddress;
     }
 
-    function run(Hoku.Environment env) public returns (Hoku) {
+    function run(Environment env) public returns (Hoku) {
         if (vm.envExists(PRIVATE_KEY)) {
             uint256 privateKey = vm.envUint(PRIVATE_KEY);
             vm.startBroadcast(privateKey);
-        } else if (env == Hoku.Environment.Local) {
+        } else if (env == Environment.Local) {
             vm.startBroadcast();
         } else {
             revert("PRIVATE_KEY not set in non-local environment");
@@ -29,6 +30,7 @@ contract DeployScript is Script {
 
         // Check implementation
         address implAddr = Upgrades.getImplementationAddress(proxyAddress);
+        console2.log("Implementation address: ", implAddr);
 
         Hoku hoku = Hoku(proxyAddress);
         return hoku;

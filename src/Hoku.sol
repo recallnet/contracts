@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+import {Utilities} from "./Utilities.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
@@ -13,14 +14,9 @@ contract Hoku is
     OwnableUpgradeable,
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
-    UUPSUpgradeable
+    UUPSUpgradeable,
+    Utilities
 {
-    enum Environment {
-        Local,
-        Testnet,
-        Mainnet
-    }
-
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
