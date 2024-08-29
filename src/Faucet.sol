@@ -1,42 +1,58 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
+import "forge-std/console.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 error TryLater();
+error InvalidFunding(address from, uint256 value);
+
+event Funding(address indexed from, uint256 value);
 
 contract Faucet is Ownable {
-    /// Address of the token that this faucet drips
-    IERC20 public token;
-
     /// For rate limiting
-    mapping(address => uint256) public nextRequestAt;
-    /// Max token limit per request
-    uint256 public limit = 100;
+    mapping(address => uint256) internal _nextRequestAt;
+    /// Amount to drip
+    uint256 internal _dripAmount = 100;
 
-    /// @param _token The address of the faucet's token
-    constructor(IERC20 _token) Ownable(msg.sender) {
-        token = _token;
+    constructor() Ownable(msg.sender) {}
+
+    /// Current drip amount
+    function dripAmount() external view returns (uint256) {
+        return _dripAmount;
+    }
+
+    /// Current faucet supply
+    function supply() external view returns (uint256) {
+        return address(this).balance;
+    }
+
+    /// Fund the faucet
+    function fund() external payable {
+        if (msg.value <= 0) {
+            revert InvalidFunding(msg.sender, msg.value);
+        }
+
+        emit Funding(msg.sender, msg.value);
     }
 
     /// Used to send the tokens
-    /// @param _recipient The address of the tokens recipient
-    /// @param _amount The amount of tokens required from the faucet
-    function drip(address _recipient, uint256 _amount) external {
-        if (nextRequestAt[_recipient] > block.timestamp) {
+    /// @param recipient The address of the tokens recipient
+    function drip(address payable recipient) external {
+        if (_nextRequestAt[recipient] > block.timestamp) {
             revert TryLater();
         }
 
-        token.transfer(_recipient, _amount);
+        recipient.transfer(_dripAmount);
 
-        nextRequestAt[_recipient] = block.timestamp + (5 minutes);
+        _nextRequestAt[recipient] = block.timestamp + (5 minutes);
     }
 
-    /// Used to set the max limit per request
+    /// Used to set the drip amount per request
     /// @dev This method is restricted and should be called only by the owner
-    /// @param _limit The new limit for the tokens per request
-    function setLimit(uint256 _limit) external onlyOwner {
-        limit = _limit;
+    /// @param amt The new drip amount for the tokens per request
+    function setDripAmount(uint256 amt) external onlyOwner {
+        _dripAmount = amt;
     }
 }

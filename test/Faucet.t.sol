@@ -1,50 +1,63 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Test, Vm} from "forge-std/Test.sol";
+import "forge-std/Test.sol";
+import "forge-std/console.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {Faucet, TryLater} from "../src/Faucet.sol";
 import {Hoku} from "../src/Hoku.sol";
 import {Utilities} from "../src/Utilities.sol";
-import {DeployScript} from "../script/Hoku.s.sol";
+import {DeployScript as TokenDeployer} from "../script/Hoku.s.sol";
+import {DeployScript as FaucetDeployer} from "../script/Faucet.s.sol";
 
 contract FaucetTest is Test, Utilities {
     Faucet internal faucet;
-    Hoku internal token;
     Vm.Wallet internal wallet;
+    Vm.Wallet internal chain;
+    address constant tester = address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
+    uint256 constant mintAmount = 1000 * 10 ** 18;
 
     function setUp() public virtual {
-        DeployScript deployer = new DeployScript();
-        token = deployer.run(Environment.Local);
-        wallet = vm.createWallet("test");
-        faucet = new Faucet(IERC20(token));
-        vm.prank(address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38));
-        token.mint(address(faucet), 1000);
+        chain = vm.createWallet("chain");
+        vm.deal(chain.addr, mintAmount);
+        wallet = vm.createWallet("user");
+        vm.prank(chain.addr);
+        FaucetDeployer faucetDeployer = new FaucetDeployer();
+        faucet = faucetDeployer.run(Environment.Local, mintAmount / 2);
+        assertEq(faucet.supply(), mintAmount / 2);
     }
 
     function test_DripTransfer() public {
-        assertEq(token.balanceOf(wallet.addr), 0);
+        assertEq(wallet.addr.balance, 0);
 
-        faucet.drip(wallet.addr, 100);
+        faucet.drip(payable(wallet.addr));
 
-        assertEq(token.balanceOf(wallet.addr), 100);
+        assertEq(faucet.supply(), mintAmount / 2 - faucet.dripAmount());
+        assertEq(wallet.addr.balance, faucet.dripAmount());
     }
 
     function test_DripTransferNoDelayFail() public {
-        faucet.drip(wallet.addr, 100);
+        faucet.drip(payable(wallet.addr));
 
         vm.expectRevert(TryLater.selector);
-        faucet.drip(wallet.addr, 100);
+        faucet.drip(payable(wallet.addr));
     }
 
     function test_DripTransferDelay() public {
-        faucet.drip(wallet.addr, 100);
+        faucet.drip(payable(wallet.addr));
 
         vm.warp(block.timestamp + (5 minutes));
 
-        faucet.drip(wallet.addr, 100);
+        faucet.drip(payable(wallet.addr));
 
-        assertEq(token.balanceOf(wallet.addr), 200);
+        assertEq(wallet.addr.balance, 2 * faucet.dripAmount());
+    }
+
+    function test_FundFaucet() public {
+        vm.prank(chain.addr);
+        faucet.fund{value: 100}();
+
+        assertEq(faucet.supply(), mintAmount / 2 + 100);
     }
 }
