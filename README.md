@@ -1,4 +1,4 @@
-# Hoku ERC20 Contracts
+# Hoku Contracts
 
 ## Install
 ```shell
