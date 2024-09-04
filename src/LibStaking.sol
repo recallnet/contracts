@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.23;
 
-import {IGateway} from "../interfaces/IGateway.sol";
-import {LibSubnetActorStorage, SubnetActorStorage} from "./LibSubnetActorStorage.sol";
-import {LibMaxPQ, MaxPQ} from "./priority/LibMaxPQ.sol";
-import {LibMinPQ, MinPQ} from "./priority/LibMinPQ.sol";
-import {LibStakingChangeLog} from "./LibStakingChangeLog.sol";
-import {PermissionMode, StakingReleaseQueue, StakingChangeLog, StakingChange, StakingChangeRequest, StakingOperation, StakingRelease, ValidatorSet, AddressStakingReleases, ParentValidatorsTracker, Validator} from "../structs/Subnet.sol";
-import {WithdrawExceedingCollateral, NotValidator, CannotConfirmFutureChanges, NoCollateralToWithdraw, AddressShouldBeValidator, InvalidConfigurationNumber} from "../errors/IPCErrors.sol";
+import {IGateway} from "ipc-contracts/interfaces/IGateway.sol";
+import {LibSubnetActorStorage, SubnetActorStorage} from "ipc-contracts/lib/LibSubnetActorStorage.sol";
+import {LibMaxPQ, MaxPQ} from "ipc-contracts/lib/priority/LibMaxPQ.sol";
+import {LibMinPQ, MinPQ} from "ipc-contracts/lib/priority/LibMinPQ.sol";
+import {LibStakingChangeLog} from "ipc-contracts/lib/LibStakingChangeLog.sol";
+import {PermissionMode, StakingReleaseQueue, StakingChangeLog, StakingChange, StakingChangeRequest, StakingOperation, StakingRelease, ValidatorSet, AddressStakingReleases, ParentValidatorsTracker, Validator} from "ipc-contracts/structs/Subnet.sol";
+import {WithdrawExceedingCollateral, NotValidator, CannotConfirmFutureChanges, NoCollateralToWithdraw, AddressShouldBeValidator, InvalidConfigurationNumber} from "ipc-contracts/errors/IPCErrors.sol";
 import {Address} from "openzeppelin-contracts/utils/Address.sol";
 
 library LibAddressStakingReleases {
