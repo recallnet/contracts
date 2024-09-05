@@ -8,7 +8,7 @@ import {LibMinPQ, MinPQ} from "ipc-contracts/lib/priority/LibMinPQ.sol";
 import {LibStakingChangeLog} from "ipc-contracts/lib/LibStakingChangeLog.sol";
 import {PermissionMode, StakingReleaseQueue, StakingChangeLog, StakingChange, StakingChangeRequest, StakingOperation, StakingRelease, ValidatorSet, AddressStakingReleases, ParentValidatorsTracker, Validator} from "ipc-contracts/structs/Subnet.sol";
 import {WithdrawExceedingCollateral, NotValidator, CannotConfirmFutureChanges, NoCollateralToWithdraw, AddressShouldBeValidator, InvalidConfigurationNumber} from "ipc-contracts/errors/IPCErrors.sol";
-import {Address} from "openzeppelin-contracts/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 library LibAddressStakingReleases {
     /// @notice Add new release to the storage. Caller makes sure the release.releasedAt is ordered
