@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 import {Test} from "forge-std/Test.sol";
+import "forge-std/console.sol";
 import {Stake} from "../src/Stake.sol";
 
 /// TODO update comments
@@ -14,6 +15,9 @@ contract StakeTest is Test {
     function setUp() public {
         // Deploy the Stake contract
         stakeContract = new Stake();
+
+        // Send some Ether to the contract to cover collateral claims
+        vm.deal(address(stakeContract), 10 ether);
 
         // Set the lock duration to a predefined value
         stakeContract.setLockDuration(lockDuration);
@@ -31,11 +35,10 @@ contract StakeTest is Test {
 
         // Fast forward time to after the lock duration
         vm.roll(block.number + lockDuration + 1);
-
         // The validator should be able to claim the collateral
         vm.prank(validator);
         uint256 claimedAmount = stakeContract.claimCollateral();
-
+        
         // Assert that the claimed amount matches the initial amount
         assertEq(claimedAmount, initialAmount, "The claimed amount should match the initially added collateral");
     }
