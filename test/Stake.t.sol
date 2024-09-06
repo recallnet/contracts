@@ -23,13 +23,13 @@ contract StakeTest is Test {
         stakeContract.setLockDuration(lockDuration);
     }
 
-    function testSetLockDuration() public {
+    function test_SetLockDuration() public {
         // Check that the lock duration is set correctly
         uint256 returnedDuration = stakeContract.getLockDuration();
         assertEq(returnedDuration, lockDuration, "Lock duration should be correctly set");
     }
 
-    function testAddCollateralRelease() public {
+    function test_AddCollateralRelease() public {
         // Add a collateral release for the validator
         stakeContract.addCollateralRelease(validator, initialAmount);
 
@@ -43,7 +43,7 @@ contract StakeTest is Test {
         assertEq(claimedAmount, initialAmount, "The claimed amount should match the initially added collateral");
     }
 
-    function testClaimBeforeLockDuration() public {
+    function test_RevertIfClaimBeforeLockDuration() public {
         // Add a collateral release for the validator
         stakeContract.addCollateralRelease(validator, initialAmount);
 
@@ -53,9 +53,10 @@ contract StakeTest is Test {
         stakeContract.claimCollateral();
     }
 
-    function testClaimAfterLockDuration() public {
+    function test_ClaimAfterLockDuration() public {
         // Add a collateral release for the validator
         stakeContract.addCollateralRelease(validator, initialAmount);
+        // Make sure it cannot be claimed
 
         // Fast forward time to after the lock duration
         vm.roll(block.number + lockDuration + 1);
