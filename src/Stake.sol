@@ -7,6 +7,8 @@ import {LibSubnetActorStorage, SubnetActorStorage} from "ipc-contracts/lib/LibSu
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Open to suggestions on the name TODO
+// NOTE this is just an inital set up i still need to include token per Kb logic and delegation
+// NOTE THIS IS NOT THE FINAL CONTRACT BECAUSE THERE WONT BE A NEW CONTRACT BUT RATHER ILL MODIFY AN EXISTING ONE
 contract Stake {
     using LibStaking for ValidatorSet;
     using LibStakingReleaseQueue for StakingReleaseQueue;
