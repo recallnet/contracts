@@ -23,7 +23,11 @@ contract DeployScript is Script, Utilities {
         }
 
         Faucet faucet = new Faucet();
-        faucet.fund{value: initialSupply}();
+        try faucet.fund{value: initialSupply}() {
+            console2.log("Faucet funded with: ", initialSupply);
+        } catch {
+            console2.log("Faucet funding failed, need to fund manually");
+        }
 
         vm.stopBroadcast();
 

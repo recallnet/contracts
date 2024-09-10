@@ -40,6 +40,10 @@ contract Faucet is Ownable {
     /// Used to send the tokens
     /// @param recipient The address of the tokens recipient
     function drip(address payable recipient) external {
+        if (recipient == address(0)) {
+            revert InvalidFunding(recipient, _dripAmount);
+        }
+
         if (_nextRequestAt[recipient] > block.timestamp) {
             revert TryLater();
         }

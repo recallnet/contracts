@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {Faucet, TryLater} from "../src/Faucet.sol";
+import {Faucet, InvalidFunding, TryLater} from "../src/Faucet.sol";
 import {Hoku} from "../src/Hoku.sol";
 import {Utilities} from "../src/Utilities.sol";
 import {DeployScript as TokenDeployer} from "../script/Hoku.s.sol";
@@ -35,6 +35,11 @@ contract FaucetTest is Test, Utilities {
 
         assertEq(faucet.supply(), mintAmount / 2 - faucet.dripAmount());
         assertEq(wallet.addr.balance, faucet.dripAmount());
+    }
+
+    function test_FailDripToSelf() public {
+        vm.expectRevert(InvalidFunding.selector);
+        faucet.drip(payable(address(faucet)));
     }
 
     function test_DripTransferNoDelayFail() public {
