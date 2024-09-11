@@ -14,6 +14,7 @@ import {EnumerableSet} from "openzeppelin-contracts/utils/structs/EnumerableSet.
 import {Address} from "openzeppelin-contracts/utils/Address.sol";
 import {LibSubnetActor} from "../lib/LibSubnetActor.sol";
 import {Pausable} from "../lib/LibPausable.sol";
+import {LibStorageStaking} from "./LibStorageStaking.sol";
 
 contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -219,6 +220,7 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
 
         LibStaking.withdraw(msg.sender, amount);
     }
+    // TODO: Create a version of the above function for unstakeStorage, and modify the above to include a check for sufficient collateral in storage.
 
     /// @notice method that allows a validator to leave the subnet.
     function leave() external nonReentrant whenNotPaused notKilled {
@@ -233,7 +235,8 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
 
         // remove bootstrap nodes added by this validator
         uint256 amount = LibStaking.totalValidatorCollateral(msg.sender);
-        if (amount == 0) {
+        uint256 totalStorage = LibStorageStaking.totalValidatorStorage(msg.sender);
+        if (amount == 0 || totalStorage == 0) {
             revert NotValidator(msg.sender);
         }
 

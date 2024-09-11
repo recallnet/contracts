@@ -80,7 +80,7 @@ struct StakingReleaseQueue {
 }
 
 /// @notice Keeping track of the validator information.
-/// @dev There are two types of collaterals:
+/// @dev There are two types of collaterals and storage:
 ///     - Confirmed: The amount of collateral actually confirmed in child subnet;
 ///     - Total: Aside from Confirmed, there is also the collateral has been supplied, but not yet confirmed in child.
 struct ValidatorInfo {
@@ -93,7 +93,7 @@ struct ValidatorInfo {
     /// to parse or decode the bytes.
     bytes metadata;
     uint256 totalStorage;
-    uint256 confirmedStorage; // TODO: For compatibility purposes, consider including storage parameters as part of the metadata.
+    uint256 confirmedStorage;
 }
 
 /// @notice Determines the permission mode for validators.
