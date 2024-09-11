@@ -109,8 +109,8 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
     ///         If the total confirmed collateral of the subnet is greater
     ///         or equal to minimum activation collateral as a result of this operation,
     ///         then  subnet will be registered.
-    /// @param publicKey The off-chain 65 byte public key that should be associated with the validator
-    function join(bytes calldata publicKey) external payable nonReentrant whenNotPaused notKilled {
+    /// @param metadata The off-chain 65 byte public key that should be associated with the validator and its committed storage
+    function join(bytes calldata metadata) external payable nonReentrant whenNotPaused notKilled {
         // Adding this check to prevent new validators from joining
         // after the subnet has been bootstrapped, if the subnet mode is not Collateral.
         // We will increase the functionality in the future to support explicit permissioning.
@@ -120,28 +120,28 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
         if (msg.value == 0) {
             revert CollateralIsZero();
         }
-        if (msg.data.length == 36) {
-           revert NotEnoughStorageCommitment();
+
+        if (metadata.length != 97) { // 65 bytes for publicKey + 32 bytes for storageCommitment
+            revert InvalidPublicKeyLength();
+        }
+
+        // Extract the publicKey (first 65 bytes)
+        bytes calldata publicKey = metadata[:65];
+
+        // Extract the storageCommitment (last 32 bytes)
+        uint256 storageCommitment;
+        assembly {
+            // Load the storageCommitment directly from calldata (after the first 65 bytes)
+            storageCommitment := calldataload(add(metadata.offset, 65))
         }
 
         if (LibStaking.isValidator(msg.sender)) {
             revert MethodNotAllowed(ERR_VALIDATOR_JOINED);
         }
 
-        if (publicKey.length != VALIDATOR_SECP256K1_PUBLIC_KEY_LENGTH) {
-            // Taking 65 bytes because the FVM libraries have some assertions checking it, it's more convenient.
-            revert InvalidPublicKeyLength();
-        }
-
         address convertedAddress = LibSubnetActor.publicKeyToAddress(publicKey);
         if (convertedAddress != msg.sender) {
             revert NotOwnerOfPublicKey();
-        }
-
-        // Extract storage committment
-        uint256 storageCommittment;
-        assembly {
-            storageCommittment := calldataload(4)// after the 4-byte function selector
         }
 
         if (!s.bootstrapped) {
@@ -150,16 +150,15 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
             // in the gateway
 
             // confirm validators deposit immediately
-            LibStaking.setMetadataWithConfirm(msg.sender, publicKey);
+            LibStaking.setMetadataWithConfirm(msg.sender, metadata);
             LibStaking.depositWithConfirm(msg.sender, msg.value);
 
             LibSubnetActor.bootstrapSubnetIfNeeded();
         } else {
             // if the subnet has been bootstrapped, join with postponed confirmation.
-            bytes calldata combinedMetadata = abi.encodePacked(publicKey, storageCommittment);
-            LibStaking.setValidatorMetadata(msg.sender, combinedMetadata);
+            LibStaking.setValidatorMetadata(msg.sender, metadata);
             LibStaking.deposit(msg.sender, msg.value);
-            LibStorageStaking.commitStorage(msg.sender, msg.data);
+            LibStorageStaking.commitStorage(msg.sender, storageCommitment);
 
         }
     }

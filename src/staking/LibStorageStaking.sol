@@ -32,8 +32,8 @@ library LibStorageStaking {
     function commitStorage(address validator, uint256 totalStorage) internal {
         SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
 
-        s.changeSet.depositRequest(validator, totalStorage);
-        s.validatorSet.recordDeposit(validator, totalStorage);
+       /* s.changeSet.depositRequest(validator, totalStorage);
+        s.validatorSet.recordDeposit(validator, totalStorage);*/
     }
 
     // TODO: A Withdraw commitment function.
