@@ -137,6 +137,12 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
             revert NotOwnerOfPublicKey();
         }
 
+        // Extract storage committment
+        uint256 storageCommittment;
+        assembly {
+            storageCommittment := calldataload(4)// after the 4-byte function selector
+        }
+
         if (!s.bootstrapped) {
             // if the subnet has not been bootstrapped, join directly
             // without delays, and collect collateral to register
@@ -149,7 +155,8 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
             LibSubnetActor.bootstrapSubnetIfNeeded();
         } else {
             // if the subnet has been bootstrapped, join with postponed confirmation.
-            LibStaking.setValidatorMetadata(msg.sender, publicKey);
+            bytes memory combinedMetadata = abi.encodePacked(publicKey, storageCommittment);
+            LibStaking.setValidatorMetadata(msg.sender, combinedMetadata);
             LibStaking.deposit(msg.sender, msg.value);
             LibStaking.depositStorage(msg.sender, msg.data);
 
