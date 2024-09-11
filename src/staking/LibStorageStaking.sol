@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.23;
 
-import {ValidatorSet, Validator} from "ipc-contracts/structs/Subnet.sol";
+import {ValidatorSet, Validator} from "./Subnet.sol";
+import {LibSubnetActorStorage, SubnetActorStorage} from "./LibSubnetActorStorage.sol";
 
 library LibStorageStaking {
 
@@ -26,4 +27,14 @@ library LibStorageStaking {
 
         return s.validatorSet.validators[validator].totalStorage != 0;
     }
+
+    /// @notice Commit the storage. 
+    function commitStorage(address validator, uint256 totalStorage) internal {
+        SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
+
+        s.changeSet.depositRequest(validator, totalStorage);
+        s.validatorSet.recordDeposit(validator, totalStorage);
+    }
+
+    // TODO: A Withdraw commitment function.
 }

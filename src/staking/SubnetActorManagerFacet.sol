@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.23;
 
-import {VALIDATOR_SECP256K1_PUBLIC_KEY_LENGTH} from "../constants/Constants.sol";
-import {ERR_VALIDATOR_JOINED, ERR_VALIDATOR_NOT_JOINED} from "../errors/IPCErrors.sol";
-import {InvalidFederationPayload, SubnetAlreadyBootstrapped, NotEnoughFunds, CollateralIsZero, CannotReleaseZero, NotOwnerOfPublicKey, EmptyAddress, NotEnoughBalance, NotEnoughCollateral, NotValidator, NotAllValidatorsHaveLeft, InvalidPublicKeyLength, MethodNotAllowed, SubnetNotBootstrapped, NotEnoughStorageCommitment} from "IPCErrors.sol";
-import {IGateway} from "../interfaces/IGateway.sol";
-import {Validator, ValidatorSet} from "../structs/Subnet.sol";
-import {LibDiamond} from "../lib/LibDiamond.sol";
-import {ReentrancyGuard} from "../lib/LibReentrancyGuard.sol";
-import {SubnetActorModifiers} from "../lib/LibSubnetActorStorage.sol";
-import {LibValidatorSet, LibStaking} from "../lib/LibStaking.sol";
+import {VALIDATOR_SECP256K1_PUBLIC_KEY_LENGTH} from "ipc-contracts/constants/Constants.sol";
+import {ERR_VALIDATOR_JOINED, ERR_VALIDATOR_NOT_JOINED} from "ipc-contracts/errors/IPCErrors.sol";
+import {InvalidFederationPayload, SubnetAlreadyBootstrapped, NotEnoughFunds, CollateralIsZero, CannotReleaseZero, NotOwnerOfPublicKey, EmptyAddress, NotEnoughBalance, NotEnoughCollateral, NotValidator, NotAllValidatorsHaveLeft, InvalidPublicKeyLength, MethodNotAllowed, SubnetNotBootstrapped, NotEnoughStorageCommitment} from "./IPCErrors.sol";
+import {IGateway} from "ipc-contracts/interfaces/IGateway.sol";
+import {Validator, ValidatorSet} from "ipc-contracts/structs/Subnet.sol";
+import {LibDiamond} from "ipc-contracts/lib/LibDiamond.sol";
+import {ReentrancyGuard} from "ipc-contracts/lib/LibReentrancyGuard.sol";
+import {SubnetActorModifiers} from "ipc-contracts/lib/LibSubnetActorStorage.sol";
+import {LibValidatorSet, LibStaking} from "ipc-contracts/lib/LibStaking.sol";
 import {EnumerableSet} from "openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 import {Address} from "openzeppelin-contracts/utils/Address.sol";
-import {LibSubnetActor} from "../lib/LibSubnetActor.sol";
-import {Pausable} from "../lib/LibPausable.sol";
+import {LibSubnetActor} from "ipc-contracts/lib/LibSubnetActor.sol";
+import {Pausable} from "ipc-contracts/lib/LibPausable.sol";
 import {LibStorageStaking} from "./LibStorageStaking.sol";
 
 contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausable {
@@ -156,10 +156,10 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
             LibSubnetActor.bootstrapSubnetIfNeeded();
         } else {
             // if the subnet has been bootstrapped, join with postponed confirmation.
-            bytes memory combinedMetadata = abi.encodePacked(publicKey, storageCommittment);
+            bytes calldata combinedMetadata = abi.encodePacked(publicKey, storageCommittment);
             LibStaking.setValidatorMetadata(msg.sender, combinedMetadata);
             LibStaking.deposit(msg.sender, msg.value);
-            LibStaking.depositStorage(msg.sender, msg.data);
+            LibStorageStaking.commitStorage(msg.sender, msg.data);
 
         }
     }

@@ -533,15 +533,6 @@ library LibStaking {
         s.validatorSet.recordDeposit(validator, amount);
     }
 
-    /// @notice Deposit the collateral. // TODO: Withdraw commitment function.
-    // TOOD: change name
-    function depositStorage(address validator, uint256 dataStorage) internal {
-        SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
-
-        s.changeSet.depositRequest(validator, dataStorage);
-        s.validatorSet.recordDeposit(validator, dataStorage);
-    }
-
     /// @notice Withdraw the collateral
     function withdraw(address validator, uint256 amount) internal {
         SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
