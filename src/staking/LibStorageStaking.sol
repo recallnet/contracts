@@ -10,7 +10,7 @@ library LibStorageStaking {
 
     /// @notice Getter for total storage committed by all validators in a subnet.
     /// @param validators The subnet validators set.
-    function getTotalStorage(ValidatorSet storage validators) internal view returns(uint256 totalStorage) {
+    function gettotalConfirmedStorage(ValidatorSet storage validators) internal view returns(uint256 totalStorage) {
         totalStorage = validators.totalConfirmedStorage;
     }
 
@@ -36,7 +36,7 @@ library LibStorageStaking {
 
         s.changeSet.commitStorageRequest(validator, totalStorage);
         s.validatorSet.recordStorageDeposit(validator, totalStorage);
-        revert(validator != address(0) && totalStorage > 0,"Function not implemented yet");
+        require(validator != address(0) && totalStorage > 0,"Function not implemented yet");
     }
 
     /// @notice Confirm the deposit directly without going through the confirmation process
@@ -71,7 +71,5 @@ library LibStorageStaking {
         self.validators[validator].confirmedStorage = newCommittedStorage;
 
         self.totalConfirmedStorage += amount;
-
-        increaseReshuffle({self: self, maybeActive: validator, newPower: newCommittedStorage});
     }
 }

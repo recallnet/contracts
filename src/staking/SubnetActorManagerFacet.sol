@@ -2,14 +2,14 @@
 pragma solidity ^0.8.23;
 
 import {VALIDATOR_SECP256K1_PUBLIC_KEY_LENGTH} from "ipc-contracts/constants/Constants.sol";
-import {ERR_VALIDATOR_JOINED, ERR_VALIDATOR_NOT_JOINED} from "ipc-contracts/errors/IPCErrors.sol";
+import {ERR_VALIDATOR_JOINED, ERR_VALIDATOR_NOT_JOINED} from "./IPCErrors.sol";
 import {InvalidFederationPayload, SubnetAlreadyBootstrapped, NotEnoughFunds, CollateralIsZero, CannotReleaseZero, NotOwnerOfPublicKey, EmptyAddress, NotEnoughBalance, NotEnoughCollateral, NotValidator, NotAllValidatorsHaveLeft, InvalidPublicKeyLength, MethodNotAllowed, SubnetNotBootstrapped, NotEnoughStorageCommitment} from "./IPCErrors.sol";
 import {IGateway} from "ipc-contracts/interfaces/IGateway.sol";
-import {Validator, ValidatorSet} from "ipc-contracts/structs/Subnet.sol";
+import {Validator, ValidatorSet} from "./Subnet.sol";
 import {LibDiamond} from "ipc-contracts/lib/LibDiamond.sol";
 import {ReentrancyGuard} from "ipc-contracts/lib/LibReentrancyGuard.sol";
-import {SubnetActorModifiers} from "ipc-contracts/lib/LibSubnetActorStorage.sol";
-import {LibValidatorSet, LibStaking} from "ipc-contracts/lib/LibStaking.sol";
+import {SubnetActorModifiers} from "./LibSubnetActorStorage.sol";
+import {LibValidatorSet, LibStaking} from "./LibStaking.sol";
 import {EnumerableSet} from "openzeppelin-contracts/utils/structs/EnumerableSet.sol";
 import {Address} from "openzeppelin-contracts/utils/Address.sol";
 import {LibSubnetActor} from "ipc-contracts/lib/LibSubnetActor.sol";

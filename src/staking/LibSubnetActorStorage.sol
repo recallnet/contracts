@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import {ConsensusType} from "ipc-contracts/enums/ConsensusType.sol";
-import {NotGateway, SubnetAlreadyKilled} from "ipc-contracts/errors/IPCErrors.sol";
+import {NotGateway, SubnetAlreadyKilled} from "./IPCErrors.sol";
 import {BottomUpCheckpoint, BottomUpMsgBatchInfo} from "ipc-contracts/structs/CrossNet.sol";
 import {SubnetID, ValidatorSet, StakingChangeLog, StakingReleaseQueue, SupplySource, Validator, PermissionMode} from "./Subnet.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
