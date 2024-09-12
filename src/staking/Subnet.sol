@@ -2,8 +2,8 @@
 pragma solidity ^0.8.23;
 
 import {FvmAddress} from "ipc-contracts/structs/FvmAddress.sol";
-import {MaxPQ} from "ipc-contracts/lib/priority/LibMaxPQ.sol";
-import {MinPQ} from "ipc-contracts/lib/priority/LibMinPQ.sol";
+import {MaxPQ} from "./priority/LibMaxPQ.sol";
+import {MinPQ} from "./priority/LibMinPQ.sol";
 
 /// @notice A subnet identity type.
 struct SubnetID {

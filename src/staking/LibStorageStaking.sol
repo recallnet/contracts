@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.23;
 
-import {ValidatorSet, Validator} from "./Subnet.sol";
+import {ValidatorSet, Validator, StakingChangeLog} from "./Subnet.sol";
 import {LibSubnetActorStorage, SubnetActorStorage} from "./LibSubnetActorStorage.sol";
+import {LibStakingChangeLog} from "./LibStakingChangeLog.sol";
+import {LibValidatorSet} from "./LibStaking.sol";
 
 library LibStorageStaking {
+    using LibStakingChangeLog for StakingChangeLog;
+    using LibValidatorSet for ValidatorSet;
 
     // =============== Getters =============
 
@@ -57,19 +61,4 @@ library LibStorageStaking {
 
     // TODO: A Withdraw commitment function.
 
-    /***********************************************************************
-    * Internal helper functions, should not be called by external functions
-    ***********************************************************************/
-
-    /// @notice Validator increases its total storage committed by amount.
-    function recordStorageDeposit(ValidatorSet storage validators, address validator, uint256 amount) internal {
-        validators.validators[validator].totalStorage += amount;
-    }
-
-    function confirmStorageDeposit(ValidatorSet storage self, address validator, uint256 amount) internal {
-        uint256 newCommittedStorage = self.validators[validator].confirmedStorage + amount;
-        self.validators[validator].confirmedStorage = newCommittedStorage;
-
-        self.totalConfirmedStorage += amount;
-    }
 }

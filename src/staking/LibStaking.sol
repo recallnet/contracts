@@ -3,8 +3,8 @@ pragma solidity ^0.8.23;
 
 import {IGateway} from "ipc-contracts/interfaces/IGateway.sol";
 import {LibSubnetActorStorage, SubnetActorStorage} from "./LibSubnetActorStorage.sol";
-import {LibMaxPQ, MaxPQ} from "ipc-contracts/lib/priority/LibMaxPQ.sol";
-import {LibMinPQ, MinPQ} from "ipc-contracts/lib/priority/LibMinPQ.sol";
+import {LibMaxPQ, MaxPQ} from "./priority/LibMaxPQ.sol";
+import {LibMinPQ, MinPQ} from "./priority/LibMinPQ.sol";
 import {LibStakingChangeLog} from "./LibStakingChangeLog.sol";
 import {PermissionMode, StakingReleaseQueue, StakingChangeLog, StakingChange, StakingChangeRequest, StakingOperation, StakingRelease, ValidatorSet, AddressStakingReleases, ParentValidatorsTracker, Validator} from "./Subnet.sol";
 import {WithdrawExceedingCollateral, NotValidator, CannotConfirmFutureChanges, NoCollateralToWithdraw, AddressShouldBeValidator, InvalidConfigurationNumber} from "./IPCErrors.sol";
@@ -369,6 +369,18 @@ library LibValidatorSet {
 
         emit ActiveValidatorCollateralUpdated(validator, newPower);
     }
+
+    /// @notice Validator increases its total storage committed by amount.
+    function recordStorageDeposit(ValidatorSet storage validators, address validator, uint256 amount) internal {
+        validators.validators[validator].totalStorage += amount;
+    }
+
+        function confirmStorageDeposit(ValidatorSet storage self, address validator, uint256 amount) internal {
+        uint256 newCommittedStorage = self.validators[validator].confirmedStorage + amount;
+        self.validators[validator].confirmedStorage = newCommittedStorage;
+
+        self.totalConfirmedStorage += amount;
+    }
 }
 
 library LibStaking {
@@ -490,7 +502,8 @@ library LibStaking {
                 Validator memory val = Validator({
                     addr: validator,
                     weight: collateral,
-                    metadata: s.validatorSet.validators[validator].metadata
+                    metadata: s.validatorSet.validators[validator].metadata,
+                    storageAmount: 0
                 });
                 s.genesisValidators.push(val);
             }
