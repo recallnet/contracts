@@ -48,29 +48,10 @@ library LibStorageStaking {
         // confirm deposit that updates the confirmed commited storage
         s.validatorSet.confirmStorageDeposit(validator, totalStorage);
 
-        if (!s.bootstrapped) {
-            // add to initial validators avoiding duplicates if it
-            // is a genesis validator.
-            bool alreadyValidator;
-            uint256 length = s.genesisValidators.length;
-            for (uint256 i; i < length; ) {
-                if (s.genesisValidators[i].addr == validator) {
-                    alreadyValidator = true;
-                    break;
-                }
-                unchecked {
-                    ++i;
-                }
-            }
-            if (!alreadyValidator) {//TODO here
-                uint256 storageAmount = s.validatorSet.validators[validator].confirmedStorage;
-                Validator memory val = Validator({
-                    addr: validator,
-                    weight: collateral,
-                    metadata: s.validatorSet.validators[validator].metadata
-                });
-                s.genesisValidators.push(val);
-            }
+        // Because depositWithConfirm runs before this we know the address is already a validator we just need to include the storage in the struct
+        if (!s.bootstrapped) { //TODO It's not the most gas-efficient operation to do this twice; evaluate the possibility of doing it only once.
+            uint256 storageAmount = s.validatorSet.validators[validator].confirmedStorage;
+            s.genesisValidators[s.genesisValidators.length - 1].storageAmount = storageAmount;
         }
     }
 

@@ -162,6 +162,7 @@ struct Validator {
     uint256 weight;
     address addr;
     bytes metadata;
+    uint256 storageAmount;
 }
 
 /// @notice Membership information stored in the gateway.
