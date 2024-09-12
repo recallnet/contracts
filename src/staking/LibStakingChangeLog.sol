@@ -88,6 +88,25 @@ library LibStakingChangeLog {
         });
     }
 
+    /// @notice Perform upsert operation to the storage committed changes
+    function commitStorageRequest(StakingChangeLog storage changes, address validator, uint256 amount) internal {
+        bytes memory payload = abi.encode(amount);
+
+        uint64 configurationNumber = recordChange({
+            changes: changes,
+            validator: validator,
+            op: StakingOperation.CommitStorage,
+            payload: payload
+        });
+
+        emit NewStakingChangeRequest({
+            op: StakingOperation.CommitStorage,
+            validator: validator,
+            payload: payload,
+            configurationNumber: configurationNumber
+        });
+    }
+
     /// @notice Perform upsert operation to the deposit changes
     function recordChange(
         StakingChangeLog storage changes,

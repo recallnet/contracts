@@ -463,7 +463,7 @@ library LibStaking {
     }
 
     /// @notice Confirm the deposit directly without going through the confirmation process
-    function depositWithConfirm(address validator, uint256 amount, uint256 dataStorage) internal { //TODO 
+    function depositWithConfirm(address validator, uint256 amount) internal {
         SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
 
         // record deposit that updates the total collateral
@@ -525,7 +525,7 @@ library LibStaking {
         s.changeSet.metadataRequest(validator, metadata);
     }
 
-    /// @notice Deposit the collateral //TODO
+    /// @notice Deposit the collateral
     function deposit(address validator, uint256 amount) internal {
         SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
 

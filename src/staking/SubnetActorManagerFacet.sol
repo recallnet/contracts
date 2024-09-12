@@ -152,14 +152,13 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
             // confirm validators deposit immediately
             LibStaking.setMetadataWithConfirm(msg.sender, metadata);
             LibStaking.depositWithConfirm(msg.sender, msg.value);
-
+            LibStorageStaking.commitStorageWithConfirm(msg.sender, storageCommitment);
             LibSubnetActor.bootstrapSubnetIfNeeded();
         } else {
             // if the subnet has been bootstrapped, join with postponed confirmation.
             LibStaking.setValidatorMetadata(msg.sender, metadata);
             LibStaking.deposit(msg.sender, msg.value);
             LibStorageStaking.commitStorage(msg.sender, storageCommitment);
-
         }
     }
 
