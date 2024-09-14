@@ -14,7 +14,7 @@ library LibStorageStaking {
 
     /// @notice Getter for total storage committed by all validators in a subnet.
     /// @param validators The subnet validators set.
-    function gettotalConfirmedStorage(ValidatorSet storage validators) internal view returns(uint256 totalStorage) {
+    function getTotalConfirmedStorage(ValidatorSet storage validators) internal view returns(uint256 totalStorage) {
         totalStorage = validators.totalConfirmedStorage;
     }
 
