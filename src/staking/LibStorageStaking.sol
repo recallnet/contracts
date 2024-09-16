@@ -5,6 +5,7 @@ import {ValidatorSet, Validator, StakingChangeLog} from "./Subnet.sol";
 import {LibSubnetActorStorage, SubnetActorStorage} from "./LibSubnetActorStorage.sol";
 import {LibStakingChangeLog} from "./LibStakingChangeLog.sol";
 import {LibValidatorSet} from "./LibStaking.sol";
+import {WithdrawExceedingStorage} from "./IPCErrors.sol";
 
 library LibStorageStaking {
     using LibStakingChangeLog for StakingChangeLog;
@@ -59,6 +60,48 @@ library LibStorageStaking {
         }
     }
 
-    // TODO: A Withdraw commitment function.
+    /// @notice Validator reduces its total storage committed by amount.
+    function recordStorageWithdraw(ValidatorSet storage validators, address validator, uint256 amount) internal {
+        uint256 total = validators.validators[validator].totalStorage;
+        if (total < amount) {
+            revert WithdrawExceedingStorage();
+        }
+
+        validators.validators[validator].totalStorage = total - amount;
+    }
+
+    function confirmStorageWithdraw(ValidatorSet storage self, address validator, uint256 amount) internal {
+        uint256 newStorage = self.validators[validator].confirmedStorage - amount;
+        uint256 totalStorage = self.validators[validator].totalStorage;
+
+        if (newStorage == 0 && totalStorage == 0) {
+            delete self.validators[validator];
+        } else {
+            self.validators[validator].confirmedStorage = newStorage;
+        }
+
+        self.totalConfirmedStorage -= amount;
+    }
+
+    /// @notice Confirm the storage withdraw directly without going through the confirmation process
+    /// and releasing from the gateway.
+    /// @dev only use for non-bootstrapped subnets
+    function withdrawStorageWithConfirm(address validator, uint256 amount) internal {
+        SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
+
+        // record deposit that updates the total collateral
+        recordStorageWithdraw(s.validatorSet, validator, amount);
+        // confirm deposit that updates the confirmed collateral
+        confirmStorageWithdraw(s.validatorSet, validator, amount);
+
+    }
+
+    /// @notice Withdraw the storage
+    function withdrawStorage(address validator, uint256 amount) internal {
+        SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
+
+        s.changeSet.withdrawStorageRequest(validator, amount);
+        s.validatorSet.recordWithdraw(validator, amount);
+    }
 
 }

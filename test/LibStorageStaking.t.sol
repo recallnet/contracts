@@ -117,4 +117,70 @@ contract LibStorageStakingTest is Test {
         assertEq(totalStorage, total);
         assertEq(confirmedStorage, total);
     }
+
+    /// Test for recordWithdraw when the amount is less than or equal to totalStorage
+    function testRecordWithdrawSuccess() public {
+        SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
+        uint256 amountToWithdraw = 50;
+        uint256 initialStorage = s.validatorSet.validators[validatorAddress1].totalStorage;
+
+        // Call recordWithdraw
+        s.validatorSet.recordStorageWithdraw(validatorAddress1, amountToWithdraw);
+
+        // Check if totalStorage is reduced
+        uint256 updatedStorage = s.validatorSet.validators[validatorAddress1].totalStorage;
+        assertEq(updatedStorage, initialStorage - amountToWithdraw);
+    }
+
+    /// Test for recordWithdraw when the amount exceeds totalStorage (should revert)
+    function testRecordWithdrawExceedsStorage() public {
+        SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
+        uint256 amountToWithdraw = 200; // Exceeding storage
+
+        vm.expectRevert(WithdrawExceedingStorage.selector);
+        s.validatorSet.recordStorageWithdraw(validatorAddress1, amountToWithdraw);
+    }
+
+    /// Test for confirmWithdraw with normal storage reduction
+    function testConfirmWithdrawSuccess() public {
+        SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
+        uint256 amountToWithdraw = 50;
+        uint256 initialConfirmedStorage = s.validatorSet.validators[validatorAddress1].confirmedStorage;
+        uint256 total = initialConfirmedStorage - amountToWithdraw;
+
+        // Call confirmWithdraw
+        s.validatorSet.confirmStorageWithdraw(validatorAddress1, amountToWithdraw);
+
+        // Check if confirmedStorage is reduced
+        uint256 updatedConfirmedStorage = s.validatorSet.validators[validatorAddress1].confirmedStorage;
+        assertEq(updatedConfirmedStorage, total);
+        console.log("next");
+        console.log(s.validatorSet.totalConfirmedStorage);
+        // Check if totalConfirmedStorage is reduced
+        assertEq(s.validatorSet.totalConfirmedStorage, total);
+    }
+
+    /// Test for confirmWithdraw when newStorage == 0 and totalStorage == 0 (deletion case)
+    function testConfirmWithdrawDeleteValidator() public {
+        SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
+
+        // Withdraw full storage, so the validator should be deleted
+        uint256 amountToWithdraw = validator1Storage;
+
+        // Call confirmWithdraw
+        s.validatorSet.confirmStorageWithdraw(validatorAddress1, amountToWithdraw);
+
+        // Check if the validator was deleted
+        assertEq(s.validatorSet.validators[validatorAddress1].totalStorage, 0);
+        assertEq(s.validatorSet.validators[validatorAddress1].confirmedStorage, 0);
+        assertEq(s.validatorSet.totalConfirmedStorage, 0);
+    }
+    /*
+    function testWithdrawWithConfirm() public {
+
+    }
+    
+    function testWithdraw() public {
+
+    }*/
 }
