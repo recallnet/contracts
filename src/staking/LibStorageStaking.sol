@@ -101,7 +101,7 @@ library LibStorageStaking {
         SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
 
         s.changeSet.withdrawStorageRequest(validator, amount);
-        s.validatorSet.recordWithdraw(validator, amount);
+        recordStorageWithdraw(s.validatorSet, validator, amount);
     }
 
 }

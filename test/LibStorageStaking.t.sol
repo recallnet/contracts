@@ -176,12 +176,37 @@ contract LibStorageStakingTest is Test {
         assertEq(s.validatorSet.validators[validatorAddress1].confirmedStorage, 0);
         assertEq(s.validatorSet.totalConfirmedStorage, totalConfirmed - amountToWithdraw);
     }
-    /*
+
+   /// Test for withdrawWithConfirm (record and confirm)
     function testWithdrawWithConfirm() public {
+        SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
+        uint256 amountToWithdraw = 50;
+        uint256 totalConfirmedStorage = s.validatorSet.validators[validatorAddress1].confirmedStorage;
 
+        // Call withdrawWithConfirm
+        LibStorageStaking.withdrawStorageWithConfirm(validatorAddress1, amountToWithdraw);
+
+        // Check if totalStorage and confirmedStorage are reduced
+        uint256 updatedTotalStorage = s.validatorSet.validators[validatorAddress1].totalStorage;
+        uint256 updatedConfirmedStorage = s.validatorSet.validators[validatorAddress1].confirmedStorage;
+
+        assertEq(updatedTotalStorage, validator1Storage - amountToWithdraw);
+        assertEq(updatedConfirmedStorage, totalConfirmedStorage - amountToWithdraw);
     }
-    
-    function testWithdraw() public {
 
-    }*/
+    /// Test for withdraw (record withdrawal without confirmation)
+    function testWithdraw() public {
+        SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
+        uint256 amountToWithdraw = 50;
+        uint256 totalConfirmedStorage = s.validatorSet.validators[validatorAddress1].confirmedStorage;
+        
+        // Call withdraw
+        LibStorageStaking.withdrawStorage(validatorAddress1, amountToWithdraw);
+        
+        // Check if totalStorage is reduced (confirmation not yet done)
+        uint256 updatedTotalStorage = s.validatorSet.validators[validatorAddress1].totalStorage;
+        assertEq(updatedTotalStorage, validator1Storage - amountToWithdraw);
+        // confirmedStorage should remain the same since withdraw was not confirmed
+        assertEq(s.validatorSet.validators[validatorAddress1].confirmedStorage, totalConfirmedStorage);
+    }
 }
