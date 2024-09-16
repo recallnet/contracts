@@ -6,7 +6,7 @@ import {LibSubnetActorStorage, SubnetActorStorage} from "./LibSubnetActorStorage
 import {LibStakingChangeLog} from "./LibStakingChangeLog.sol";
 import {LibValidatorSet} from "./LibStaking.sol";
 import {WithdrawExceedingStorage} from "./IPCErrors.sol";
-
+import "forge-std/console.sol";
 library LibStorageStaking {
     using LibStakingChangeLog for StakingChangeLog;
     using LibValidatorSet for ValidatorSet;
@@ -73,13 +73,13 @@ library LibStorageStaking {
     function confirmStorageWithdraw(ValidatorSet storage self, address validator, uint256 amount) internal {
         uint256 newStorage = self.validators[validator].confirmedStorage - amount;
         uint256 totalStorage = self.validators[validator].totalStorage;
-
+        
         if (newStorage == 0 && totalStorage == 0) {
             delete self.validators[validator];
         } else {
             self.validators[validator].confirmedStorage = newStorage;
         }
-
+        
         self.totalConfirmedStorage -= amount;
     }
 

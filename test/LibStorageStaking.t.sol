@@ -146,34 +146,35 @@ contract LibStorageStakingTest is Test {
         SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
         uint256 amountToWithdraw = 50;
         uint256 initialConfirmedStorage = s.validatorSet.validators[validatorAddress1].confirmedStorage;
-        uint256 total = initialConfirmedStorage - amountToWithdraw;
-
+        uint256 validatorTotal = initialConfirmedStorage - amountToWithdraw;
+        uint256 total = s.validatorSet.totalConfirmedStorage - amountToWithdraw;
+        
         // Call confirmWithdraw
         s.validatorSet.confirmStorageWithdraw(validatorAddress1, amountToWithdraw);
 
         // Check if confirmedStorage is reduced
         uint256 updatedConfirmedStorage = s.validatorSet.validators[validatorAddress1].confirmedStorage;
-        assertEq(updatedConfirmedStorage, total);
-        console.log("next");
-        console.log(s.validatorSet.totalConfirmedStorage);
+        assertEq(updatedConfirmedStorage, validatorTotal);
+        
         // Check if totalConfirmedStorage is reduced
         assertEq(s.validatorSet.totalConfirmedStorage, total);
     }
 
-    /// Test for confirmWithdraw when newStorage == 0 and totalStorage == 0 (deletion case)
+    /// Test for confirmStorageWithdraw when newStorage == 0 and totalStorage == 0 (deletion case)
     function testConfirmWithdrawDeleteValidator() public {
         SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
+        uint256 totalConfirmed = s.validatorSet.totalConfirmedStorage;
 
         // Withdraw full storage, so the validator should be deleted
-        uint256 amountToWithdraw = validator1Storage;
-
-        // Call confirmWithdraw
-        s.validatorSet.confirmStorageWithdraw(validatorAddress1, amountToWithdraw);
+        uint256 amountToWithdraw = s.validatorSet.validators[validatorAddress1].totalStorage;
+        
+        // Call withdrawStorageWithConfirm that internally calls the confirmStorageWithdraw
+        LibStorageStaking.withdrawStorageWithConfirm(validatorAddress1, amountToWithdraw);
 
         // Check if the validator was deleted
         assertEq(s.validatorSet.validators[validatorAddress1].totalStorage, 0);
         assertEq(s.validatorSet.validators[validatorAddress1].confirmedStorage, 0);
-        assertEq(s.validatorSet.totalConfirmedStorage, 0);
+        assertEq(s.validatorSet.totalConfirmedStorage, totalConfirmed - amountToWithdraw);
     }
     /*
     function testWithdrawWithConfirm() public {
