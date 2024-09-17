@@ -45,9 +45,8 @@ contract SubnetActorManagerFacetTest is Test, Utilities {
     }
 
     function testSetStorageOnStake() public {
-        uint256 validatorTotalStorage = subnetActorManagerFacet.getTotalStorage(walletAddr);
-        uint256 validatorConfirmedStorage = subnetActorManagerFacet.getTotalConfirmedStorage(walletAddr);
-        uint256 totalConfirmedStorage = subnetActorManagerFacet.getSubnetTotalConfirmedStorage();
+        (uint256 validatorTotalStorage, uint256 validatorConfirmedStorage,uint256 totalConfirmedStorage ) = getStorageValues();
+
         // Must revert if validator have not joined the subnet
         vm.expectRevert();
         subnetActorManagerFacet.stakeStorage(storageCommintment);
@@ -62,15 +61,37 @@ contract SubnetActorManagerFacetTest is Test, Utilities {
         assertGt(subnetActorManagerFacet.getTotalConfirmedStorage(walletAddr),validatorConfirmedStorage);
         assertGt(subnetActorManagerFacet.getSubnetTotalConfirmedStorage(),totalConfirmedStorage);
     }
-/*
+
     function testSetStorageOnLeave() public {
-        // Example test logic
-        assertEq(validatorsAddresses.length, 3);
+        // Save current storage state
+        (uint256 validatorTotalStorage, , uint256 totalConfirmedStorage ) = getStorageValues();
+
+        // Should not allow to leave if address never joined
+        vm.expectRevert();
+        subnetActorManagerFacet.leave();
+
+        vm.startPrank(walletAddr);
+        subnetActorManagerFacet.join{value: 1}(metadata); // Call join before leaving
+        subnetActorManagerFacet.leave();
+        vm.stopPrank();
+
+        (uint256 newValidatorTotalStorage, uint256 newValidatorConfirmedStorage, uint256 newTotalConfirmedStorage ) = getStorageValues();
+        assertEq(newValidatorTotalStorage, 0);
+        assertEq(newValidatorConfirmedStorage, 0);
+        assertEq(newTotalConfirmedStorage, totalConfirmedStorage - validatorTotalStorage);
     }
 
     function testSetStorageOnUnstake() public {
         // Example test logic
-        assertEq(validatorsAddresses.length, 3);
-    }*/
+       // assertEq(validatorsAddresses.length, 3);
+    }
+
+    function getStorageValues() internal view returns(uint256, uint256, uint256) {
+        uint256 validatorTotalStorage = subnetActorManagerFacet.getTotalStorage(walletAddr);
+        uint256 validatorConfirmedStorage = subnetActorManagerFacet.getTotalConfirmedStorage(walletAddr);
+        uint256 totalConfirmedStorage = subnetActorManagerFacet.getSubnetTotalConfirmedStorage();
+
+        return (validatorTotalStorage, validatorConfirmedStorage, totalConfirmedStorage);
+    }
 
 }

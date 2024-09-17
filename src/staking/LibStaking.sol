@@ -519,7 +519,7 @@ library LibStaking {
     /// @dev only use for non-bootstrapped subnets
     function withdrawWithConfirm(address validator, uint256 amount) internal {
         SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
-
+        
         // record deposit that updates the total collateral
         s.validatorSet.recordWithdraw(validator, amount);
         // confirm deposit that updates the confirmed collateral
