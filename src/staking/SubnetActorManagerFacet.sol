@@ -15,6 +15,7 @@ import {Address} from "openzeppelin-contracts/utils/Address.sol";
 import {LibSubnetActor} from "ipc-contracts/lib/LibSubnetActor.sol";
 import {Pausable} from "ipc-contracts/lib/LibPausable.sol";
 import {LibStorageStaking} from "./LibStorageStaking.sol";
+import "forge-std/console.sol";
 
 contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -114,9 +115,11 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
         // Adding this check to prevent new validators from joining
         // after the subnet has been bootstrapped, if the subnet mode is not Collateral.
         // We will increase the functionality in the future to support explicit permissioning.
+
         if (s.bootstrapped) {
             LibSubnetActor.enforceCollateralValidation();
         }
+        
         if (msg.value == 0) {
             revert CollateralIsZero();
         }
@@ -153,7 +156,8 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
             LibStaking.setMetadataWithConfirm(msg.sender, metadata);
             LibStaking.depositWithConfirm(msg.sender, msg.value);
             LibStorageStaking.commitStorageWithConfirm(msg.sender, storageCommitment);
-            LibSubnetActor.bootstrapSubnetIfNeeded();
+            LibSubnetActor.bootstrapSubnetIfNeeded();console.log("got out 3");
+            console.log("181");
         } else {
             // if the subnet has been bootstrapped, join with postponed confirmation.
             LibStaking.setValidatorMetadata(msg.sender, metadata);

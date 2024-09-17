@@ -3,14 +3,14 @@ pragma solidity ^0.8.23;
 
 import {Script, console2} from "forge-std/Script.sol";
 import {Utilities} from "../src/Utilities.sol";
-import {SubnetActorManagerFacet} from "../src/staking/SubnetActorManagerFacet.sol";
+import {SubnetActorManagerFacetMock} from "../src/staking/SubnetActorManagerFacetMock.sol";
 
 contract StakingDeployScript is Script, Utilities {
     string constant PRIVATE_KEY = "PRIVATE_KEY";
 
     function setUp() public {}
 
-    function run(Environment env, uint256 initialSupply) public returns (SubnetActorManagerFacet) {
+    function run(Environment env) public returns (SubnetActorManagerFacetMock) {
          if (vm.envExists(PRIVATE_KEY)) {
             uint256 privateKey = vm.envUint(PRIVATE_KEY);
             vm.startBroadcast(privateKey);
@@ -19,8 +19,9 @@ contract StakingDeployScript is Script, Utilities {
         } else {
             revert("PRIVATE_KEY not set in non-local environment");
         }
+        vm.stopBroadcast();
 
-        SubnetActorManagerFacet subnet = new SubnetActorManagerFacet();
+        SubnetActorManagerFacetMock subnet = new SubnetActorManagerFacetMock();
         return subnet;
     }
 

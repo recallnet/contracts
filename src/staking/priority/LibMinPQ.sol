@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import {LibValidatorSet} from "../LibStaking.sol";
 import {ValidatorSet} from "../Subnet.sol";
 import {PQ, LibPQ} from "./LibPQ.sol";
+import "forge-std/console.sol";
 
 struct MinPQ {
     PQ inner;
@@ -96,6 +97,7 @@ library LibMinPQ {
     /// @notice Get the minimal value in the priority queue.
     /// NOTE that caller should ensure the queue is not empty!
     function min(MinPQ storage self, ValidatorSet storage validators) internal view returns (address, uint256) {
+        console.log(self.inner.size);
         self.inner.requireNotEmpty();
 
         address addr = self.inner.posToAddress[1];

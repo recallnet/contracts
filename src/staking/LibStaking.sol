@@ -9,6 +9,7 @@ import {LibStakingChangeLog} from "./LibStakingChangeLog.sol";
 import {PermissionMode, StakingReleaseQueue, StakingChangeLog, StakingChange, StakingChangeRequest, StakingOperation, StakingRelease, ValidatorSet, AddressStakingReleases, ParentValidatorsTracker, Validator} from "./Subnet.sol";
 import {WithdrawExceedingCollateral, NotValidator, CannotConfirmFutureChanges, NoCollateralToWithdraw, AddressShouldBeValidator, InvalidConfigurationNumber} from "./IPCErrors.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import "forge-std/console.sol";
 
 /// NOTE: This needs to be kept up to date with the original IPC implementation.
 library LibAddressStakingReleases {
@@ -244,7 +245,7 @@ library LibValidatorSet {
         self.validators[validator].confirmedCollateral = newCollateral;
 
         self.totalConfirmedCollateral += amount;
-
+        
         increaseReshuffle({self: self, maybeActive: validator, newPower: newCollateral});
     }
 
@@ -273,7 +274,8 @@ library LibValidatorSet {
 
         // incoming address is not active validator
         uint16 activeLimit = self.activeLimit;
-        uint16 activeSize = self.activeValidators.getSize();
+        uint16 activeSize = self.activeValidators.getSize();//0
+        console.log("activeLimit:", activeLimit);
         if (activeLimit > activeSize) {
             // we can still take more active validators, just insert to the pq.
             self.activeValidators.insert(self, maybeActive);
@@ -290,8 +292,10 @@ library LibValidatorSet {
         //        - insert popped validator into waiting validators
         //     - no:
         //        - insert the incoming validator into waiting validators
+        console.log("295", self.activeValidators.getSize());
         (address minAddress, uint256 minActivePower) = self.activeValidators.min(self);
         if (minActivePower < newPower) {
+            console.log("if");
             self.activeValidators.pop(self);
 
             if (self.waitingValidators.contains(maybeActive)) {
@@ -305,13 +309,13 @@ library LibValidatorSet {
             return;
         }
 
-        if (self.waitingValidators.contains(maybeActive)) {
+        if (self.waitingValidators.contains(maybeActive)) {console.log("if2");
             self.waitingValidators.increaseReheapify(self, maybeActive);
             emit WaitingValidatorCollateralUpdated(maybeActive, newPower);
             return;
         }
-
-        self.waitingValidators.insert(self, maybeActive);
+console.log("end");
+        self.waitingValidators.insert(self, maybeActive);console.log("12we");
         emit NewWaitingValidator(maybeActive, newPower);
     }
 
@@ -477,15 +481,16 @@ library LibStaking {
     /// @notice Confirm the deposit directly without going through the confirmation process
     function depositWithConfirm(address validator, uint256 amount) internal {
         SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
-
+        
         // record deposit that updates the total collateral
         s.validatorSet.recordDeposit(validator, amount);
         // confirm deposit that updates the confirmed collateral
         s.validatorSet.confirmDeposit(validator, amount);
-
+        
         if (!s.bootstrapped) {
             // add to initial validators avoiding duplicates if it
             // is a genesis validator.
+            console.log("not bootstraped");
             bool alreadyValidator;
             uint256 length = s.genesisValidators.length;
             for (uint256 i; i < length; ) {
@@ -497,7 +502,9 @@ library LibStaking {
                     ++i;
                 }
             }
+            console.log("505");
             if (!alreadyValidator) {
+                console.log("507");
                 uint256 collateral = s.validatorSet.validators[validator].confirmedCollateral;
                 Validator memory val = Validator({
                     addr: validator,
