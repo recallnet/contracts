@@ -21,31 +21,48 @@ contract SubnetActorManagerFacetTest is Test, Utilities {
             publicKeyX,                 
             publicKeyY                  
         );
+    bytes metadata = abi.encodePacked(uncompressedKey, storageCommintment);
 
     function setUp() public {
         StakingDeployScript deployer = new StakingDeployScript();
         subnetActorManagerFacet = deployer.run(Environment.Local);
-
+        subnetActorManagerFacet.setActiveLimit(10);
+        subnetActorManagerFacet.setMinCollateral(100);
         vm.deal(walletAddr, 10 ether);
     }
 
     function testSetStorageOnJoin() public {
-        bytes memory metadata = abi.encodePacked(uncompressedKey, storageCommintment);
-        subnetActorManagerFacet.setActiveLimit(10);
-        
         vm.prank(walletAddr);
         // Expect no revert on this call
         subnetActorManagerFacet.join{value: 1}(metadata); // Call join function with valid collateral and metadata
+        
+        // Check that the validator has joined
+        assertTrue(subnetActorManagerFacet.isValidator(walletAddr), "Validator did not join successfully");
+        assertTrue(subnetActorManagerFacet.hasStorage(walletAddr));
+        
+        assertEq(subnetActorManagerFacet.getTotalStorage(walletAddr), storageCommintment);
+        assertEq(subnetActorManagerFacet.getTotalConfirmedStorage(walletAddr), storageCommintment);
+    }
 
-        // Check that the validator has joined (you can do this via getters)
-        assertTrue(LibStaking.isValidator(walletAddr), "Validator did not join successfully");
+    function testSetStorageOnStake() public {
+        uint256 validatorTotalStorage = subnetActorManagerFacet.getTotalStorage(walletAddr);
+        uint256 validatorConfirmedStorage = subnetActorManagerFacet.getTotalConfirmedStorage(walletAddr);
+        uint256 totalConfirmedStorage = subnetActorManagerFacet.getSubnetTotalConfirmedStorage();
+        // Must revert if validator have not joined the subnet
+        vm.expectRevert();
+        subnetActorManagerFacet.stakeStorage(storageCommintment);
+
+
+        vm.startPrank(walletAddr);
+        subnetActorManagerFacet.join{value: 1}(metadata); // Call join before staking
+        subnetActorManagerFacet.stakeStorage{value: 1}(storageCommintment);
+        vm.stopPrank();
+
+        assertGt(subnetActorManagerFacet.getTotalStorage(walletAddr),validatorTotalStorage);
+        assertGt(subnetActorManagerFacet.getTotalConfirmedStorage(walletAddr),validatorConfirmedStorage);
+        assertGt(subnetActorManagerFacet.getSubnetTotalConfirmedStorage(),totalConfirmedStorage);
     }
 /*
-    function testSetStorageOnStake() public {
-        // Example test logic
-        assertEq(validatorsAddresses.length, 3);
-    }
-
     function testSetStorageOnLeave() public {
         // Example test logic
         assertEq(validatorsAddresses.length, 3);

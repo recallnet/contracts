@@ -156,8 +156,7 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
             LibStaking.setMetadataWithConfirm(msg.sender, metadata);
             LibStaking.depositWithConfirm(msg.sender, msg.value);
             LibStorageStaking.commitStorageWithConfirm(msg.sender, storageCommitment);
-            LibSubnetActor.bootstrapSubnetIfNeeded();console.log("got out 3");
-            console.log("181");
+            LibSubnetActor.bootstrapSubnetIfNeeded();
         } else {
             // if the subnet has been bootstrapped, join with postponed confirmation.
             LibStaking.setValidatorMetadata(msg.sender, metadata);
@@ -177,10 +176,6 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
         if (msg.value == 0) {
             revert CollateralIsZero();
         }
-        
-        if (msg.data.length == 36) {
-           revert NotEnoughStorageCommitment();
-        }
 
         if (!LibStaking.isValidator(msg.sender)) {
             revert MethodNotAllowed(ERR_VALIDATOR_NOT_JOINED);
@@ -195,19 +190,13 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
         }
     }
 
-    /// @notice method that allows a validator to increase its storage commited.
-    ///         If the total confirmed storage of the subnet is greater
-    ///         or equal to minimum activation collateral as a result of this operation,
-    ///         then  subnet will be registered.
-    function stakeStorage() external payable whenNotPaused notKilled {
+    /// @notice method that allows a validator to increase its storage commited by amount.
+    function stakeStorage(uint256 amount) external payable whenNotPaused notKilled {
         // disabling validator changes for federated subnets (at least for now
         // until a more complex mechanism is implemented).
         LibSubnetActor.enforceCollateralValidation();
-        if (msg.value == 0) {
-            revert CollateralIsZero();
-        }
-        
-        if (msg.data.length == 36) {
+        //TODO each storage stake will require more collateral so this must get value or check that enough collateral was already staked
+        if (amount == 0) {
            revert NotEnoughStorageCommitment();
         }
 
@@ -216,11 +205,9 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
         }
 
         if (!s.bootstrapped) {
-            LibStaking.depositWithConfirm(msg.sender, msg.value);
-            
-            LibSubnetActor.bootstrapSubnetIfNeeded();
+            LibStorageStaking.commitStorageWithConfirm(msg.sender, amount);
         } else {
-            LibStaking.deposit(msg.sender, msg.value);
+            LibStorageStaking.commitStorage(msg.sender, amount);
         }
     }
 

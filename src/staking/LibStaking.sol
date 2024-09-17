@@ -243,7 +243,6 @@ library LibValidatorSet {
     function confirmDeposit(ValidatorSet storage self, address validator, uint256 amount) internal {
         uint256 newCollateral = self.validators[validator].confirmedCollateral + amount;
         self.validators[validator].confirmedCollateral = newCollateral;
-
         self.totalConfirmedCollateral += amount;
         
         increaseReshuffle({self: self, maybeActive: validator, newPower: newCollateral});
@@ -274,8 +273,8 @@ library LibValidatorSet {
 
         // incoming address is not active validator
         uint16 activeLimit = self.activeLimit;
-        uint16 activeSize = self.activeValidators.getSize();//0
-        console.log("activeLimit:", activeLimit);
+        uint16 activeSize = self.activeValidators.getSize();
+        
         if (activeLimit > activeSize) {
             // we can still take more active validators, just insert to the pq.
             self.activeValidators.insert(self, maybeActive);
@@ -292,10 +291,10 @@ library LibValidatorSet {
         //        - insert popped validator into waiting validators
         //     - no:
         //        - insert the incoming validator into waiting validators
-        console.log("295", self.activeValidators.getSize());
+        
         (address minAddress, uint256 minActivePower) = self.activeValidators.min(self);
         if (minActivePower < newPower) {
-            console.log("if");
+            
             self.activeValidators.pop(self);
 
             if (self.waitingValidators.contains(maybeActive)) {
@@ -309,13 +308,13 @@ library LibValidatorSet {
             return;
         }
 
-        if (self.waitingValidators.contains(maybeActive)) {console.log("if2");
+        if (self.waitingValidators.contains(maybeActive)) {
             self.waitingValidators.increaseReheapify(self, maybeActive);
             emit WaitingValidatorCollateralUpdated(maybeActive, newPower);
             return;
         }
-console.log("end");
-        self.waitingValidators.insert(self, maybeActive);console.log("12we");
+
+        self.waitingValidators.insert(self, maybeActive);
         emit NewWaitingValidator(maybeActive, newPower);
     }
 
@@ -379,7 +378,7 @@ console.log("end");
         validators.validators[validator].totalStorage += amount;
     }
 
-        function confirmStorageDeposit(ValidatorSet storage self, address validator, uint256 amount) internal {
+    function confirmStorageDeposit(ValidatorSet storage self, address validator, uint256 amount) internal {
         uint256 newCommittedStorage = self.validators[validator].confirmedStorage + amount;
         self.validators[validator].confirmedStorage = newCommittedStorage;
 
@@ -432,7 +431,7 @@ library LibStaking {
     /// @return A boolean indicating whether the validator has staked.
     function hasStaked(address validator) internal view returns (bool) {
         SubnetActorStorage storage s = LibSubnetActorStorage.appStorage();
-
+        
         // gas-opt: original check: totalCollateral > 0
         return s.validatorSet.validators[validator].totalCollateral != 0;
     }
@@ -490,7 +489,6 @@ library LibStaking {
         if (!s.bootstrapped) {
             // add to initial validators avoiding duplicates if it
             // is a genesis validator.
-            console.log("not bootstraped");
             bool alreadyValidator;
             uint256 length = s.genesisValidators.length;
             for (uint256 i; i < length; ) {
@@ -502,9 +500,8 @@ library LibStaking {
                     ++i;
                 }
             }
-            console.log("505");
+            
             if (!alreadyValidator) {
-                console.log("507");
                 uint256 collateral = s.validatorSet.validators[validator].confirmedCollateral;
                 Validator memory val = Validator({
                     addr: validator,
