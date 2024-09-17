@@ -184,7 +184,36 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
 
         if (!s.bootstrapped) {
             LibStaking.depositWithConfirm(msg.sender, msg.value);
+            
+            LibSubnetActor.bootstrapSubnetIfNeeded();
+        } else {
+            LibStaking.deposit(msg.sender, msg.value);
+        }
+    }
 
+    /// @notice method that allows a validator to increase its storage commited.
+    ///         If the total confirmed storage of the subnet is greater
+    ///         or equal to minimum activation collateral as a result of this operation,
+    ///         then  subnet will be registered.
+    function stakeStorage() external payable whenNotPaused notKilled {
+        // disabling validator changes for federated subnets (at least for now
+        // until a more complex mechanism is implemented).
+        LibSubnetActor.enforceCollateralValidation();
+        if (msg.value == 0) {
+            revert CollateralIsZero();
+        }
+        
+        if (msg.data.length == 36) {
+           revert NotEnoughStorageCommitment();
+        }
+
+        if (!LibStaking.isValidator(msg.sender)) {
+            revert MethodNotAllowed(ERR_VALIDATOR_NOT_JOINED);
+        }
+
+        if (!s.bootstrapped) {
+            LibStaking.depositWithConfirm(msg.sender, msg.value);
+            
             LibSubnetActor.bootstrapSubnetIfNeeded();
         } else {
             LibStaking.deposit(msg.sender, msg.value);
@@ -195,7 +224,7 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
     /// @dev `leave` must be used to unstake the entire stake.
     /// @param amount The amount to unstake.
     function unstake(uint256 amount) external nonReentrant whenNotPaused notKilled {
-        // disbling validator changes for federated validation subnets (at least for now
+        // disabling validator changes for federated validation subnets (at least for now
         // until a more complex mechanism is implemented).
         LibSubnetActor.enforceCollateralValidation();
 
@@ -218,11 +247,38 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
 
         LibStaking.withdraw(msg.sender, amount);
     }
-    // TODO: Create a version of the above function for unstakeStorage, and modify the above to include a check for sufficient collateral in storage.
+    
+    /// @notice method that allows a validator to unstake a part of its storage from a subnet.
+    /// @dev `leave` must be used to unstake the entire stake.
+    /// @param amount The storage amount to unstake.
+    function unstakeStorage(uint256 amount) external nonReentrant whenNotPaused notKilled {
+        // disabling validator changes for federated validation subnets (at least for now
+        // until a more complex mechanism is implemented).
+        LibSubnetActor.enforceCollateralValidation();
+
+        if (amount == 0) {
+            revert CannotReleaseZero();
+        }
+
+        uint256 totalStorage = LibStorageStaking.totalValidatorStorage(msg.sender);
+
+        if (totalStorage == 0) {
+            revert NotValidator(msg.sender);
+        }
+        if (totalStorage <= amount) {
+            revert NotEnoughStorageCommitment();
+        }
+        if (!s.bootstrapped) {
+            LibStorageStaking.withdrawStorageWithConfirm(msg.sender, amount);
+            return;
+        }
+
+        LibStorageStaking.withdrawStorage(msg.sender, amount);
+    }
 
     /// @notice method that allows a validator to leave the subnet.
     function leave() external nonReentrant whenNotPaused notKilled {
-        // disbling validator changes for federated subnets (at least for now
+        // disabling validator changes for federated subnets (at least for now
         // until a more complex mechanism is implemented).
         // This means that initial validators won't be able to recover
         // their collateral ever (worth noting in the docs if this ends
@@ -254,9 +310,11 @@ contract SubnetActorManagerFacet is SubnetActorModifiers, ReentrancyGuard, Pausa
 
             // interaction must be performed after checks and changes
             LibStaking.withdrawWithConfirm(msg.sender, amount);
+            LibStorageStaking.withdrawStorageWithConfirm(msg.sender, totalStorage);
             return;
         }
         LibStaking.withdraw(msg.sender, amount);
+        LibStorageStaking.withdrawStorage(msg.sender, totalStorage);
     }
 
     /// @notice method that allows to kill the subnet when all validators left.
