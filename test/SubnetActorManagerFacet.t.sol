@@ -45,7 +45,7 @@ contract SubnetActorManagerFacetTest is Test, Utilities {
     }
 
     function testSetStorageOnStake() public {
-        (uint256 validatorTotalStorage, uint256 validatorConfirmedStorage,uint256 totalConfirmedStorage ) = getStorageValues();
+        (uint256 validatorTotalStorage, uint256 validatorConfirmedStorage, uint256 totalConfirmedStorage ) = getStorageValues();
 
         // Must revert if validator have not joined the subnet
         vm.expectRevert();
@@ -82,8 +82,27 @@ contract SubnetActorManagerFacetTest is Test, Utilities {
     }
 
     function testSetStorageOnUnstake() public {
-        // Example test logic
-       // assertEq(validatorsAddresses.length, 3);
+        vm.startPrank(walletAddr);
+        subnetActorManagerFacet.join{value: 1}(metadata); // Call join before unstaking
+
+        (uint256 validatorTotalStorage, uint256 validatorConfirmedStorage, uint256 totalConfirmedStorage ) = getStorageValues();
+        uint256 amount = validatorTotalStorage/2;
+
+        vm.expectRevert();
+        subnetActorManagerFacet.unstakeStorage(0);// Cannot unstake 0
+
+        vm.expectRevert();
+        subnetActorManagerFacet.unstakeStorage(validatorTotalStorage + 1);// Cannot exceed total storage
+
+        subnetActorManagerFacet.unstakeStorage(amount);
+        vm.stopPrank();
+
+        (uint256 newValidatorTotalStorage, uint256 newValidatorConfirmedStorage, uint256 newTotalConfirmedStorage ) = getStorageValues();
+
+        assertEq(newValidatorTotalStorage, validatorTotalStorage - amount);
+        assertEq(newValidatorConfirmedStorage, validatorTotalStorage - amount);
+        assertEq(newTotalConfirmedStorage, totalConfirmedStorage - amount);
+
     }
 
     function getStorageValues() internal view returns(uint256, uint256, uint256) {
