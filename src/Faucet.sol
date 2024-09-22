@@ -6,6 +6,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 error TryLater();
+error FaucetEmpty();
 error InvalidFunding(address from, uint256 value);
 
 event Funding(address indexed from, uint256 value);
@@ -42,6 +43,9 @@ contract Faucet is Ownable {
     function drip(address payable recipient) external {
         if (_nextRequestAt[recipient] > block.timestamp) {
             revert TryLater();
+        }
+        if (address(this).balance < _dripAmount) {
+            revert FaucetEmpty();
         }
 
         recipient.transfer(_dripAmount);
