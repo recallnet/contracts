@@ -13,3 +13,6 @@
 [submodule "lib/interchain-token-service"]
 	path = lib/interchain-token-service
 	url = https://github.com/axelarnetwork/interchain-token-service
+[submodule "lib/axelar-gmp-sdk-solidity"]
+	path = lib/axelar-gmp-sdk-solidity
+	url = https://github.com/axelarnetwork/axelar-gmp-sdk-solidity
