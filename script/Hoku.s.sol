@@ -4,10 +4,8 @@ pragma solidity ^0.8.23;
 import {Script, console2} from "forge-std/Script.sol";
 import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
 import {Hoku} from "../src/Hoku.sol";
-import {Utilities} from "../src/Utilities.sol";
 
-contract DeployScript is Script, Utilities {
-    string constant PRIVATE_KEY = "PRIVATE_KEY";
+contract DeployScript is Script {
     address public proxyAddress;
 
     function setUp() public {}
@@ -16,21 +14,23 @@ contract DeployScript is Script, Utilities {
         return proxyAddress;
     }
 
-    function run(Environment env) public returns (Hoku) {
-        if (vm.envExists(PRIVATE_KEY)) {
-            uint256 privateKey = vm.envUint(PRIVATE_KEY);
-            vm.startBroadcast(privateKey);
-        } else if (env == Environment.Local) {
-            vm.startBroadcast();
-        } else {
-            revert("PRIVATE_KEY not set in non-local environment");
-        }
-        proxyAddress = Upgrades.deployUUPSProxy("Hoku.sol", abi.encodeCall(Hoku.initialize, (env)));
+    function run(string memory prefix, address its) public returns (Hoku) {
+        vm.startBroadcast();
+
+        bytes32 itsSalt = keccak256("HOKU_SALT");
+        proxyAddress = Upgrades.deployUUPSProxy("Hoku.sol", abi.encodeCall(Hoku.initialize, (prefix, its, itsSalt)));
         vm.stopBroadcast();
 
         // Check implementation
         address implAddr = Upgrades.getImplementationAddress(proxyAddress);
         console2.log("Implementation address: ", implAddr);
+
+        // Verify the implementation has code
+        uint256 codeSize;
+        assembly {
+            codeSize := extcodesize(implAddr)
+        }
+        console2.log("Implementation code size:", codeSize);
 
         Hoku hoku = Hoku(proxyAddress);
         return hoku;

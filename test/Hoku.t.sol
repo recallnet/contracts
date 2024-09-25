@@ -15,7 +15,7 @@ contract HokuTest is Test, Utilities {
 
     function setUp() public {
         DeployScript deployer = new DeployScript();
-        token = deployer.run(Environment.Local);
+        token = deployer.run("l", address(0x0));
 
         user = address(0x123);
     }

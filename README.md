@@ -10,24 +10,39 @@ forge install
 forge build
 ```
 
+## Clean
+```shell
+forge clean
+```
+
 ## Deploy
 
+To deploy the contract you need the following:
+- Select an environment prefix: `l` = Local, `t` = Testnet, "" = Mainnet
+- The address of the Axelar Interchain Token Service on chain you are deploying to
+- A private key with funds on the target chain
+- An rpc endpoint for the target chain
+
 ### Local
+Start a local network using anvil,
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url <...>  --broadcast -vv
-vv
+anvil
+```
+Anvil will output an address and private key, copy one of the private keys for the step below.
+
+Deploy the contract, in this case we just use the zero-address for the Axelar Interchain Token Service.
+```shell
+forge script script/Hoku.s.sol:DeployScript --sig 'run(string,address)' l 0x0000000000000000000000000000000000000000 -vv --rpc-url http://localhost:8545 --private-key <0x...>
 ```
 
 ### Testnet
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url <...>  --broadcast -vv
-vv
+forge script script/Hoku.s.sol:DeployScript --sig 'run(string,address)' t <axelar-its-address> --rpc-url <...>  --broadcast -vv --private-key <0x...>
 ```
 
 ### Mainnet
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript 2 --sig 'run(uint8)' --rpc-url <...>  --broadcast -vv
-vv
+forge script script/Hoku.s.sol:DeployScript --sig 'run(string,address)' "" <axelar-its-address> --rpc-url <...>  --broadcast -vv --private-key <0x...>
 ```
 
 
