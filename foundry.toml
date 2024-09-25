@@ -7,3 +7,7 @@ extra_output = ["storageLayout"]
 gas_reports = ["Hoku"]
 ffi = true
 ast = true
+libraries = [
+    "src/util/ByteParser.sol:ByteParser:0xd1739AAD5669C451Bcf36a69C0323D43ef20e11e",
+    "src/util/CBORDecoding.sol:CBORDecoding:0x3121F4d5f28F8d08116f6f276d7Cc919C789a701"
+]
