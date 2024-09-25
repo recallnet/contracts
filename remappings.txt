@@ -6,3 +6,4 @@ forge-std/=lib/forge-std/src/
 @ensdomains/buffer/contracts=lib/buffer/contracts
 @filecoin-solidity/v0.8=lib/filecoin-solidity/contracts/v0.8
 @solidity-cbor=lib/solidity-cbor/packages/solidity-cbor/contracts
+hardhat=src/hardhat
