@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-import {Script, console2} from "forge-std/Script.sol";
+import {Script, console} from "forge-std/Script.sol";
 import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
+import { IInterchainTokenService } from '@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol';
+import { ITokenManagerType } from '@axelar-network/interchain-token-service/contracts/interfaces/ITokenManagerType.sol';
 import {Hoku} from "../src/Hoku.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+
+address constant INTERCHAIN_TOKEN_SERVICE = 0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C;
 
 contract DeployScript is Script {
     address public proxyAddress;
@@ -14,25 +19,46 @@ contract DeployScript is Script {
         return proxyAddress;
     }
 
-    function run(string memory prefix, address its) public returns (Hoku) {
+    function run(string memory network) public returns (Hoku) {
+        string memory prefix = "";
+        if (Strings.equal(network, "local")) {
+            prefix = "l";
+        } else if (Strings.equal(network, "testnet")) {
+            prefix = "t";
+        } else if (!Strings.equal(network, "ethereum") && !Strings.equal(network, "filecoin")) {
+            revert("Unsupported network.");
+        }
         vm.startBroadcast();
 
+
         bytes32 itsSalt = keccak256("HOKU_SALT");
-        proxyAddress = Upgrades.deployUUPSProxy("Hoku.sol", abi.encodeCall(Hoku.initialize, (prefix, its, itsSalt)));
-        vm.stopBroadcast();
+        proxyAddress = Upgrades.deployUUPSProxy("Hoku.sol", abi.encodeCall(Hoku.initialize, (prefix, INTERCHAIN_TOKEN_SERVICE, itsSalt)));
 
         // Check implementation
         address implAddr = Upgrades.getImplementationAddress(proxyAddress);
-        console2.log("Implementation address: ", implAddr);
+        console.log("Implementation address: ", implAddr);
 
-        // Verify the implementation has code
-        uint256 codeSize;
-        assembly {
-            codeSize := extcodesize(implAddr)
-        }
-        console2.log("Implementation code size:", codeSize);
 
         Hoku hoku = Hoku(proxyAddress);
+
+        console.log("Deployer: ", hoku.deployer());
+
+        if (Strings.equal(network, "filecoin") || Strings.equal(network, "ethereum")) {
+            console.log("Deploying token manager");
+            IInterchainTokenService itsContract = IInterchainTokenService(INTERCHAIN_TOKEN_SERVICE);
+            bytes memory params = abi.encode(abi.encodePacked(hoku.deployer()), address(hoku));
+            itsContract.deployTokenManager(itsSalt, "", ITokenManagerType.TokenManagerType.MINT_BURN_FROM, params, 0);
+            bytes32 itsTokenId = hoku.interchainTokenId();
+
+            console.log("Hoku Interchain Token ID: ", Strings.toHexString(uint256(itsTokenId), 32));
+            address tokenManager = itsContract.tokenManagerAddress(itsTokenId);
+            console.log("Token manager: ", tokenManager);
+
+            // Grant minter role to token manager
+            hoku.grantRole(hoku.MINTER_ROLE(), tokenManager);
+        }
+        vm.stopBroadcast();
+
         return hoku;
     }
 }
@@ -46,11 +72,11 @@ contract UpgradeProxyScript is Script {
 
         // Get proxy address
         address proxy = vm.envAddress("PROXY_ADDR");
-        console2.log("proxy address: ", proxy);
+        console.log("proxy address: ", proxy);
 
         // Check current implementation
         address implOld = Upgrades.getImplementationAddress(proxy);
-        console2.log("Implementation address: ", implOld);
+        console.log("Implementation address: ", implOld);
 
         // Upgrade proxy to new implementation
         Options memory opts;
@@ -61,7 +87,7 @@ contract UpgradeProxyScript is Script {
 
         // Check new implementation
         address implNew = Upgrades.getImplementationAddress(proxy);
-        console2.log("Implementation address: ", implNew);
+        console.log("Implementation address: ", implNew);
 
         require(implOld != implNew, "Implementation address not changed");
     }

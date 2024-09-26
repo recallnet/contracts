@@ -48,7 +48,6 @@ contract Hoku is
 
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
-        _grantRole(MINTER_ROLE, its);
         _setRoleAdmin(MINTER_ROLE, ADMIN_ROLE);
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
     }

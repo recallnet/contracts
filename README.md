@@ -32,19 +32,25 @@ Anvil will output an address and private key, copy one of the private keys for t
 
 Deploy the contract, in this case we just use the zero-address for the Axelar Interchain Token Service.
 ```shell
-forge script script/Hoku.s.sol:DeployScript --sig 'run(string,address)' l 0x0000000000000000000000000000000000000000 -vv --rpc-url http://localhost:8545 --private-key <0x...>
+forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' local --broadcast -vv --rpc-url http://localhost:8545 --private-key <0x...>
 ```
 
 ### Testnet
 ```shell
-forge script script/Hoku.s.sol:DeployScript --sig 'run(string,address)' t <axelar-its-address> --rpc-url <...>  --broadcast -vv --private-key <0x...>
+forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' testnet --broadcast -vv --rpc-url <...>  --private-key <0x...>
 ```
 
-### Mainnet
+### Ethereum Mainnet
 ```shell
-forge script script/Hoku.s.sol:DeployScript --sig 'run(string,address)' "" <axelar-its-address> --rpc-url <...>  --broadcast -vv --private-key <0x...>
+forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' ethereum --broadcast -vv --rpc-url https://eth.merkle.io --private-key <0x...>
 ```
 
+### Filecoin mainnet
+RPC copied from https://docs.filecoin.io/networks/mainnet/rpcs
+```shell
+forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' filecoin --broadcast -vv -g 100000 --rpc-url https://api.node.glif.io/rpc/v1 --private-key <0x...>
+```
+The `-g` flag is a multiplier on the estimated gas price. In this case 100000 is 1000x the estimated gas price. Unclear why filecoin requires such a large multiplier.
 
 ## Deployments
 
