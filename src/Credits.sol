@@ -8,9 +8,9 @@ import {FilecoinCBOR} from "@filecoin-solidity/v0.8/cbor/FilecoinCBOR.sol";
 import {CBORDecoding} from "./util/CBORDecoding.sol";
 import {ByteParser} from "./util/ByteParser.sol";
 
-import "forge-std/console.sol";
+import {console} from "forge-std/console.sol";
 
-type BigInt is uint256;
+type BigInt is int256;
 
 enum BlobStatus {
     Pending,
@@ -64,11 +64,11 @@ struct GetBlobStatusParams {
 
 struct GetStatsReturn {
     TokenAmount balance;
-    uint64 capacityFree;
-    uint64 capacityUsed;
-    uint256 creditSold;
-    uint256 creditCommitted;
-    uint256 creditDebited;
+    BigInt capacityFree;
+    BigInt capacityUsed;
+    BigInt creditSold;
+    BigInt creditCommitted;
+    BigInt creditDebited;
     uint64 creditDebitRate;
     uint64 numAccounts;
     uint64 numBlobs;
@@ -76,9 +76,9 @@ struct GetStatsReturn {
 }
 
 struct AccountReturn {
-    uint64 capacityUsed;
-    uint64 capacityFree;
-    uint256 creditCommitted;
+    BigInt capacityUsed;
+    BigInt capacityFree;
+    BigInt creditCommitted;
     ChainEpoch lastDebitEpoch;
 }
 
@@ -102,24 +102,39 @@ contract Credits is CBORDecoding, ByteParser {
         return bytes32(result);
     }
 
-    function parseU256(bytes memory data) public pure returns (uint256) {
-        return uint256(trimPrefix(data));
+    function parseBigInt(bytes memory data) internal returns (BigInt) {
+        bytes[] memory decoded = decodeArray(data);
+        uint64 sign = bytesToUint64(decoded[0]);
+        bytes[] memory value = decodeArray(decoded[1]);
+        if (value.length == 0) {
+            return BigInt.wrap(0);
+        }
+        uint256 result = 0;
+        for (uint256 i = 0; i < value.length; i++) {
+            bytes memory val = this.decodePrimitive(value[i]);
+            result = result << 8;
+            result += bytesToUint256(val);
+        }
+        int256 signedResult = int256(result);
+        if (sign == 0) {
+            signedResult *= -1;
+        }
+        return BigInt.wrap(signedResult);
     }
 
     function decodeStats(bytes memory data) external returns (GetStatsReturn memory) {
         bytes[] memory decoded = decodeArray(data);
-        // 0: string, 1: balance, 2: capacityFree, 3: capacityUsed, 4: creditSold, 5: creditCommitted, 6: creditDebited, 7: creditDebitRate, 8: numAccounts, 9: numBlobs, 10: numResolving
         TokenAmount memory balance;
-        //   bytes[] memory decodedBalance = decodeArray(decoded[0]);
-        // 0: atto
-        //   balance.atto = BigInt.wrap(bytesToBigNumber(decodedBalance[0]));
+        // This isn't properly encoded in the actor
+        // bytes[] memory decodedBalance = decodeArray(decoded[0]);
+        balance.atto = BigInt.wrap(int256(bytesToUint256(decoded[0])));
         GetStatsReturn memory stats;
         stats.balance = balance;
-        stats.capacityFree = bytesToUint64(decoded[1]);
-        stats.capacityUsed = bytesToUint64(decoded[2]);
-        stats.creditSold = parseU256(decoded[3]);
-        stats.creditCommitted = parseU256(decoded[4]);
-        stats.creditDebited = parseU256(decoded[5]);
+        stats.capacityFree = parseBigInt(decoded[1]);
+        stats.capacityUsed = parseBigInt(decoded[2]);
+        stats.creditSold = parseBigInt(decoded[3]);
+        stats.creditCommitted = parseBigInt(decoded[4]);
+        stats.creditDebited = parseBigInt(decoded[5]);
         stats.creditDebitRate = bytesToUint64(decoded[6]);
         stats.numAccounts = bytesToUint64(decoded[7]);
         stats.numBlobs = bytesToUint64(decoded[8]);
@@ -127,17 +142,16 @@ contract Credits is CBORDecoding, ByteParser {
         return stats;
     }
 
-    function getStats() external returns (bytes memory) {
+    function getStats() external returns (GetStatsReturn memory) {
         bytes memory raw_request = new bytes(0);
         (int256 exit, bytes memory data) = Actor.callByIDReadOnly(_actorId, uint64(188400153), EMPTY_CODEC, raw_request);
 
         require(exit == 0, "Actor returned an error");
 
-        // GetStatsReturn memory stats = decodeStats(data);
-        return data;
+        return this.decodeStats(data);
     }
 
-    function buyCredit(address addr) external payable {
+    function buyCredit(address addr) external payable returns (AccountReturn memory) {
         CommonTypes.FilAddress memory filAddr = FilAddresses.fromEthAddress(addr);
         bytes memory raw_request = FilecoinCBOR.serializeAddress(filAddr);
         (int256 exit, bytes memory data) = Actor.callByID(
@@ -150,19 +164,21 @@ contract Credits is CBORDecoding, ByteParser {
         );
 
         require(exit == 0, "Actor returned an error");
+
+        return this.decodeAccount(data);
     }
 
-    function decodeAccount(bytes memory data) public view returns (AccountReturn memory) {
-        //   bytes[] memory decoded = CBORDecoding.decodeArray(data);
+    function decodeAccount(bytes memory data) external returns (AccountReturn memory) {
+        bytes[] memory decoded = decodeArray(data);
         AccountReturn memory acc;
-        //   acc.capacityUsed = BigInt.wrap(ByteParser.bytesToBigNumber(decoded[0]));
-        //   acc.capacityFree = BigInt.wrap(ByteParser.bytesToBigNumber(decoded[1]));
-        //   acc.creditCommitted = BigInt.wrap(ByteParser.bytesToBigNumber(decoded[2]));
-        //   acc.lastDebitEpoch = ChainEpoch.wrap(int64(ByteParser.bytesToUint64(decoded[3])));
+        acc.capacityUsed = parseBigInt(decoded[1]);
+        acc.capacityFree = parseBigInt(decoded[2]);
+        acc.creditCommitted = parseBigInt(decoded[3]);
+        acc.lastDebitEpoch = ChainEpoch.wrap(int64(bytesToUint64(decoded[4])));
         return acc;
     }
 
-    function account(address addr) external returns (bytes memory) {
+    function account(address addr) external returns (AccountReturn memory) {
         CommonTypes.FilAddress memory filAddr = FilAddresses.fromEthAddress(addr);
         bytes memory raw_request = FilecoinCBOR.serializeAddress(filAddr);
         (int256 exit, bytes memory data) = Actor.callByID(
@@ -176,8 +192,7 @@ contract Credits is CBORDecoding, ByteParser {
 
         require(exit == 0, "Actor returned an error");
 
-        // AccountReturn memory acc = decodeAccount(data);
-        return data;
+        return this.decodeAccount(data);
     }
 
     function approveCredit(ApproveCreditParams memory params) external {
