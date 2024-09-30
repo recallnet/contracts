@@ -2,10 +2,10 @@
 pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
-import {Hoku} from "../src/Hoku.sol";
-import {Environment} from "../src/util/Utilities.sol";
-import {DeployScript} from "../script/Hoku.s.sol";
 import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
+import {Hoku} from "../src/Hoku.sol";
+import {Environment} from "../src/util/Types.sol";
+import {DeployScript} from "../script/Hoku.s.sol";
 
 contract HokuTest is Test {
     Hoku internal token;

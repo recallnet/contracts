@@ -8,18 +8,8 @@ import {CommonTypes} from "@filecoin-solidity/v0.8/types/CommonTypes.sol";
 import {ByteParser} from "./solidity-cbor/ByteParser.sol";
 import {CBORDecoding} from "./solidity-cbor/CBORDecoding.sol";
 
-/// @dev Environment helper for setting the chain environment in scripts or contracts.
-/// - Local: Local (localnet or devnet)
-/// - Testnet: Testnet environment
-/// - Mainnet: Mainnet environment
-enum Environment {
-    Local,
-    Testnet,
-    Mainnet
-}
-
 /// @dev Utility functions for interacting with WASM actors and encoding/decoding CBOR.
-library Utilities {
+library Wrapper {
     uint64 internal constant EMPTY_CODEC = Misc.NONE_CODEC;
     uint64 internal constant CBOR_CODEC = Misc.CBOR_CODEC;
 

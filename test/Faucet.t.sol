@@ -4,10 +4,9 @@ pragma solidity ^0.8.26;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 import {Faucet, TryLater} from "../src/Faucet.sol";
 import {Hoku} from "../src/Hoku.sol";
-import {Environment} from "../src/util/Utilities.sol";
+import {Environment} from "../src/util/Types.sol";
 import {DeployScript as TokenDeployer} from "../script/Hoku.s.sol";
 import {DeployScript as FaucetDeployer} from "../script/Faucet.s.sol";
 

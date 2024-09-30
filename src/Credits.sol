@@ -2,104 +2,8 @@
 pragma solidity ^0.8.23;
 
 import {CommonTypes} from "@filecoin-solidity/v0.8/types/CommonTypes.sol";
-import {Utilities} from "./util/Utilities.sol";
-
-/// @dev The stored representation of a credit account.
-struct Account {
-    /// Total size of all blobs managed by the account.
-    uint256 capacityUsed;
-    /// Current free credit in byte-blocks that can be used for new commitments.
-    uint256 creditFree;
-    /// Current committed credit in byte-blocks that will be used for debits.
-    uint256 creditCommitted;
-    /// The chain epoch of the last debit.
-    uint64 lastDebitEpoch;
-    /// Credit approvals to other accounts, keyed by receiver, keyed by caller
-    // TODO: implement from hashmap: HashMap<Address, HashMap<Address, CreditApproval>>
-    // mapping(address => mapping(address => uint256)) public approvals;
-    uint64 approvals;
-}
-
-/// @dev Credit ba`lance for an account.
-struct Balance {
-    /// Current free credit in byte-blocks that can be used for new commitments.
-    uint256 creditFree;
-    /// Current committed credit in byte-blocks that will be used for debits.
-    uint256 creditCommitted;
-    /// The chain epoch of the last debit.
-    uint64 lastDebitEpoch;
-}
-
-/// @dev Params for revoking credit.
-struct RevokeCreditParams {
-    /// Account address that is receiving the approval.
-    address receiver;
-    /// Optional restriction on caller address, e.g., an object store.
-    /// This allows the origin of a transaction to use an approval limited to the caller.
-    address requiredCaller;
-}
-
-/// @dev Params for approving credit.
-struct ApproveCreditParams {
-    /// Account address that is receiving the approval.
-    address receiver;
-    /// Optional restriction on caller address, e.g., an object store.
-    /// The receiver will only be able to use the approval via a caller contract.
-    address requiredCaller;
-    /// Optional credit approval limit.
-    /// If specified, the approval becomes invalid once the committed credits reach the
-    /// specified limit.
-    uint256 limit;
-    /// Optional credit approval time-to-live epochs.
-    /// If specified, the approval becomes invalid after this duration.
-    uint64 ttl;
-}
-
-/// @dev The stats of the blob actor.
-/// This is the return type for the blobs actor `get_stats` method:
-/// - The `balance` is a uint256, encoded as a CBOR byte string (e.g., 0x00010f0cf064dd59200000).
-/// - The `capacityFree`, `capacityUsed`, `creditSold`, `creditCommitted`, and `creditDebited` are
-/// WASM BigInt types: a CBOR array with a sign (assume non-negative) and array of numbers (e.g., 0x8201820001).
-/// - The `creditDebitRate`, `numAccounts`, `numBlobs`, and `numResolving` are uint64, encoded as a
-/// CBOR byte string (e.g., 0x317).
-struct SubnetStats {
-    /// The current token balance earned by the subnet.
-    uint256 balance;
-    /// The total free storage capacity of the subnet.
-    uint256 capacityFree;
-    /// The total used storage capacity of the subnet.
-    uint256 capacityUsed;
-    /// The total number of credits sold in the subnet.
-    uint256 creditSold;
-    /// The total number of credits committed to active storage in the subnet.
-    uint256 creditCommitted;
-    /// The total number of credits debited in the subnet.
-    uint256 creditDebited;
-    /// The byte-blocks per atto token rate set at genesis.
-    uint64 creditDebitRate;
-    /// Total number of debit accounts.
-    uint64 numAccounts;
-    /// Total number of actively stored blobs.
-    uint64 numBlobs;
-    /// Total number of currently resolving blobs.
-    uint64 numResolving;
-}
-
-/// @dev Subnet-wide credit statistics.
-struct CreditStats {
-    /// The current token balance earned by the subnet.
-    uint256 balance;
-    /// The total number of credits sold in the subnet.
-    uint256 creditSold;
-    /// The total number of credits committed to active storage in the subnet.
-    uint256 creditCommitted;
-    /// The total number of credits debited in the subnet.
-    uint256 creditDebited;
-    /// The byte-blocks per atto token rate set at genesis.
-    uint64 creditDebitRate;
-    /// Total number of debit accounts.
-    uint64 numAccounts;
-}
+import {Account, Balance, CreditStats, StorageStats, SubnetStats, Usage} from "./util/Types.sol";
+import {Wrapper} from "./util/Wrapper.sol";
 
 /// @dev Emitted when an account buys credits.
 event BuyCredit(address indexed addr, uint256 amount);
@@ -107,9 +11,9 @@ event BuyCredit(address indexed addr, uint256 amount);
 /// @dev Hoku Blobs actor EVM interface for managing credits, and querying credit or storage stats.
 /// See Rust implementation for details: https://github.com/hokunet/ipc/blob/develop/fendermint/actors/blobs/src/actor.rs
 contract Credits {
-    using Utilities for bytes;
+    using Wrapper for bytes;
     // Constants for method IDs on the Hoku Blobs actor
-    uint64 constant METHOD_GET_SUBNET_STATS = 188400153;
+    uint64 constant METHOD_GET_STATS = 188400153;
     uint64 constant METHOD_GET_ACCOUNT = 3435393067;
     uint64 constant METHOD_BUY_CREDIT = 1035900737;
     uint64 constant METHOD_APPROVE_CREDIT = 2276438360;
@@ -163,9 +67,39 @@ contract Credits {
     /// @dev Get the subnet stats.
     /// @return stats The subnet stats.
     function getSubnetStats() public view returns (SubnetStats memory stats) {
-        bytes memory data = Utilities.readFromWasmActor(_actorId, METHOD_GET_SUBNET_STATS);
+        bytes memory data = Wrapper.readFromWasmActor(_actorId, METHOD_GET_STATS);
 
         return decodeSubnetStats(data);
+    }
+
+    /// @dev Get the credit account for an address.
+    /// @param addr The address of the account.
+    /// @return account The credit account for the address.
+    function getAccount(address addr) public view returns (Account memory account) {
+        bytes memory params = Wrapper.prepareParams(addr);
+        bytes memory data = Wrapper.readFromWasmActor(_actorId, METHOD_GET_ACCOUNT, params);
+
+        account = decodeAccount(data);
+    }
+
+    /// @dev Get the storage usage for an account.
+    /// @param addr The address of the account.
+    /// @return usage The storage usage for the account.
+    function getStorageUsage(address addr) public view returns (Usage memory usage) {
+        Account memory account = getAccount(addr);
+
+        usage.capacityUsed = account.capacityUsed;
+    }
+
+    /// @dev Get the storage stats for the subnet.
+    /// @return stats The storage stats for the subnet.
+    function getStorageStats() public view returns (StorageStats memory stats) {
+        SubnetStats memory subnetStats = getSubnetStats();
+
+        stats.capacityFree = subnetStats.capacityFree;
+        stats.capacityUsed = subnetStats.capacityUsed;
+        stats.numBlobs = subnetStats.numBlobs;
+        stats.numResolving = subnetStats.numResolving;
     }
 
     /// @dev Get the subnet-wide credit statistics.
@@ -179,16 +113,6 @@ contract Credits {
         stats.creditDebited = subnetStats.creditDebited;
         stats.creditDebitRate = subnetStats.creditDebitRate;
         stats.numAccounts = subnetStats.numAccounts;
-    }
-
-    /// @dev Get the credit account for an address.
-    /// @param addr The address of the account.
-    /// @return account The credit account for the address.
-    function getAccount(address addr) public view returns (Account memory account) {
-        bytes memory params = Utilities.prepareParams(addr);
-        bytes memory data = Utilities.readFromWasmActor(_actorId, METHOD_GET_ACCOUNT, params);
-
-        account = decodeAccount(data);
     }
 
     /// @dev Get the credit balance of an account.
@@ -205,8 +129,8 @@ contract Credits {
     /// @return balance The balance of the account after buying credits.
     function buyCredit(address addr) external payable returns(Balance memory balance) {
         require(msg.value > 0, "Amount must be greater than zero");
-        bytes memory params = Utilities.prepareParams(addr);
-        bytes memory data = Utilities.writeToWasmActor(_actorId, METHOD_BUY_CREDIT, params);
+        bytes memory params = Wrapper.prepareParams(addr);
+        bytes memory data = Wrapper.writeToWasmActor(_actorId, METHOD_BUY_CREDIT, params);
 
         emit BuyCredit(addr, msg.value);
 
