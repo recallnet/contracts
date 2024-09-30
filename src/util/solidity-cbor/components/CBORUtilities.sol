@@ -32,14 +32,14 @@ abstract contract CBORUtilities is ByteUtils, Spec {
             // Special means data is encoded INSIDE field
             if (shortCount == 21) {
                 // True
-                value = abi.encodePacked( /*Spec.*/ UINT_TRUE);
+                value = abi.encodePacked(/*Spec.*/ UINT_TRUE);
             } else if (
                 // Falsy
-                shortCount == 20 // false
-                    || shortCount == 22 // null
-                    || shortCount == 23 // undefined
+                shortCount == 20 || // false
+                shortCount == 22 || // null
+                shortCount == 23 // undefined
             ) {
-                value = abi.encodePacked( /*Spec.*/ UINT_FALSE);
+                value = abi.encodePacked(/*Spec.*/ UINT_FALSE);
             }
         }
         // Data IS the shortCount (<24)
@@ -57,7 +57,9 @@ abstract contract CBORUtilities is ByteUtils, Spec {
      * @return majorType corresponding data type (see RFC8949 section 3.2)
      * @return shortCount corresponding short count (see RFC8949 section 3)
      */
-    function parseFieldEncoding(bytes1 fieldEncoding)
+    function parseFieldEncoding(
+        bytes1 fieldEncoding
+    )
         internal
         pure
         returns (
@@ -91,7 +93,11 @@ abstract contract CBORUtilities is ByteUtils, Spec {
         require(ss.length % 2 == 0); // length must be even
         bytes memory r = new bytes(ss.length / 2);
         for (uint256 i = 0; i < ss.length / 2; ++i) {
-            r[i] = bytes1(fromHexChar(uint8(ss[2 * i])) * 16 + fromHexChar(uint8(ss[2 * i + 1])));
+            r[i] = bytes1(
+                fromHexChar(uint8(ss[2 * i])) *
+                    16 +
+                    fromHexChar(uint8(ss[2 * i + 1]))
+            );
         }
         return r;
     }

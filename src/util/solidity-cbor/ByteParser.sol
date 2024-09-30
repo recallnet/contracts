@@ -13,8 +13,13 @@ abstract contract ByteParser {
      * @param data dynamic bytes array
      * @return value calculated uint64 value
      */
-    function bytesToUint64(bytes memory data) public pure returns (uint64 value) {
-        require(value <= MAX_UINT64, "Number too large! Use `bytesToBigNumber` instead!");
+    function bytesToUint64(
+        bytes memory data
+    ) public pure returns (uint64 value) {
+        require(
+            value <= MAX_UINT64,
+            "Number too large! Use `bytesToBigNumber` instead!"
+        );
         value = uint64(bytesToBigNumber(data));
     }
 
@@ -23,7 +28,9 @@ abstract contract ByteParser {
      * @param data dynamic bytes array
      * @return value calculated uint64 value
      */
-    function bytesToNegativeInt128(bytes memory data) public pure returns (int128 value) {
+    function bytesToNegativeInt128(
+        bytes memory data
+    ) public pure returns (int128 value) {
         value = -1 - int64(bytesToUint64(data));
     }
 
@@ -32,7 +39,9 @@ abstract contract ByteParser {
      * @param data dynamic bytes array
      * @return value converted string object
      */
-    function bytesToString(bytes memory data) public pure returns (string memory value) {
+    function bytesToString(
+        bytes memory data
+    ) public pure returns (string memory value) {
         value = string(data);
     }
 
@@ -41,10 +50,14 @@ abstract contract ByteParser {
      * @param data dynamic bytes array
      * @return value calculated uint256 value
      */
-    function bytesToBigNumber(bytes memory data) public pure returns (uint256 value) {
+    function bytesToBigNumber(
+        bytes memory data
+    ) public pure returns (uint256 value) {
         require(data.length <= 64, "Value too large!");
         for (uint256 i = 0; i < data.length; i++) {
-            value += uint8(data[i]) * uint256(2 ** (8 * (data.length - (i + 1))));
+            value +=
+                uint8(data[i]) *
+                uint256(2 ** (8 * (data.length - (i + 1))));
         }
     }
 

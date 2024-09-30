@@ -19,11 +19,11 @@ abstract contract CBORDataStructures is ByteUtils, Primitives, Spec, Utils {
      * @return dataStart byte position where data starts
      * @return dataEnd byte position where data ends
      */
-    function parseString(bytes memory encoding, uint256 cursor, uint256 shortCount)
-        internal
-        view
-        returns (uint256 dataStart, uint256 dataEnd)
-    {
+    function parseString(
+        bytes memory encoding,
+        uint256 cursor,
+        uint256 shortCount
+    ) internal view returns (uint256 dataStart, uint256 dataEnd) {
         // Marker for how far count goes
         uint256 countStart = cursor + 1;
         uint256 countEnd = countStart;
@@ -77,13 +77,16 @@ abstract contract CBORDataStructures is ByteUtils, Primitives, Spec, Utils {
      * @return dataStart byte position where data starts
      * @return dataEnd byte position where data ends
      */
-    function parseSemantic(bytes memory encoding, uint256 cursor, uint256 shortCount)
-        internal
-        view
-        returns (uint256 dataStart, uint256 dataEnd)
-    {
+    function parseSemantic(
+        bytes memory encoding,
+        uint256 cursor,
+        uint256 shortCount
+    ) internal view returns (uint256 dataStart, uint256 dataEnd) {
         // Check for BigNums
-        if (shortCount /*Spec.*/ == TAG_TYPE_BIGNUM || shortCount /*Spec.*/ == TAG_TYPE_NEGATIVE_BIGNUM) {
+        if (
+            shortCount /*Spec.*/ == TAG_TYPE_BIGNUM ||
+            shortCount /*Spec.*/ == TAG_TYPE_NEGATIVE_BIGNUM
+        ) {
             // String-encoded bignum will start at next byte
             cursor++;
             // Forward request to parseString (bignums are string-encoded)
@@ -106,7 +109,10 @@ abstract contract CBORDataStructures is ByteUtils, Primitives, Spec, Utils {
      * @return end position where the data ends (in bytes)
      * @return next position to find the next field (in bytes)
      */
-    function parseField(bytes memory encoding, uint256 cursor)
+    function parseField(
+        bytes memory encoding,
+        uint256 cursor
+    )
         internal
         view
         returns (
@@ -119,21 +125,37 @@ abstract contract CBORDataStructures is ByteUtils, Primitives, Spec, Utils {
         )
     {
         // Parse field encoding
-        (majorType, shortCount) = /*Utils.*/ parseFieldEncoding(encoding[cursor]);
+        (majorType, shortCount) = /*Utils.*/ parseFieldEncoding(
+            encoding[cursor]
+        );
 
         // Switch case on data type
 
         // Integers (Major Types: 0,1)
-        if (majorType /*Spec.*/ == MajorType.UnsignedInteger || majorType /*Spec.*/ == MajorType.NegativeInteger) {
+        if (
+            majorType /*Spec.*/ == MajorType.UnsignedInteger ||
+            majorType /*Spec.*/ == MajorType.NegativeInteger
+        ) {
             (start, end) = /*Primitives.*/ parseInteger(cursor, shortCount);
         }
         // Strings (Major Types: 2,3)
-        else if (majorType /*Spec.*/ == MajorType.ByteString || majorType /*Spec.*/ == MajorType.TextString) {
+        else if (
+            majorType /*Spec.*/ == MajorType.ByteString ||
+            majorType /*Spec.*/ == MajorType.TextString
+        ) {
             (start, end) = parseString(encoding, cursor, shortCount);
         }
         // Arrays (Major Type: 4,5)
-        else if (majorType /*Spec.*/ == MajorType.Array || majorType /*Spec.*/ == MajorType.Map) {
-            (start, end) = parseDataStructure(encoding, cursor, majorType, shortCount);
+        else if (
+            majorType /*Spec.*/ == MajorType.Array ||
+            majorType /*Spec.*/ == MajorType.Map
+        ) {
+            (start, end) = parseDataStructure(
+                encoding,
+                cursor,
+                majorType,
+                shortCount
+            );
         }
         // Semantic Tags (Major Type: 6)
         else if (majorType /*Spec.*/ == MajorType.Semantic) {
@@ -176,7 +198,12 @@ abstract contract CBORDataStructures is ByteUtils, Primitives, Spec, Utils {
     ) internal view returns (uint256 dataStart, uint256 dataEnd) {
         uint256 totalItems;
         // Count how many items we have, also get start position and *maybe* end (see notice).
-        (totalItems, dataStart, dataEnd) = getDataStructureItemLength(encoding, cursor, majorType, shortCount);
+        (totalItems, dataStart, dataEnd) = getDataStructureItemLength(
+            encoding,
+            cursor,
+            majorType,
+            shortCount
+        );
 
         // If we have an empty array, we know the end
         if (totalItems == 0) {
@@ -223,7 +250,11 @@ abstract contract CBORDataStructures is ByteUtils, Primitives, Spec, Utils {
         /*Spec.*/
         MajorType majorType,
         uint256 shortCount
-    ) internal view returns (uint256 totalItems, uint256 dataStart, uint256 dataEnd) {
+    )
+        internal
+        view
+        returns (uint256 totalItems, uint256 dataStart, uint256 dataEnd)
+    {
         // Setup extended count (currently none)
         uint256 countStart = cursor + 1;
         uint256 countEnd = countStart;
@@ -280,17 +311,22 @@ abstract contract CBORDataStructures is ByteUtils, Primitives, Spec, Utils {
      * @param shortCount short data identifier included in field info
      * @return decodedMapping the mapping decoded
      */
-    function expandMapping(bytes memory encoding, uint256 cursor, uint8 shortCount)
-        internal
-        view
-        returns (bytes[2][] memory decodedMapping)
-    {
+    function expandMapping(
+        bytes memory encoding,
+        uint256 cursor,
+        uint8 shortCount
+    ) internal view returns (bytes[2][] memory decodedMapping) {
         // Track our mapping start
         uint256 mappingCursor = cursor;
 
         // Count up how many keys we have, set cursor
-        (uint256 totalItems, uint256 dataStart,) =
-            getDataStructureItemLength(encoding, mappingCursor, /*Spec.*/ MajorType.Map, shortCount);
+        (uint256 totalItems, uint256 dataStart, ) = getDataStructureItemLength(
+            encoding,
+            mappingCursor,
+            /*Spec.*/
+            MajorType.Map,
+            shortCount
+        );
         require(totalItems % 2 == 0, "Invalid mapping provided!");
         mappingCursor = dataStart;
 
@@ -304,11 +340,22 @@ abstract contract CBORDataStructures is ByteUtils, Primitives, Spec, Utils {
             uint256 pair = item / 2; // 0,0,1,1,2,2..
 
             // See what our field looks like
-            (Spec.MajorType majorType, uint8 sc, uint256 start, uint256 end, uint256 next) =
-                parseField(encoding, mappingCursor);
+            (
+                Spec.MajorType majorType,
+                uint8 sc,
+                uint256 start,
+                uint256 end,
+                uint256 next
+            ) = parseField(encoding, mappingCursor);
 
             // Save our data
-            decodedMapping[pair][arrayIdx] = /*Utils.*/ extractValue(encoding, majorType, sc, start, end);
+            decodedMapping[pair][arrayIdx] = /*Utils.*/ extractValue(
+                encoding,
+                majorType,
+                sc,
+                start,
+                end
+            );
 
             // Update our cursor
             mappingCursor = next;
@@ -324,17 +371,22 @@ abstract contract CBORDataStructures is ByteUtils, Primitives, Spec, Utils {
      * @param shortCount short data identifier included in field info
      * @return decodedArray the array decoded
      */
-    function expandArray(bytes memory encoding, uint256 cursor, uint8 shortCount)
-        internal
-        view
-        returns (bytes[] memory decodedArray)
-    {
+    function expandArray(
+        bytes memory encoding,
+        uint256 cursor,
+        uint8 shortCount
+    ) internal view returns (bytes[] memory decodedArray) {
         // Track our array start
         uint256 arrayCursor = cursor;
 
         // Count up how many keys we have, set cursor
-        (uint256 totalItems, uint256 dataStart,) =
-            getDataStructureItemLength(encoding, arrayCursor, /*Spec.*/ MajorType.Array, shortCount);
+        (uint256 totalItems, uint256 dataStart, ) = getDataStructureItemLength(
+            encoding,
+            arrayCursor,
+            /*Spec.*/
+            MajorType.Array,
+            shortCount
+        );
         arrayCursor = dataStart;
 
         // Allocate new array
@@ -343,11 +395,22 @@ abstract contract CBORDataStructures is ByteUtils, Primitives, Spec, Utils {
         // Position cursor and Pull out our data
         for (uint256 item = 0; item < totalItems; item++) {
             // See what our field looks like
-            (Spec.MajorType majorType, uint8 sc, uint256 start, uint256 end, uint256 next) =
-                parseField(encoding, arrayCursor);
+            (
+                Spec.MajorType majorType,
+                uint8 sc,
+                uint256 start,
+                uint256 end,
+                uint256 next
+            ) = parseField(encoding, arrayCursor);
 
             // Save our data
-            decodedArray[item] = /*Utils.*/ extractValue(encoding, majorType, sc, start, end);
+            decodedArray[item] = /*Utils.*/ extractValue(
+                encoding,
+                majorType,
+                sc,
+                start,
+                end
+            );
 
             // Update our cursor
             arrayCursor = next;
@@ -365,11 +428,11 @@ abstract contract CBORDataStructures is ByteUtils, Primitives, Spec, Utils {
      * @return totalItems total items found in encoding
      * @return endCursor cursor position after scanning (non-inclusive)
      */
-    function scanIndefiniteItems(bytes memory encoding, uint256 cursor, uint256 maxItems)
-        internal
-        view
-        returns (uint256 totalItems, uint256 endCursor)
-    {
+    function scanIndefiniteItems(
+        bytes memory encoding,
+        uint256 cursor,
+        uint256 maxItems
+    ) internal view returns (uint256 totalItems, uint256 endCursor) {
         // Loop through our indefinite-length number until break marker
         for (; cursor < encoding.length; totalItems++) {
             // If we're at a BREAK_MARKER
@@ -382,7 +445,17 @@ abstract contract CBORDataStructures is ByteUtils, Primitives, Spec, Utils {
             }
 
             // See where the next field starts
-            ( /*majorType*/ , /*shortCount*/, /*start*/, /*end*/, uint256 next) = parseField(encoding, cursor);
+            (
+                ,
+                ,
+                ,
+                ,
+                /*majorType*/
+                /*shortCount*/
+                /*start*/
+                /*end*/
+                uint256 next
+            ) = parseField(encoding, cursor);
 
             // Update our cursor
             cursor = next;

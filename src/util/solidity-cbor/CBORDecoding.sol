@@ -25,14 +25,26 @@ abstract contract CBORDecoding is DataStructures {
      * Interpretting this bytes data from bytes to it's proper object is up
      * to the implementer.
      */
-    function decodeMapping(bytes memory encoding) external view returns (bytes[2][] memory decodedData) {
+    function decodeMapping(
+        bytes memory encoding
+    ) internal view returns (bytes[2][] memory decodedData) {
         uint256 cursor = 0;
         // Type check
-        (Spec.MajorType majorType, uint8 shortCount) = /*Utils.*/ parseFieldEncoding(encoding[cursor]);
-        require(majorType /*Spec.*/ == MajorType.Map, "Object is not a mapping!");
+        (
+            Spec.MajorType majorType,
+            uint8 shortCount
+        ) = /*Utils.*/ parseFieldEncoding(encoding[cursor]);
+        require(
+            majorType /*Spec.*/ == MajorType.Map,
+            "Object is not a mapping!"
+        );
 
         // Decode and return
-        decodedData = /*DataStructures.*/ expandMapping(encoding, cursor, shortCount);
+        decodedData = /*DataStructures.*/ expandMapping(
+            encoding,
+            cursor,
+            shortCount
+        );
         return decodedData;
     }
 
@@ -49,14 +61,27 @@ abstract contract CBORDecoding is DataStructures {
      * Interpretting this bytes data from bytes to it's proper object is up
      * to the implementer.
      */
-    function decodeArray(bytes memory encoding) internal returns (bytes[] memory decodedData) {
+    function decodeArray(
+        bytes memory encoding
+    ) internal view returns (bytes[] memory decodedData) {
         uint256 cursor = 0;
         // Type check
-        ( /*Spec.*/ MajorType majorType, uint8 shortCount) = /*Utils.*/ parseFieldEncoding(encoding[cursor]);
-        require(majorType /*Spec.*/ == MajorType.Array, "Object is not an array!");
+        (
+            /*Spec.*/
+            MajorType majorType,
+            uint8 shortCount
+        ) = /*Utils.*/ parseFieldEncoding(encoding[cursor]);
+        require(
+            majorType /*Spec.*/ == MajorType.Array,
+            "Object is not an array!"
+        );
 
         // Decode and return
-        decodedData = /*DataStructures.*/ expandArray(encoding, cursor, shortCount);
+        decodedData = /*DataStructures.*/ expandArray(
+            encoding,
+            cursor,
+            shortCount
+        );
         return decodedData;
     }
 
@@ -73,18 +98,32 @@ abstract contract CBORDecoding is DataStructures {
      * Interpretting this bytes data from bytes to it's proper object is up
      * to the implementer.
      */
-    function decodePrimitive(bytes memory encoding) external view returns (bytes memory decodedData) {
+    function decodePrimitive(
+        bytes memory encoding
+    ) internal view returns (bytes memory decodedData) {
         uint256 cursor = 0;
         // See what our field looks like
-        (Spec.MajorType majorType, uint8 shortCount, uint256 start, uint256 end, /*next*/ ) = /*DataStructures.*/
-            parseField(encoding, cursor);
+        (
+            Spec.MajorType majorType,
+            uint8 shortCount,
+            uint256 start,
+            uint256 end /*next*/ /*DataStructures.*/,
+
+        ) = parseField(encoding, cursor);
         require(
-            majorType /*Spec.*/ != MajorType.Array && majorType /*Spec.*/ != MajorType.Map,
+            majorType /*Spec.*/ != MajorType.Array &&
+                majorType /*Spec.*/ != MajorType.Map,
             "Encoding is not a primitive!"
         );
 
         // Save our data
-        decodedData = /*Utils.*/ extractValue(encoding, majorType, shortCount, start, end);
+        decodedData = /*Utils.*/ extractValue(
+            encoding,
+            majorType,
+            shortCount,
+            start,
+            end
+        );
         return decodedData;
     }
 
@@ -100,11 +139,10 @@ abstract contract CBORDecoding is DataStructures {
      * @param searchKey key to search for
      * @return value decoded CBOR data as bytes
      */
-    function decodeMappingGetValue(bytes memory encoding, bytes memory searchKey)
-        external
-        view
-        returns (bytes memory value)
-    {
+    function decodeMappingGetValue(
+        bytes memory encoding,
+        bytes memory searchKey
+    ) external view returns (bytes memory value) {
         // Search parameters
         uint256 cursor;
         bytes32 searchKeyHash = keccak256(searchKey);
@@ -112,8 +150,14 @@ abstract contract CBORDecoding is DataStructures {
 
         {
             // Ensure we start with a mapping
-            (Spec.MajorType majorType, uint8 shortCount) = /*Utils.*/ parseFieldEncoding(encoding[0]);
-            require(majorType /*Spec.*/ == MajorType.Map, "Object is not a mapping!");
+            (
+                Spec.MajorType majorType,
+                uint8 shortCount
+            ) = /*Utils.*/ parseFieldEncoding(encoding[0]);
+            require(
+                majorType /*Spec.*/ == MajorType.Map,
+                "Object is not a mapping!"
+            );
 
             // Figure out where cursor should start.
             if (shortCount == 31) {
@@ -122,15 +166,25 @@ abstract contract CBORDecoding is DataStructures {
             }
             // Get cursor start position (either from count or shortcount)
             else {
-                (, cursor,) = /*DataStructures.*/ getDataStructureItemLength(encoding, cursor, majorType, shortCount);
+                (, cursor, ) = /*DataStructures.*/ getDataStructureItemLength(
+                    encoding,
+                    cursor,
+                    majorType,
+                    shortCount
+                );
             }
         }
 
         // Scan through our data
         for (uint256 itemIdx = 0; cursor < encoding.length; itemIdx++) {
             // Grab a key and it's value
-            (Spec.MajorType majorType, uint8 shortCount, uint256 start, uint256 end, uint256 next) = /*DataStructures.*/
-                parseField(encoding, cursor);
+            (
+                Spec.MajorType majorType,
+                uint8 shortCount,
+                uint256 start,
+                uint256 end,
+                uint256 next /*DataStructures.*/
+            ) = parseField(encoding, cursor);
 
             // Update our cursor, skip every other item
             cursor = next;
@@ -139,7 +193,13 @@ abstract contract CBORDecoding is DataStructures {
             }
 
             // Else extract item
-            bytes memory currentItem = /*Utils.*/ extractValue(encoding, majorType, shortCount, start, end);
+            bytes memory currentItem = /*Utils.*/ extractValue(
+                encoding,
+                majorType,
+                shortCount,
+                start,
+                end
+            );
 
             // If we found our key last iteration, this is our value (so we can return)
             if (keyFound) {
@@ -168,15 +228,24 @@ abstract contract CBORDecoding is DataStructures {
      * @param searchKey key to search for
      * @return index item position in items where item exists
      */
-    function decodeArrayGetIndex(bytes memory encoding, bytes memory searchKey) external view returns (uint64 index) {
+    function decodeArrayGetIndex(
+        bytes memory encoding,
+        bytes memory searchKey
+    ) external view returns (uint64 index) {
         // Search parameters
         uint256 cursor;
         bytes32 searchKeyHash = keccak256(searchKey);
 
         {
             // Ensure we start with a mapping
-            (Spec.MajorType majorType, uint8 shortCount) = /*Utils.*/ parseFieldEncoding(encoding[0]);
-            require(majorType /*Spec.*/ == MajorType.Array, "Object is not an array!");
+            (
+                Spec.MajorType majorType,
+                uint8 shortCount
+            ) = /*Utils.*/ parseFieldEncoding(encoding[0]);
+            require(
+                majorType /*Spec.*/ == MajorType.Array,
+                "Object is not an array!"
+            );
 
             // Figure out where cursor should start.
             if (shortCount == 31) {
@@ -185,16 +254,32 @@ abstract contract CBORDecoding is DataStructures {
             }
             // Get cursor start position (either from count or shortcount)
             else {
-                (, cursor,) = /*DataStructures.*/ getDataStructureItemLength(encoding, cursor, majorType, shortCount);
+                (, cursor, ) = /*DataStructures.*/ getDataStructureItemLength(
+                    encoding,
+                    cursor,
+                    majorType,
+                    shortCount
+                );
             }
         }
 
         // Scan through our data
         for (uint64 itemIdx = 0; cursor < encoding.length; itemIdx++) {
             // Grab a key and it's value
-            (Spec.MajorType majorType, uint8 shortCount, uint256 start, uint256 end, uint256 next) = /*DataStructures.*/
-                parseField(encoding, cursor);
-            bytes memory currentItem = /*Utils.*/ extractValue(encoding, majorType, shortCount, start, end);
+            (
+                Spec.MajorType majorType,
+                uint8 shortCount,
+                uint256 start,
+                uint256 end,
+                uint256 next /*DataStructures.*/
+            ) = parseField(encoding, cursor);
+            bytes memory currentItem = /*Utils.*/ extractValue(
+                encoding,
+                majorType,
+                shortCount,
+                start,
+                end
+            );
 
             // This will trigger the item to be returned next time
             if (keccak256(currentItem) == searchKeyHash) {
@@ -214,14 +299,23 @@ abstract contract CBORDecoding is DataStructures {
      * @param index Nth item index to grab
      * @return value decoded CBOR data as bytes
      */
-    function decodeArrayGetItem(bytes memory encoding, uint64 index) external view returns (bytes memory value) {
+    function decodeArrayGetItem(
+        bytes memory encoding,
+        uint64 index
+    ) external view returns (bytes memory value) {
         // Search parameters
         uint256 cursor;
 
         {
             // Ensure we start with a mapping
-            (Spec.MajorType majorType, uint8 shortCount) = /*Utils.*/ parseFieldEncoding(encoding[0]);
-            require(majorType /*Spec.*/ == MajorType.Array, "Object is not an array!");
+            (
+                Spec.MajorType majorType,
+                uint8 shortCount
+            ) = /*Utils.*/ parseFieldEncoding(encoding[0]);
+            require(
+                majorType /*Spec.*/ == MajorType.Array,
+                "Object is not an array!"
+            );
 
             // Figure out where cursor should start.
             if (shortCount == 31) {
@@ -230,19 +324,35 @@ abstract contract CBORDecoding is DataStructures {
             }
             // Get cursor start position (either from count or shortcount)
             else {
-                (, cursor,) = /*DataStructures.*/ getDataStructureItemLength(encoding, cursor, majorType, shortCount);
+                (, cursor, ) = /*DataStructures.*/ getDataStructureItemLength(
+                    encoding,
+                    cursor,
+                    majorType,
+                    shortCount
+                );
             }
         }
 
         // Scan through our data
         for (uint256 itemIdx = 0; cursor < encoding.length; itemIdx++) {
             // Grab the current item info, move cursor
-            (Spec.MajorType majorType, uint8 shortCount, uint256 start, uint256 end, uint256 next) = /*DataStructures.*/
-                parseField(encoding, cursor);
+            (
+                Spec.MajorType majorType,
+                uint8 shortCount,
+                uint256 start,
+                uint256 end,
+                uint256 next /*DataStructures.*/
+            ) = parseField(encoding, cursor);
 
             // If this is our item, return
             if (index == itemIdx) {
-                value = /*Utils.*/ extractValue(encoding, majorType, shortCount, start, end);
+                value = /*Utils.*/ extractValue(
+                    encoding,
+                    majorType,
+                    shortCount,
+                    start,
+                    end
+                );
                 return value;
             }
 

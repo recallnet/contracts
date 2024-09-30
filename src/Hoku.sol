@@ -1,33 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Utilities} from "./Utilities.sol";
+import {Utilities} from "./util/Utilities.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from
-    "@openzeppelin/contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol";
 
 contract Hoku is
     ERC20Upgradeable,
     OwnableUpgradeable,
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
-    UUPSUpgradeable,
-    Utilities
+    UUPSUpgradeable
 {
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    function initialize(Environment env) public initializer {
-        string memory symbol = "lHOKU";
-        if (env == Environment.Testnet) {
+    function initialize(Utilities.Environment env) public initializer {
+        string memory symbol = "HOKU";
+        if (env == Utilities.Environment.Testnet) {
             symbol = "tHOKU";
-        } else if (env == Environment.Mainnet) {
-            symbol = "HOKU";
         }
         __ERC20_init("Hoku", symbol);
         __Ownable_init(msg.sender);

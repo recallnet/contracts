@@ -12,11 +12,11 @@ abstract contract CBORByteUtils {
      * @param end position to end byte slice (non-inclusive)
      * @return slicedData dynamic sliced bytes object
      */
-    function sliceBytesMemory(bytes memory data, uint256 start, uint256 end)
-        internal
-        pure
-        returns (bytes memory slicedData)
-    {
+    function sliceBytesMemory(
+        bytes memory data,
+        uint256 start,
+        uint256 end
+    ) internal pure returns (bytes memory slicedData) {
         // Slice our bytes
         for (uint256 i = start; i < end; i++) {
             slicedData = abi.encodePacked(slicedData, data[i]);
@@ -28,7 +28,9 @@ abstract contract CBORByteUtils {
      * @param data dynamic bytes array
      * @return value calculated uint256 value
      */
-    function bytesToUint256(bytes memory data) internal view returns (uint256 value) {
+    function bytesToUint256(
+        bytes memory data
+    ) internal pure returns (uint256 value) {
         for (uint256 i = 0; i < data.length; i++) {
             value += uint8(data[i]) * (2 ** (8 * (data.length - (i + 1))));
         }

@@ -3,19 +3,20 @@ pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
 import {Hoku} from "../src/Hoku.sol";
-import {Utilities} from "../src/Utilities.sol";
+import {Utilities} from "../src/util/Utilities.sol";
 import {DeployScript} from "../script/Hoku.s.sol";
 import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
 
-contract HokuTest is Test, Utilities {
+contract HokuTest is Test {
     Hoku internal token;
     address internal user;
     uint256 constant mintAmount = 1000 * 10 ** 18;
-    address constant tester = address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
+    address constant tester =
+        address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
 
     function setUp() public {
         DeployScript deployer = new DeployScript();
-        token = deployer.run(Environment.Local);
+        token = deployer.run(Utilities.Environment.Local);
 
         user = address(0x123);
     }
