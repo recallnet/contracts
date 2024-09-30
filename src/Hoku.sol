@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Utilities} from "./util/Utilities.sol";
+import {Environment} from "./util/Utilities.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
@@ -20,9 +20,9 @@ contract Hoku is
         _disableInitializers();
     }
 
-    function initialize(Utilities.Environment env) public initializer {
+    function initialize(Environment env) public initializer {
         string memory symbol = "HOKU";
-        if (env == Utilities.Environment.Testnet) {
+        if (env == Environment.Testnet) {
             symbol = "tHOKU";
         }
         __ERC20_init("Hoku", symbol);

@@ -7,7 +7,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {Faucet, TryLater} from "../src/Faucet.sol";
 import {Hoku} from "../src/Hoku.sol";
-import {Utilities} from "../src/util/Utilities.sol";
+import {Environment} from "../src/util/Utilities.sol";
 import {DeployScript as TokenDeployer} from "../script/Hoku.s.sol";
 import {DeployScript as FaucetDeployer} from "../script/Faucet.s.sol";
 
@@ -25,10 +25,7 @@ contract FaucetTest is Test {
         wallet = vm.createWallet("user");
         vm.prank(chain.addr);
         FaucetDeployer faucetDeployer = new FaucetDeployer();
-        faucet = faucetDeployer.run(
-            Utilities.Environment.Local,
-            mintAmount / 2
-        );
+        faucet = faucetDeployer.run(Environment.Local, mintAmount / 2);
         assertEq(faucet.supply(), mintAmount / 2);
     }
 

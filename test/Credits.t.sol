@@ -14,7 +14,7 @@ import {ByteParser} from "../src/util/solidity-cbor/ByteParser.sol";
 import {console2} from "forge-std/console2.sol";
 import {Credits} from "../src/Credits.sol";
 
-contract CreditsTest is Test, CBORDecoding, ByteParser, Credits {
+contract CreditsTest is Test, Credits {
     using BytesCBOR for bytes;
     using CBORDecoder for bytes;
     using BigInts for CommonTypes.BigInt;
@@ -24,4 +24,8 @@ contract CreditsTest is Test, CBORDecoding, ByteParser, Credits {
         vm.createSelectFork("http://localhost:8545");
         credits = new Credits();
     }
+    // 85820181068201831ab33939da1ab8bbcad019021d8201811a6b49d2001a00010769a0
+    // "credit_free": "9992999999998199937498"
+    // "credit_committed": "1800000000",
+    // "last_debit_epoch": 67433
 }

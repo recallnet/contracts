@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
  * @dev Helpful byte utility functions.
  *
  */
-abstract contract CBORByteUtils {
+library CBORByteUtils {
     /**
      * @dev Slices a dynamic bytes object from start:end (non-inclusive end)
      * @param start position to start byte slice (inclusive)

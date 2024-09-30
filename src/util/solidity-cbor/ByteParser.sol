@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
  * @dev Helpful byte utility functions.
  * Returns decoded CBOR values as their proper types.
  */
-abstract contract ByteParser {
+library ByteParser {
     uint256 private constant MAX_UINT64 = 0xFFFFFFFFFFFFFFFF;
 
     /**

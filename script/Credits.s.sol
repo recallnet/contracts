@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import {Script, console2} from "forge-std/Script.sol";
-import {Utilities} from "../src/util/Utilities.sol";
+import {Environment} from "../src/util/Utilities.sol";
 import {Credits} from "../src/Credits.sol";
 
 contract DeployScript is Script {
@@ -11,11 +11,11 @@ contract DeployScript is Script {
 
     function setUp() public {}
 
-    function run(Utilities.Environment env) public returns (Credits) {
+    function run(Environment env) public returns (Credits) {
         if (vm.envExists(PRIVATE_KEY)) {
             uint256 privateKey = vm.envUint(PRIVATE_KEY);
             vm.startBroadcast(privateKey);
-        } else if (env == Utilities.Environment.Local) {
+        } else if (env == Environment.Local) {
             vm.startBroadcast();
         } else {
             revert("PRIVATE_KEY not set in non-local environment");

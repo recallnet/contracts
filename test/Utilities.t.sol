@@ -10,7 +10,22 @@ contract UtilitiesTest is Test {
         vm.createSelectFork("http://localhost:8545");
     }
 
-    function testDecodeCBORArray() public pure {
+    function testDecodeCborArray() public view {
+        bytes[] memory array_null = Utilities.decodeCborArrayToBytes(hex"f6");
+        assertEq(array_null.length, 0);
+
+        bytes[] memory array = Utilities.decodeCborArrayToBytes(
+            hex"85820181068201821a44c08d341a456391828201811936ba1a000af53da0"
+        );
+        assertEq(array.length, 5);
+        assertEq(array[0], hex"82018106");
+        assertEq(array[1], hex"8201821a44c08d341a45639182");
+        assertEq(array[2], hex"8201811936ba");
+        assertEq(array[3], hex"000af53d");
+        assertEq(array[4], hex"a0");
+    }
+
+    function testDecodeCborBigInt() public pure {
         // Zero / empty array
         require(
             Utilities.decodeCborBigIntToUint256(hex"820080") == 0,
@@ -153,26 +168,42 @@ contract UtilitiesTest is Test {
         );
     }
 
-    function testInvalidInput() public {
-        // Test invalid initial array
-        try Utilities.decodeCborBigIntToUint256(hex"810080") {
-            fail();
-        } catch Error(string memory reason) {
+    function externalDecodeCborBigIntToUint256(
+        bytes memory input
+    ) external pure returns (uint256) {
+        return Utilities.decodeCborBigIntToUint256(input);
+    }
+
+    function testInvalidInitialArray() public view {
+        bool hasError = false;
+        try this.externalDecodeCborBigIntToUint256(hex"810080") {} catch Error(
+            string memory reason
+        ) {
+            hasError = true;
             assertEq(reason, "Must be array of 2 elements");
         }
+        assertTrue(hasError, "Expected function to revert");
+    }
 
-        // Test invalid sign
-        try Utilities.decodeCborBigIntToUint256(hex"820280") {
-            fail();
-        } catch Error(string memory reason) {
+    function testInvalidSign() public view {
+        bool hasError = false;
+        try this.externalDecodeCborBigIntToUint256(hex"820280") {} catch Error(
+            string memory reason
+        ) {
+            hasError = true;
             assertEq(reason, "Invalid sign value");
         }
+        assertTrue(hasError, "Expected function to revert");
+    }
 
-        // Test invalid inner array length
-        try Utilities.decodeCborBigIntToUint256(hex"820189") {
-            fail();
-        } catch Error(string memory reason) {
+    function testInvalidInnerArrayLength() public view {
+        bool hasError = false;
+        try this.externalDecodeCborBigIntToUint256(hex"820189") {} catch Error(
+            string memory reason
+        ) {
+            hasError = true;
             assertEq(reason, "Invalid array length");
         }
+        assertTrue(hasError, "Expected function to revert");
     }
 }

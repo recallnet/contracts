@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
 import {Hoku} from "../src/Hoku.sol";
-import {Utilities} from "../src/util/Utilities.sol";
+import {Environment} from "../src/util/Utilities.sol";
 import {DeployScript} from "../script/Hoku.s.sol";
 import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
 
@@ -16,7 +16,7 @@ contract HokuTest is Test {
 
     function setUp() public {
         DeployScript deployer = new DeployScript();
-        token = deployer.run(Utilities.Environment.Local);
+        token = deployer.run(Environment.Local);
 
         user = address(0x123);
     }

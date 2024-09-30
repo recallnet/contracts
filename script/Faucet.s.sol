@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import {Script, console2} from "forge-std/Script.sol";
-import {Utilities} from "../src/util/Utilities.sol";
+import {Environment} from "../src/util/Utilities.sol";
 import {Faucet} from "../src/Faucet.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -13,13 +13,13 @@ contract DeployScript is Script {
     function setUp() public {}
 
     function run(
-        Utilities.Environment env,
+        Environment env,
         uint256 initialSupply
     ) public returns (Faucet) {
         if (vm.envExists(PRIVATE_KEY)) {
             uint256 privateKey = vm.envUint(PRIVATE_KEY);
             vm.startBroadcast(privateKey);
-        } else if (env == Utilities.Environment.Local) {
+        } else if (env == Environment.Local) {
             vm.startBroadcast();
         } else {
             revert("PRIVATE_KEY not set in non-local environment");
