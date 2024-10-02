@@ -26,7 +26,7 @@ contract WrapperTest is Test {
     }
 
     function testDecodeCborBigInt() public pure {
-        // Zero / empty array
+        // Zero, empty array, or null
         require(
             Wrapper.decodeCborBigIntToUint256(hex"820080") == 0,
             "it should be zero for empty array"
@@ -34,6 +34,16 @@ contract WrapperTest is Test {
         require(
             Wrapper.decodeCborBigIntToUint256(hex"82008100") == 0,
             "it should be zero for array with zero"
+        );
+        // Handles the case where WASM returns a null string for a BigInt
+        require(
+            Wrapper.decodeCborBigIntToUint256(hex"f6") == 0,
+            "it should be zero if bigint serialized as null string"
+        );
+        // Handles the same case, but after the CBOR `decodeArray` helper converts to 0x00
+        require(
+            Wrapper.decodeCborBigIntToUint256(hex"00") == 0,
+            "it should be zero if bigint serialized as already deserialized null string"
         );
         // 8 bits
         require(
@@ -174,6 +184,15 @@ contract WrapperTest is Test {
         return Wrapper.decodeCborBigIntToUint256(input);
     }
 
+    function testDecodeArray() public view {
+        bytes memory input = hex"83f6f6820080";
+        bytes[] memory array = Wrapper.decodeCborArrayToBytes(input);
+        assertEq(array.length, 3);
+        assertEq(array[0], hex"00");
+        assertEq(array[1], hex"00");
+        assertEq(array[2], hex"820080");
+    }
+
     function testInvalidInitialArray() public view {
         bool hasError = false;
         try this.externalDecodeCborBigIntToUint256(hex"810080") {} catch Error(
@@ -205,5 +224,15 @@ contract WrapperTest is Test {
             assertEq(reason, "Invalid array length");
         }
         assertTrue(hasError, "Expected function to revert");
+    }
+
+    function testEncodeAddressAsArrayWithNulls() public pure {
+        assertEq(
+            Wrapper.encodeAddressAsArrayWithNulls(
+                0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65,
+                3
+            ),
+            hex"8456040a15d34aaf54267db7d7c367839aaf71a00a2c6a65f6f6f6"
+        );
     }
 }

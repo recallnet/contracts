@@ -13,3 +13,6 @@
 [submodule "lib/filecoin-solidity"]
 	path = lib/filecoin-solidity
 	url = https://github.com/filecoin-project/filecoin-solidity
+[submodule "lib/buffer"]
+	path = lib/buffer
+	url = https://github.com/@ensdomains/buffer

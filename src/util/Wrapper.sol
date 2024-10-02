@@ -7,6 +7,7 @@ import {FilAddresses} from "@filecoin-solidity/v0.8/utils/FilAddresses.sol";
 import {CommonTypes} from "@filecoin-solidity/v0.8/types/CommonTypes.sol";
 import {ByteParser} from "./solidity-cbor/ByteParser.sol";
 import {CBORDecoding} from "./solidity-cbor/CBORDecoding.sol";
+import {CBOR} from "./solidity-cbor/CBOREncoding.sol";
 
 /// @dev Utility functions for interacting with WASM actors and encoding/decoding CBOR.
 library Wrapper {
@@ -19,7 +20,7 @@ library Wrapper {
     function decodeCborArrayToBytes(
         bytes memory data
     ) internal view returns (bytes[] memory decoded) {
-        if (keccak256(data) == keccak256(hex"f6")) return new bytes[](0);
+        if (data.length == 1 && data[0] == 0xf6) return new bytes[](0);
         decoded = CBORDecoding.decodeArray(data);
     }
 
@@ -42,9 +43,10 @@ library Wrapper {
     }
 
     /// @dev Decode a CBOR encoded BigInt (unsigned) to a uint256. Assumptions:
-    /// - Data is encoded as a CBOR array with two elements.
+    /// - Data is (almost always) encoded as a CBOR array with two elements.
+    /// - A null BigInt is typically encoded as `0x820080`, but WASM sometimes serializes it as a string `0xf6`—and also, using the external CBOR helper `decodeArray` will convert to `0x00`.
     /// - First element is a sign (0x00 if empty or zero, 0x01 if positive), and all values are non-negative.
-    /// - Second element is an array of big endian values with up to 8 elements.
+    /// - Second element is an array of big endian values with up to 8 elements (each 32 bit max).
     /// - Array values can be either 8, 16, or 32 bit unsigned integers, represented in CBOR as 0x18, 0x19, or 0x1a respectively.
     /// See Rust implementation for more details: https://github.com/filecoin-project/ref-fvm/blob/b72a51084f3b65f8bd41f4a9a733d43bb4b1d6f7/shared/src/bigint/biguint_ser.rs#L29
     /// TODO: Try to use filecoin-solidity or solidity-cbor for this.
@@ -54,6 +56,7 @@ library Wrapper {
     function decodeCborBigIntToUint256(
         bytes memory data
     ) internal pure returns (uint256) {
+        if (data.length == 1 && (data[0] == 0x00 || data[0] == 0xf6)) return 0;
         require(data[0] == 0x82, "Must be array of 2 elements");
         require(uint8(data[1]) <= 1, "Invalid sign value");
 
@@ -99,6 +102,27 @@ library Wrapper {
         }
 
         return result;
+    }
+
+    /// @dev Encode an address as a CBOR array with nulls.
+    /// @param addr The address to encode.
+    /// @param nulls The number of nulls to encode.
+    /// @return The encoded address as a CBOR array.
+    function encodeAddressAsArrayWithNulls(
+        address addr,
+        uint8 nulls
+    ) internal pure returns (bytes memory) {
+        bytes memory addrCbor = prepareParams(addr);
+        // 1 for the array indicator/length (82), the address length, and nulls * 3 (three `f6` null bytes)
+        CBOR.CBORBuffer memory buf = CBOR.create(
+            1 + addrCbor.length + nulls * 3
+        );
+        CBOR.startFixedArray(buf, nulls + 1);
+        CBOR.writeRaw(buf, addrCbor);
+        for (uint8 i = 0; i < nulls; i++) {
+            CBOR.writeNull(buf);
+        }
+        return CBOR.data(buf);
     }
 
     /// @dev Prepare address parameter for a method call by serializing it.

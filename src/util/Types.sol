@@ -62,6 +62,16 @@ struct ApproveCreditParams {
     uint64 ttl;
 }
 
+/// @dev A credit approval from one account to another.
+struct CreditApproval {
+    /// Optional credit approval limit.
+    uint256 limit;
+    /// Optional credit approval expiry epoch.
+    uint64 expiry;
+    /// Counter for how much credit has been committed via this approval.
+    uint256 committed;
+}
+
 /// @dev The stats of the blob actor.
 /// This is the return type for the blobs actor `get_stats` method:
 /// - The `balance` is a uint256, encoded as a CBOR byte string (e.g., 0x00010f0cf064dd59200000).
