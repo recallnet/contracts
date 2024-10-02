@@ -11,8 +11,7 @@ contract HokuTest is Test {
     Hoku internal token;
     address internal user;
     uint256 constant mintAmount = 1000 * 10 ** 18;
-    address constant tester =
-        address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
+    address constant tester = address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
 
     function setUp() public {
         DeployScript deployer = new DeployScript();

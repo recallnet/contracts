@@ -1,10 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/**
- * @dev Basic CBOR specification tools and constants.
- *
- */
+/// @dev Basic CBOR specification tools and constants.
 library CBORSpec {
     // These bitmasks are used to parse out the major and shortCount values.
     uint8 internal constant MAJOR_BITMASK = uint8(0xe0); // 11100000

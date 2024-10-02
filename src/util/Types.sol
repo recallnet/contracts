@@ -2,9 +2,9 @@
 pragma solidity ^0.8.23;
 
 /// @dev Environment helper for setting the chain environment in scripts or contracts.
-/// - Local: Local (localnet or devnet)
-/// - Testnet: Testnet environment
-/// - Mainnet: Mainnet environment
+/// @param Local: Local (localnet or devnet) chain
+/// @param Testnet: Testnet chain
+/// @param Mainnet: Mainnet chain
 enum Environment {
     Local,
     Testnet,
@@ -12,63 +12,58 @@ enum Environment {
 }
 
 /// @dev The stored representation of a credit account.
+/// @param capacityUsed (uint256): Total size of all blobs managed by the account.
+/// @param creditFree (uint256): Current free credit in byte-blocks that can be used for new commitments.
+/// @param creditCommitted (uint256): Current committed credit in byte-blocks that will be used for debits.
+/// @param lastDebitEpoch (uint64): The chain epoch of the last debit.
+/// @param approvals (uint64): Credit approvals to other accounts, keyed by receiver, keyed by caller.
 struct Account {
-    /// Total size of all blobs managed by the account.
     uint256 capacityUsed;
-    /// Current free credit in byte-blocks that can be used for new commitments.
     uint256 creditFree;
-    /// Current committed credit in byte-blocks that will be used for debits.
     uint256 creditCommitted;
-    /// The chain epoch of the last debit.
     uint64 lastDebitEpoch;
-    /// Credit approvals to other accounts, keyed by receiver, keyed by caller
     // TODO: implement from hashmap: HashMap<Address, HashMap<Address, CreditApproval>>
     // mapping(address => mapping(address => uint256)) public approvals;
     uint64 approvals;
 }
 
-/// @dev Credit ba`lance for an account.
+/// @dev Credit balance for an account.
+/// @param creditFree (uint256): Current free credit in byte-blocks that can be used for new commitments.
+/// @param creditCommitted (uint256): Current committed credit in byte-blocks that will be used for debits.
+/// @param lastDebitEpoch (uint64): The chain epoch of the last debit.
 struct Balance {
-    /// Current free credit in byte-blocks that can be used for new commitments.
     uint256 creditFree;
-    /// Current committed credit in byte-blocks that will be used for debits.
     uint256 creditCommitted;
-    /// The chain epoch of the last debit.
     uint64 lastDebitEpoch;
 }
 
 /// @dev Params for revoking credit.
+/// @param receiver (address): Account address that is receiving the approval.
+/// @param requiredCaller (address): Optional restriction on caller address, e.g., an object store.
 struct RevokeCreditParams {
-    /// Account address that is receiving the approval.
     address receiver;
-    /// Optional restriction on caller address, e.g., an object store.
-    /// This allows the origin of a transaction to use an approval limited to the caller.
     address requiredCaller;
 }
 
 /// @dev Params for approving credit.
+/// @param receiver (address): Account address that is receiving the approval.
+/// @param requiredCaller (address): Optional restriction on caller address, e.g., an object store.
+/// @param limit (uint256): Optional credit approval limit.
+/// @param ttl (uint64): Optional credit approval time-to-live epochs.
 struct ApproveCreditParams {
-    /// Account address that is receiving the approval.
     address receiver;
-    /// Optional restriction on caller address, e.g., an object store.
-    /// The receiver will only be able to use the approval via a caller contract.
     address requiredCaller;
-    /// Optional credit approval limit.
-    /// If specified, the approval becomes invalid once the committed credits reach the
-    /// specified limit.
     uint256 limit;
-    /// Optional credit approval time-to-live epochs.
-    /// If specified, the approval becomes invalid after this duration.
     uint64 ttl;
 }
 
 /// @dev A credit approval from one account to another.
+/// @param limit (uint256): Optional credit approval limit.
+/// @param expiry (uint64): Optional credit approval time-to-live epochs.
+/// @param committed (uint256): Counter for how much credit has been committed via this approval.
 struct CreditApproval {
-    /// Optional credit approval limit.
     uint256 limit;
-    /// Optional credit approval expiry epoch.
     uint64 expiry;
-    /// Counter for how much credit has been committed via this approval.
     uint256 committed;
 }
 
@@ -79,59 +74,58 @@ struct CreditApproval {
 /// WASM BigInt types: a CBOR array with a sign (assume non-negative) and array of numbers (e.g., 0x8201820001).
 /// - The `creditDebitRate`, `numAccounts`, `numBlobs`, and `numResolving` are uint64, encoded as a
 /// CBOR byte string (e.g., 0x317).
+/// @param balance (uint256): The current token balance earned by the subnet.
+/// @param capacityFree (uint256): The total free storage capacity of the subnet.
+/// @param capacityUsed (uint256): The total used storage capacity of the subnet.
+/// @param creditSold (uint256): The total number of credits sold in the subnet.
+/// @param creditCommitted (uint256): The total number of credits committed to active storage in the subnet.
+/// @param creditDebited (uint256): The total number of credits debited in the subnet.
+/// @param creditDebitRate (uint64): The byte-blocks per atto token rate set at genesis.
+/// @param numAccounts (uint64): Total number of debit accounts.
+/// @param numBlobs (uint64): Total number of actively stored blobs.
 struct SubnetStats {
-    /// The current token balance earned by the subnet.
     uint256 balance;
-    /// The total free storage capacity of the subnet.
     uint256 capacityFree;
-    /// The total used storage capacity of the subnet.
     uint256 capacityUsed;
-    /// The total number of credits sold in the subnet.
     uint256 creditSold;
-    /// The total number of credits committed to active storage in the subnet.
     uint256 creditCommitted;
-    /// The total number of credits debited in the subnet.
     uint256 creditDebited;
-    /// The byte-blocks per atto token rate set at genesis.
     uint64 creditDebitRate;
-    /// Total number of debit accounts.
     uint64 numAccounts;
-    /// Total number of actively stored blobs.
     uint64 numBlobs;
-    /// Total number of currently resolving blobs.
     uint64 numResolving;
 }
 
 /// @dev Subnet-wide credit statistics.
+/// @param balance (uint256): The current token balance earned by the subnet.
+/// @param creditSold (uint256): The total number of credits sold in the subnet.
+/// @param creditCommitted (uint256): The total number of credits committed to active storage in the subnet.
+/// @param creditDebited (uint256): The total number of credits debited in the subnet.
+/// @param creditDebitRate (uint64): The byte-blocks per atto token rate set at genesis.
+/// @param numAccounts (uint64): Total number of debit accounts.
 struct CreditStats {
-    /// The current token balance earned by the subnet.
     uint256 balance;
-    /// The total number of credits sold in the subnet.
     uint256 creditSold;
-    /// The total number of credits committed to active storage in the subnet.
     uint256 creditCommitted;
-    /// The total number of credits debited in the subnet.
     uint256 creditDebited;
-    /// The byte-blocks per atto token rate set at genesis.
     uint64 creditDebitRate;
-    /// Total number of debit accounts.
     uint64 numAccounts;
 }
 
 /// @dev Subnet-wide storage statistics.
+/// @param capacityFree (uint256): The total free storage capacity of the subnet.
+/// @param capacityUsed (uint256): The total used storage capacity of the subnet.
+/// @param numBlobs (uint64): Total number of actively stored blobs.
+/// @param numResolving (uint64): Total number of currently resolving blobs.
 struct StorageStats {
-    /// The total free storage capacity of the subnet.
     uint256 capacityFree;
-    /// The total used storage capacity of the subnet.
     uint256 capacityUsed;
-    /// Total number of actively stored blobs.
     uint64 numBlobs;
-    /// Total number of currently resolving blobs.
     uint64 numResolving;
 }
 
 /// @dev Storage usage stats for an account.
+/// @param capacityUsed (uint256): Total size of all blobs managed by the account.
 struct Usage {
-    /// Total size of all blobs managed by the account.
     uint256 capacityUsed;
 }

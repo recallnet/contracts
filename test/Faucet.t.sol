@@ -14,8 +14,7 @@ contract FaucetTest is Test {
     Faucet internal faucet;
     Vm.Wallet internal wallet;
     Vm.Wallet internal chain;
-    address constant tester =
-        address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
+    address constant tester = address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
     uint256 constant mintAmount = 1000 * 10 ** 18;
 
     function setUp() public virtual {

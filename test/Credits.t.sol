@@ -9,17 +9,12 @@ import {Credits, Account as CreditAccount} from "../src/Credits.sol";
 import {Environment, Balance} from "../src/util/Types.sol";
 import {DeployScript as CreditsDeployer} from "../script/Credits.s.sol";
 
-// Usage
-
 contract CreditsTest is Test, Credits {
     Credits internal credits;
     Vm.Wallet internal wallet;
     Vm.Wallet internal chain;
     uint256 constant mintAmount = 1000 * 10 ** 18;
-    uint256 privateKey =
-        StdUtils.bytesToUint(
-            hex"7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6"
-        );
+    uint256 privateKey = StdUtils.bytesToUint(hex"7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6");
 
     function setUp() public virtual {
         vm.createSelectFork("http://localhost:8645");
@@ -32,8 +27,7 @@ contract CreditsTest is Test, Credits {
     }
 
     function testDecodeAccount() public view {
-        bytes
-            memory data = hex"85820181068201831ab33939da1ab8bbcad019021d8201811a6b49d2001a00010769a0";
+        bytes memory data = hex"85820181068201831ab33939da1ab8bbcad019021d8201811a6b49d2001a00010769a0";
         CreditAccount memory account = decodeAccount(data);
         assertEq(account.creditFree, 9992999999998199937498);
         assertEq(account.creditCommitted, 1800000000);
