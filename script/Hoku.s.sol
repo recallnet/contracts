@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-import {Script, console2} from "forge-std/Script.sol";
-import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
+import {Options, Upgrades} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
+import {Script} from "forge-std/Script.sol";
+import {console2 as console} from "forge-std/console2.sol";
+
 import {Hoku} from "../src/Hoku.sol";
 import {Environment} from "../src/util/Types.sol";
 
@@ -25,15 +27,12 @@ contract DeployScript is Script {
         } else {
             revert("PRIVATE_KEY not set in non-local environment");
         }
-        proxyAddress = Upgrades.deployUUPSProxy(
-            "Hoku.sol",
-            abi.encodeCall(Hoku.initialize, (env))
-        );
+        proxyAddress = Upgrades.deployUUPSProxy("Hoku.sol", abi.encodeCall(Hoku.initialize, (env)));
         vm.stopBroadcast();
 
         // Check implementation
         address implAddr = Upgrades.getImplementationAddress(proxyAddress);
-        console2.log("Implementation address: ", implAddr);
+        console.log("Implementation address: ", implAddr);
 
         Hoku hoku = Hoku(proxyAddress);
         return hoku;
@@ -49,11 +48,11 @@ contract UpgradeProxyScript is Script {
 
         // Get proxy address
         address proxy = vm.envAddress("PROXY_ADDR");
-        console2.log("proxy address: ", proxy);
+        console.log("proxy address: ", proxy);
 
         // Check current implementation
         address implOld = Upgrades.getImplementationAddress(proxy);
-        console2.log("Implementation address: ", implOld);
+        console.log("Implementation address: ", implOld);
 
         // Upgrade proxy to new implementation
         Options memory opts;
@@ -64,7 +63,7 @@ contract UpgradeProxyScript is Script {
 
         // Check new implementation
         address implNew = Upgrades.getImplementationAddress(proxy);
-        console2.log("Implementation address: ", implNew);
+        console.log("Implementation address: ", implNew);
 
         require(implOld != implNew, "Implementation address not changed");
     }

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.23;
 
-import "forge-std/Test.sol";
-import "forge-std/console.sol";
-import "forge-std/StdUtils.sol";
-import {console2} from "forge-std/console2.sol";
-import {Credits, Account as CreditAccount} from "../src/Credits.sol";
-import {Environment, Balance} from "../src/util/Types.sol";
+import {StdUtils} from "forge-std/StdUtils.sol";
+import {Test, Vm} from "forge-std/Test.sol";
+import {console2 as console} from "forge-std/console2.sol";
+
 import {DeployScript as CreditsDeployer} from "../script/Credits.s.sol";
+import {Account as CreditAccount, Credits} from "../src/Credits.sol";
+import {Balance, Environment} from "../src/util/Types.sol";
 
 contract CreditsTest is Test, Credits {
     Credits internal credits;

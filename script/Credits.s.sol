@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-import {Script, console2} from "forge-std/Script.sol";
-import {Environment} from "../src/util/Types.sol";
 import {Credits} from "../src/Credits.sol";
+import {Environment} from "../src/util/Types.sol";
+import {Script} from "forge-std/Script.sol";
+import {console2 as console} from "forge-std/console2.sol";
 
 contract DeployScript is Script {
     string constant PRIVATE_KEY = "PRIVATE_KEY";

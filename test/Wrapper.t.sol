@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.23;
 
-import "forge-std/Test.sol";
-import "forge-std/console.sol";
+import {Test, Vm} from "forge-std/Test.sol";
+import {console2 as console} from "forge-std/console2.sol";
+
 import {Wrapper} from "../src/util/Wrapper.sol";
 
 contract WrapperTest is Test {

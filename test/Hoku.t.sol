@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "forge-std/Test.sol";
-import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
+import {Options, Upgrades} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
+import {Test, Vm} from "forge-std/Test.sol";
+import {console2 as console} from "forge-std/console2.sol";
+
+import {DeployScript} from "../script/Hoku.s.sol";
 import {Hoku} from "../src/Hoku.sol";
 import {Environment} from "../src/util/Types.sol";
-import {DeployScript} from "../script/Hoku.s.sol";
 
 contract HokuTest is Test {
     Hoku internal token;

@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {CBORSpec as Spec} from "./CBORSpec.sol";
-import {CBORPrimitives as Primitives} from "./CBORPrimitives.sol";
-import {CBORDataStructures as DataStructures} from "./CBORDataStructures.sol";
 import {CBORByteUtils as ByteUtils} from "./CBORByteUtils.sol";
+import {CBORDataStructures as DataStructures} from "./CBORDataStructures.sol";
+import {CBORPrimitives as Primitives} from "./CBORPrimitives.sol";
+import {CBORSpec as Spec} from "./CBORSpec.sol";
 
 /// @dev Solidity library built for decoding CBOR data.
 library CBORUtilities {

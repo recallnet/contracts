@@ -5,8 +5,8 @@ import {ICredits} from "./interfaces/ICredits.sol";
 import {
     Account,
     ApproveCreditParams,
-    CreditApproval,
     Balance,
+    CreditApproval,
     CreditStats,
     StorageStats,
     SubnetStats,
