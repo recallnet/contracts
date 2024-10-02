@@ -17,7 +17,6 @@ contract CreditsTest is Test, Credits {
     uint256 privateKey = StdUtils.bytesToUint(hex"7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6");
 
     function setUp() public virtual {
-        vm.createSelectFork("http://localhost:8645");
         chain = vm.createWallet("chain");
         vm.deal(chain.addr, mintAmount);
         wallet = vm.createWallet(privateKey);

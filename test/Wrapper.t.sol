@@ -7,10 +7,6 @@ import {console2 as console} from "forge-std/console2.sol";
 import {Wrapper} from "../src/util/Wrapper.sol";
 
 contract WrapperTest is Test {
-    function setUp() public virtual {
-        vm.createSelectFork("http://localhost:8545");
-    }
-
     function testDecodeCborArray() public view {
         bytes[] memory array_null = Wrapper.decodeCborArrayToBytes(hex"f6");
         assertEq(array_null.length, 0);
