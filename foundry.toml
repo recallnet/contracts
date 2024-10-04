@@ -1,5 +1,4 @@
 [profile.default]
-evm_version = 'cancun' # Note: needed for @filecoin-solidity library
 src = "src"
 out = "out"
 libs = ["lib"]
