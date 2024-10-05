@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
 
 import {Script, console2} from "forge-std/Script.sol";
 import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";

@@ -1,14 +1,12 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
 
-import {Script, console2} from "forge-std/Script.sol";
+import {Script} from "forge-std/Script.sol";
 import {Utilities} from "../src/Utilities.sol";
 import {Faucet} from "../src/Faucet.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract DeployScript is Script, Utilities {
     string constant PRIVATE_KEY = "PRIVATE_KEY";
-    address public proxyAddress;
 
     function setUp() public {}
 
