@@ -22,3 +22,13 @@ single_line_statement_blocks = 'preserve'
 # Custom settings
 sort_imports = true
 wrap_comments = true
+
+[rpc_endpoints]
+localnet_parent = "http://127.0.0.1:8545"
+localnet_subnet = "http://127.0.0.1:8645"
+testnet_parent = "https://api.calibration.node.glif.io/rpc/v1"
+testnet_subnet = "https://evm-api.n1.hoku.sh"
+devnet = "http://127.0.0.1:8545"
+# Note: placeholder; mainnet is not available yet
+mainnet_parent = "https://api.calibration.node.glif.io/rpc/v1"
+mainnet_subnet = "https://evm-api.n1.hoku.sh"

@@ -5,10 +5,12 @@ pragma solidity ^0.8.23;
 /// @param Local: Local (localnet or devnet) chain
 /// @param Testnet: Testnet chain
 /// @param Mainnet: Mainnet chain
+/// @param Foundry: Testing environment only within `forge test`
 enum Environment {
     Local,
     Testnet,
-    Mainnet
+    Mainnet,
+    Foundry
 }
 
 /// @dev The stored representation of a credit account.
@@ -51,22 +53,6 @@ struct Balance {
     uint256 creditFree;
     uint256 creditCommitted;
     uint64 lastDebitEpoch;
-}
-
-/// @dev Params for approving credit.
-/// @param from (address): Account address that is approving the credit.
-/// @param receiver (address): Account address that is receiving the approval.
-/// @param requiredCaller (address): Optional restriction on caller address, e.g., an object store. Use zero address if
-/// unused, indicating a null value.
-/// @param limit (uint256): Optional credit approval limit. Use zero if unused, indicating a null value.
-/// @param ttl (uint64): Optional credit approval time-to-live epochs. Minimum value is 3600 (1 hour). Use zero if
-/// unused, indicating a null value.
-struct ApproveCreditParams {
-    address from;
-    address receiver;
-    address requiredCaller;
-    uint256 limit;
-    uint64 ttl;
 }
 
 /// @dev A credit approval from one account to another.

@@ -17,11 +17,19 @@ contract DeployScript is Script {
     function run(Environment env, uint256 initialSupply) public returns (Faucet) {
         if (vm.envExists(PRIVATE_KEY)) {
             uint256 privateKey = vm.envUint(PRIVATE_KEY);
+            if (env == Environment.Local) {
+                console.log("Deploying to local network");
+            } else if (env == Environment.Testnet) {
+                console.log("Deploying to testnet network");
+            } else {
+                revert("Mainnet is not supported");
+            }
             vm.startBroadcast(privateKey);
-        } else if (env == Environment.Local) {
+        } else if (env == Environment.Foundry) {
+            console.log("Deploying to foundry");
             vm.startBroadcast();
         } else {
-            revert("PRIVATE_KEY not set in non-local environment");
+            revert("PRIVATE_KEY not set");
         }
 
         Faucet faucet = new Faucet();

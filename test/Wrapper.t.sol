@@ -158,13 +158,6 @@ contract WrapperTest is Test {
         assertTrue(hasError, "Expected function to revert");
     }
 
-    function testEncodeAddressAsArrayWithNulls() public pure {
-        bytes memory params = Wrapper.encodeCborAddress(0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
-        assertEq(
-            Wrapper.encodeCborArrayWithNulls(params, 3), hex"8456040a15d34aaf54267db7d7c367839aaf71a00a2c6a65f6f6f6"
-        );
-    }
-
     function testEncodeUint256Zero() public pure {
         bytes memory params = Wrapper.encodeCborBigInt(0);
         assertEq(params, hex"820080");

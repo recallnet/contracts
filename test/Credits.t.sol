@@ -11,18 +11,10 @@ import {Approvals, Balance, Environment} from "../src/util/Types.sol";
 
 contract CreditsTest is Test, Credits {
     Credits internal credits;
-    Vm.Wallet internal wallet;
-    Vm.Wallet internal chain;
-    uint256 constant mintAmount = 1000 * 10 ** 18;
-    uint256 privateKey = StdUtils.bytesToUint(hex"7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6");
 
     function setUp() public virtual {
-        chain = vm.createWallet("chain");
-        vm.deal(chain.addr, mintAmount);
-        wallet = vm.createWallet(privateKey);
-        vm.prank(chain.addr);
         CreditsDeployer creditsDeployer = new CreditsDeployer();
-        credits = creditsDeployer.run(Environment.Local);
+        credits = creditsDeployer.run(Environment.Foundry);
     }
 
     function testDecodeAccount() public view {

@@ -50,6 +50,9 @@ library Wrapper {
     /// @dev Decode CBOR encoded Filecoin address bytes to an Ethereum address.
     /// @param addr The encoded CBOR Filecoin address. Example: 0x040a15d34aaf54267db7d7c367839aaf71a00a2c6a65
     /// @return result The decoded Ethereum address.
+    // TODO: we need to figure out handling `t2` addresses. For example `t2yxnetcwoaljcrctdk5bm3v3bcmg6o7kzxol4zwi` will
+    // get interpreted as `0xda498aCe02D2288A635742cdd761130De77D5900`, which is not valid since a `t2` address does not
+    // have an EVM address counterpart(?).
     function decodeCborAddress(bytes memory addr) internal pure returns (address) {
         address result;
         assembly {
@@ -199,43 +202,6 @@ library Wrapper {
         encoded = CBOR.data(buf);
     }
 
-    /// @dev Encode an already encoded CBOR value as a CBOR array with nulls. This helps with cases where the
-    /// WASM params include optional fields (i.e., preceded by the "populated" field), which are null by default.
-    /// @param params The already encoded params as bytes CBOR encoded values.
-    /// @param nulls The number of nulls to encode (ordered list following the given params).
-    /// @return encoded The encoded params as a CBOR array.
-    function encodeCborArrayWithNulls(bytes memory params, uint8 nulls) internal pure returns (bytes memory encoded) {
-        // 1 for the array indicator/length (0x82), the params length, and number of nulls (each null is 0xf6)
-        CBOR.CBORBuffer memory buf = CBOR.create(1 + params.length + nulls);
-        CBOR.startFixedArray(buf, nulls + 1);
-        CBOR.writeRaw(buf, params);
-        for (uint8 i = 0; i < nulls; i++) {
-            CBOR.writeNull(buf);
-        }
-        encoded = CBOR.data(buf);
-    }
-
-    /// @dev Encode a series of already encoded CBOR values as a CBOR array with nulls. This helps with cases where the
-    /// WASM params include optional fields (i.e., preceded by the "populated" fields), which are null by default.
-    /// @param params The already encoded params as a bytes array of CBOR encoded values.
-    /// @param nulls The number of nulls to encode (ordered list following the given params).
-    /// @return encoded The encoded params as a CBOR array.
-    function encodeCborArrayWithNulls(bytes[] memory params, uint8 nulls)
-        internal
-        pure
-        returns (bytes memory encoded)
-    {
-        bytes memory concat = concatBytes(params);
-        // 1 for the array indicator/length (0x82), the concat params length, and number of nulls (each null is 0xf6)
-        CBOR.CBORBuffer memory buf = CBOR.create(1 + concat.length + nulls);
-        CBOR.startFixedArray(buf, nulls + uint64(params.length));
-        CBOR.writeRaw(buf, concat);
-        for (uint8 i = 0; i < nulls; i++) {
-            CBOR.writeNull(buf);
-        }
-        encoded = CBOR.data(buf);
-    }
-
     /// @dev Prepare address parameter for a method call by serializing it.
     /// @return params The serialized address as CBOR bytes.
     function encodeCborNull() internal pure returns (bytes memory) {
@@ -245,6 +211,7 @@ library Wrapper {
     /// @dev Prepare address parameter for a method call by serializing it.
     /// @param addr The address of the account.
     /// @return encoded The serialized address as CBOR bytes.
+    // TODO: figure out if a `t2` address can work here
     function encodeCborAddress(address addr) internal pure returns (bytes memory encoded) {
         CommonTypes.FilAddress memory filAddr = FilAddresses.fromEthAddress(addr);
         encoded = FilecoinCBOR.serializeAddress(filAddr);

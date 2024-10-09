@@ -22,9 +22,8 @@ contract FaucetTest is Test {
         chain = vm.createWallet("chain");
         vm.deal(chain.addr, mintAmount);
         wallet = vm.createWallet("user");
-        vm.prank(chain.addr);
         FaucetDeployer faucetDeployer = new FaucetDeployer();
-        faucet = faucetDeployer.run(Environment.Local, mintAmount / 2);
+        faucet = faucetDeployer.run(Environment.Foundry, mintAmount / 2);
         assertEq(faucet.supply(), mintAmount / 2);
     }
 

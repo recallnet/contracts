@@ -6,7 +6,6 @@ import {
     Account,
     Approval,
     Approvals,
-    ApproveCreditParams,
     Balance,
     CreditApproval,
     CreditStats,
@@ -97,30 +96,43 @@ contract Credits is ICredits {
     }
 
     /// @dev Helper function to encode approve credit params.
-    /// @param params The {ApproveCreditParams} to encode. For optional params that need to be null, use a zero value.
+    /// @param from (address): Account address that is approving the credit.
+    /// @param receiver (address): Account address that is receiving the approval.
+    /// @param requiredCaller (address): Optional restriction on caller address, e.g., an object store. Use zero address
+    /// if unused, indicating a null value.
+    /// @param limit (uint256): Optional credit approval limit. Use zero if unused, indicating a null value.
+    /// @param ttl (uint64): Optional credit approval time-to-live epochs. Minimum value is 3600 (1 hour). Use zero if
+    /// unused, indicating a null value.
     /// @return encoded The encoded params.
-    function encodeApproveCreditParams(ApproveCreditParams memory params) internal pure returns (bytes memory) {
-        bytes memory from = params.from.encodeCborAddress();
-        bytes memory receiver = params.receiver.encodeCborAddress();
-        bytes memory requiredCaller =
-            params.requiredCaller == address(0) ? Wrapper.encodeCborNull() : params.requiredCaller.encodeCborAddress();
+    function encodeApproveCreditParams(
+        address from,
+        address receiver,
+        address requiredCaller,
+        uint256 limit,
+        uint64 ttl
+    ) internal pure returns (bytes memory) {
+        bytes memory fromEncoded = from.encodeCborAddress();
+        bytes memory receiverEncoded = receiver.encodeCborAddress();
+        bytes memory requiredCallerEncoded =
+            requiredCaller == address(0) ? Wrapper.encodeCborNull() : requiredCaller.encodeCborAddress();
         // Note: `limit` is encoded as a BigUInt (single array with no sign bit and values) when writing data, but it
         // gets encoded as a BigInt (array with sign bit and nested array of values) when reading data.
-        bytes memory limit = params.limit == 0 ? Wrapper.encodeCborNull() : params.limit.encodeCborBigUint();
-        bytes memory ttl = params.ttl == 0 ? Wrapper.encodeCborNull() : params.ttl.encodeCborUint64();
+        bytes memory limitEncoded = limit == 0 ? Wrapper.encodeCborNull() : limit.encodeCborBigUint();
+        bytes memory ttlEncoded = ttl == 0 ? Wrapper.encodeCborNull() : ttl.encodeCborUint64();
         bytes[] memory encoded = new bytes[](5);
-        encoded[0] = from;
-        encoded[1] = receiver;
-        encoded[2] = requiredCaller;
-        encoded[3] = limit;
-        encoded[4] = ttl;
+        encoded[0] = fromEncoded;
+        encoded[1] = receiverEncoded;
+        encoded[2] = requiredCallerEncoded;
+        encoded[3] = limitEncoded;
+        encoded[4] = ttlEncoded;
         return Wrapper.encodeCborArray(encoded);
     }
 
     /// @dev Helper function to encode revoke credit params.
     /// @param from The address of the account that is revoking the credit.
     /// @param receiver The address of the account that is receiving the credit.
-    /// @param requiredCaller The address of the account that is required to call this method.
+    /// @param requiredCaller The address of the account that is required to call this method. Use zero address
+    /// if unused, indicating a null value.
     /// @return encoded The encoded params.
     function encodeRevokeCreditParams(address from, address receiver, address requiredCaller)
         internal
@@ -218,12 +230,7 @@ contract Credits is ICredits {
 
     /// @dev See {ICredits-approveCredit}.
     function approveCredit(address receiver) external returns (CreditApproval memory approval) {
-        bytes memory encodedFrom = Wrapper.encodeCborAddress(msg.sender);
-        bytes memory encodedReceiver = Wrapper.encodeCborAddress(receiver);
-        bytes[] memory encoded = new bytes[](2);
-        encoded[0] = encodedFrom;
-        encoded[1] = encodedReceiver;
-        bytes memory params = Wrapper.encodeCborArrayWithNulls(encoded, 3);
+        bytes memory params = encodeApproveCreditParams(msg.sender, receiver, address(0), 0, 0);
         bytes memory data = Wrapper.writeToWasmActor(ACTOR_ID, METHOD_APPROVE_CREDIT, params);
 
         approval = decodeCreditApproval(data);
@@ -232,12 +239,7 @@ contract Credits is ICredits {
 
     /// @dev See {ICredits-approveCredit}.
     function approveCredit(address from, address receiver) external returns (CreditApproval memory approval) {
-        bytes memory encodedFrom = Wrapper.encodeCborAddress(from);
-        bytes memory encodedReceiver = Wrapper.encodeCborAddress(receiver);
-        bytes[] memory encoded = new bytes[](2);
-        encoded[0] = encodedFrom;
-        encoded[1] = encodedReceiver;
-        bytes memory params = Wrapper.encodeCborArrayWithNulls(encoded, 3);
+        bytes memory params = encodeApproveCreditParams(from, receiver, address(0), 0, 0);
         bytes memory data = Wrapper.writeToWasmActor(ACTOR_ID, METHOD_APPROVE_CREDIT, params);
 
         approval = decodeCreditApproval(data);
@@ -245,15 +247,39 @@ contract Credits is ICredits {
     }
 
     /// @dev See {ICredits-approveCredit}.
-    function approveCredit(ApproveCreditParams memory approveParams)
+    function approveCredit(address from, address receiver, address requiredCaller)
         external
         returns (CreditApproval memory approval)
     {
-        bytes memory params = encodeApproveCreditParams(approveParams);
+        bytes memory params = encodeApproveCreditParams(from, receiver, requiredCaller, 0, 0);
         bytes memory data = Wrapper.writeToWasmActor(ACTOR_ID, METHOD_APPROVE_CREDIT, params);
 
         approval = decodeCreditApproval(data);
-        emit ApproveCredit(approveParams.from, approveParams.receiver, approval);
+        emit ApproveCredit(from, receiver, approval);
+    }
+
+    /// @dev See {ICredits-approveCredit}.
+    function approveCredit(address from, address receiver, address requiredCaller, uint256 limit)
+        external
+        returns (CreditApproval memory approval)
+    {
+        bytes memory params = encodeApproveCreditParams(from, receiver, requiredCaller, limit, 0);
+        bytes memory data = Wrapper.writeToWasmActor(ACTOR_ID, METHOD_APPROVE_CREDIT, params);
+
+        approval = decodeCreditApproval(data);
+        emit ApproveCredit(from, receiver, approval);
+    }
+
+    /// @dev See {ICredits-approveCredit}.
+    function approveCredit(address from, address receiver, address requiredCaller, uint256 limit, uint64 ttl)
+        external
+        returns (CreditApproval memory approval)
+    {
+        bytes memory params = encodeApproveCreditParams(from, receiver, requiredCaller, limit, ttl);
+        bytes memory data = Wrapper.writeToWasmActor(ACTOR_ID, METHOD_APPROVE_CREDIT, params);
+
+        approval = decodeCreditApproval(data);
+        emit ApproveCredit(from, receiver, approval);
     }
 
     /// @dev See {ICredits-revokeCredit}.
@@ -277,6 +303,6 @@ contract Credits is ICredits {
         bytes memory params = encodeRevokeCreditParams(from, receiver, requiredCaller);
         Wrapper.writeToWasmActor(ACTOR_ID, METHOD_REVOKE_CREDIT, params);
 
-        emit RevokeCredit(from, receiver);
+        emit RevokeCredit(from, receiver, requiredCaller);
     }
 }

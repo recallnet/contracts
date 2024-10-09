@@ -1,16 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-import {
-    Account,
-    ApproveCreditParams,
-    Balance,
-    CreditApproval,
-    CreditStats,
-    StorageStats,
-    SubnetStats,
-    Usage
-} from "../util/Types.sol";
+import {Account, Balance, CreditApproval, CreditStats, StorageStats, SubnetStats, Usage} from "../util/Types.sol";
 
 /// @dev Hoku Blobs actor EVM interface for managing credits, and querying credit or storage stats.
 /// See Rust implementation for details:
@@ -75,10 +66,36 @@ interface ICredits {
     /// @return approval The credit approval response.
     function approveCredit(address from, address receiver) external returns (CreditApproval memory approval);
 
-    /// @dev Approve credits for an account. Includes optional fields, which if set to zero, will be encoded as null.
-    /// @param params The parameters for approving credits. See {ApproveCreditParams} for details.
+    /// @dev Approve credits for an account. This is a simplified variant when no optional fields are needed.
+    /// @param from The address of the account that owns the credits.
+    /// @param receiver The address of the account to approve credits for.
+    /// @param requiredCaller Optional restriction on caller address, e.g., an object store. Use zero address if unused.
     /// @return approval The credit approval response.
-    function approveCredit(ApproveCreditParams memory params) external returns (CreditApproval memory approval);
+    function approveCredit(address from, address receiver, address requiredCaller)
+        external
+        returns (CreditApproval memory approval);
+
+    /// @dev Approve credits for an account. This is a simplified variant when no optional fields are needed.
+    /// @param from The address of the account that owns the credits.
+    /// @param receiver The address of the account to approve credits for.
+    /// @param requiredCaller Optional restriction on caller address, e.g., an object store. Use zero address if unused.
+    /// @param limit Optional credit approval limit. Use zero if unused, indicating a null value. Use zero if unused,
+    /// @return approval The credit approval response.
+    function approveCredit(address from, address receiver, address requiredCaller, uint256 limit)
+        external
+        returns (CreditApproval memory approval);
+
+    /// @dev Approve credits for an account. This is a simplified variant when no optional fields are needed.
+    /// @param from The address of the account that owns the credits.
+    /// @param receiver The address of the account to approve credits for.
+    /// @param requiredCaller Optional restriction on caller address, e.g., an object store. Use zero address if unused.
+    /// @param limit Optional credit approval limit. Use zero if unused, indicating a null value.
+    /// @param ttl Optional credit approval time-to-live epochs. Minimum value is 3600 (1 hour). Use zero if
+    /// unused, indicating a null value.
+    /// @return approval The credit approval response.
+    function approveCredit(address from, address receiver, address requiredCaller, uint256 limit, uint64 ttl)
+        external
+        returns (CreditApproval memory approval);
 
     /// @dev Revoke credits for an account. Assumes `msg.sender` is the owner of the credits.
     /// @param receiver The address of the account to revoke credits for.
