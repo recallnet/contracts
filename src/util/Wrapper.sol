@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {BytesCBOR} from "@filecoin-solidity/v0.8/cbor/BytesCBOR.sol";
+import {BytesCBOR} from "@filecoin-solidity/v0.8/cbor/BytesCbor.sol";
 import {FilecoinCBOR, Misc} from "@filecoin-solidity/v0.8/cbor/FilecoinCbor.sol";
 import {CommonTypes} from "@filecoin-solidity/v0.8/types/CommonTypes.sol";
 import {Actor} from "@filecoin-solidity/v0.8/utils/Actor.sol";
