@@ -310,4 +310,22 @@ library CBOR {
     function writeRaw(CBORBuffer memory buf, bytes memory rawCBOR) internal pure {
         buf.buf.append(rawCBOR);
     }
+
+    /// @dev Writes a uint32 value to the buffer
+    /// @param buf The CBORBuffer to write to
+    /// @param value The uint64 value to write
+    function writeUInt32(CBORBuffer memory buf, uint32 value) internal pure {
+        if (value <= 23) {
+            buf.buf.appendUint8(uint8((MAJOR_TYPE_INT << 5) | value));
+        } else if (value <= 0xFF) {
+            buf.buf.appendUint8(uint8((MAJOR_TYPE_INT << 5) | 24));
+            buf.buf.appendInt(value, 1);
+        } else if (value <= 0xFFFF) {
+            buf.buf.appendUint8(uint8((MAJOR_TYPE_INT << 5) | 25));
+            buf.buf.appendInt(value, 2);
+        } else {
+            buf.buf.appendUint8(uint8((MAJOR_TYPE_INT << 5) | 26));
+            buf.buf.appendInt(value, 4);
+        }
+    }
 }

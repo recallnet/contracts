@@ -35,6 +35,7 @@ contract WrapperTest is Test {
             "it should be zero if bigint serialized as already deserialized null string"
         );
         // 8 bits
+        require(Wrapper.decodeCborBigIntToUint256(hex"82018101") == 1, "it should be one");
         require(Wrapper.decodeCborBigIntToUint256(hex"8201811801") == 1, "it should be one");
         require(Wrapper.decodeCborBigIntToUint256(hex"82018118ff") == 255, "it should be 255");
         // 16 bits
@@ -74,6 +75,10 @@ contract WrapperTest is Test {
         require(
             Wrapper.decodeCborBigIntToUint256(hex"8201831a0064291e0006") == 110680464442263873822,
             "it should be 110680464442263873822"
+        );
+        require(
+            Wrapper.decodeCborBigIntToUint256(hex"820183000001") == 18446744073709551616,
+            "it should be 18446744073709551616"
         );
         require(
             Wrapper.decodeCborBigIntToUint256(hex"8201831a000000001a000000001a00000001") == 18446744073709551616,
@@ -154,9 +159,60 @@ contract WrapperTest is Test {
     }
 
     function testEncodeAddressAsArrayWithNulls() public pure {
+        bytes memory params = Wrapper.encodeCborAddress(0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
         assertEq(
-            Wrapper.encodeAddressAsArrayWithNulls(0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65, 3),
-            hex"8456040a15d34aaf54267db7d7c367839aaf71a00a2c6a65f6f6f6"
+            Wrapper.encodeCborArrayWithNulls(params, 3), hex"8456040a15d34aaf54267db7d7c367839aaf71a00a2c6a65f6f6f6"
         );
+    }
+
+    function testEncodeUint256Zero() public pure {
+        bytes memory params = Wrapper.encodeCborBigInt(0);
+        assertEq(params, hex"820080");
+
+        params = Wrapper.encodeCborBigInt(1);
+        assertEq(params, hex"82018101");
+
+        params = Wrapper.encodeCborBigInt(1099511627775);
+        assertEq(params, hex"8201821affffffff18ff");
+
+        params = Wrapper.encodeCborBigInt(65536);
+        assertEq(params, hex"8201811a00010000");
+
+        params = Wrapper.encodeCborBigInt(110680464442263873822);
+        assertEq(params, hex"8201831a0064291e0006");
+
+        params = Wrapper.encodeCborBigInt(18446744073709551616);
+        assertEq(params, hex"820183000001");
+
+        params = Wrapper.encodeCborBigInt(type(uint256).max);
+        assertEq(params, hex"8201881affffffff1affffffff1affffffff1affffffff1affffffff1affffffff1affffffff1affffffff");
+    }
+
+    function testDecodeCborBigUint() public pure {
+        require(Wrapper.decodeCborBigUintToUint256(hex"80") == 0, "it should be zero");
+        require(Wrapper.decodeCborBigUintToUint256(hex"8101") == 1, "it should be one");
+        require(
+            Wrapper.decodeCborBigUintToUint256(
+                hex"871affffffff1affffffff1affffffff1affffffff1affffffff1affffffff1affffffff"
+            ) == 26959946667150639794667015087019630673637144422540572481103610249215,
+            "it should handle large values"
+        );
+    }
+
+    function testEncodeCborBigUint() public pure {
+        bytes memory params = Wrapper.encodeCborBigUint(0);
+        assertEq(params, hex"80");
+
+        params = Wrapper.encodeCborBigUint(1);
+        assertEq(params, hex"8101");
+
+        params = Wrapper.encodeCborBigUint(26959946667150639794667015087019630673637144422540572481103610249215);
+        assertEq(params, hex"871affffffff1affffffff1affffffff1affffffff1affffffff1affffffff1affffffff");
+    }
+
+    function testDecodeAddress() public pure {
+        bytes memory addr = hex"040a15d34aaf54267db7d7c367839aaf71a00a2c6a65";
+        address result = Wrapper.decodeCborAddress(addr);
+        assertEq(result, 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
     }
 }

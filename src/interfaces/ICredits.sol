@@ -1,7 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-import {Account, Balance, CreditApproval, CreditStats, StorageStats, SubnetStats, Usage} from "../util/Types.sol";
+import {
+    Account,
+    ApproveCreditParams,
+    Balance,
+    CreditApproval,
+    CreditStats,
+    StorageStats,
+    SubnetStats,
+    Usage
+} from "../util/Types.sol";
 
 /// @dev Hoku Blobs actor EVM interface for managing credits, and querying credit or storage stats.
 /// See Rust implementation for details:
@@ -11,10 +20,13 @@ interface ICredits {
     event BuyCredit(address indexed addr, uint256 amount);
 
     /// @dev Emitted when an account approves credits.
-    event ApproveCredit(address indexed owner, address indexed receiver);
+    event ApproveCredit(address indexed from, address indexed receiver, CreditApproval approval);
 
     /// @dev Emitted when an account revokes credits.
-    event RevokeCredit(address indexed owner, address indexed receiver);
+    event RevokeCredit(address indexed from, address indexed receiver);
+
+    /// @dev Emitted when an account revokes credits.
+    event RevokeCredit(address indexed from, address indexed receiver, address indexed requiredCaller);
 
     /// @dev Get the subnet stats.
     /// @return stats The subnet stats.
@@ -43,17 +55,43 @@ interface ICredits {
     /// @return balance The credit balance of the account.
     function getCreditBalance(address addr) external view returns (Balance memory balance);
 
-    /// @dev Buy credits for an account with a `msg.value` for number of native currency to spend on credits.
-    /// @param addr The address of the account.
+    /// @dev Buy credits for `msg.sender` with a `msg.value` for number of native currency to spend on credits.
     /// @return balance The balance of the account after buying credits.
-    function buyCredit(address addr) external payable returns (Balance memory balance);
+    function buyCredit() external payable returns (Balance memory balance);
 
-    /// @dev Approve credits for an account.
+    /// @dev Buy credits for a specified account with a `msg.value` for number of native currency to spend on credits.
+    /// @param recipient The address of the account.
+    /// @return balance The balance of the account after buying credits.
+    function buyCredit(address recipient) external payable returns (Balance memory balance);
+
+    /// @dev Approve credits for an account. Assumes `msg.sender` is the owner of the credits, and no optional fields.
     /// @param receiver The address of the account to approve credits for.
     /// @return approval The credit approval response.
     function approveCredit(address receiver) external returns (CreditApproval memory approval);
 
-    /// @dev Revoke credits for an account.
+    /// @dev Approve credits for an account. This is a simplified variant when no optional fields are needed.
+    /// @param from The address of the account that owns the credits.
+    /// @param receiver The address of the account to approve credits for.
+    /// @return approval The credit approval response.
+    function approveCredit(address from, address receiver) external returns (CreditApproval memory approval);
+
+    /// @dev Approve credits for an account. Includes optional fields, which if set to zero, will be encoded as null.
+    /// @param params The parameters for approving credits. See {ApproveCreditParams} for details.
+    /// @return approval The credit approval response.
+    function approveCredit(ApproveCreditParams memory params) external returns (CreditApproval memory approval);
+
+    /// @dev Revoke credits for an account. Assumes `msg.sender` is the owner of the credits.
     /// @param receiver The address of the account to revoke credits for.
     function revokeCredit(address receiver) external;
+
+    /// @dev Revoke credits for an account.
+    /// @param from The address of the account that owns the credits.
+    /// @param receiver The address of the account to revoke credits for.
+    function revokeCredit(address from, address receiver) external;
+
+    /// @dev Revoke credits for an account. Includes optional fields, which if set to zero, will be encoded as null.
+    /// @param from The address of the account that owns the credits.
+    /// @param receiver The address of the account to revoke credits for.
+    /// @param requiredCaller Optional restriction on caller address, e.g., an object store.
+    function revokeCredit(address from, address receiver, address requiredCaller) external;
 }

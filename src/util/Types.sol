@@ -16,15 +16,31 @@ enum Environment {
 /// @param creditFree (uint256): Current free credit in byte-blocks that can be used for new commitments.
 /// @param creditCommitted (uint256): Current committed credit in byte-blocks that will be used for debits.
 /// @param lastDebitEpoch (uint64): The chain epoch of the last debit.
-/// @param approvals (uint64): Credit approvals to other accounts, keyed by receiver, keyed by caller.
+/// @param approvals (Approvals[]): Credit approvals to other accounts, keyed by receiver, keyed by caller.
 struct Account {
     uint256 capacityUsed;
     uint256 creditFree;
     uint256 creditCommitted;
     uint64 lastDebitEpoch;
-    // TODO: implement from hashmap: HashMap<Address, HashMap<Address, CreditApproval>>
-    // mapping(address => mapping(address => uint256)) public approvals;
-    uint64 approvals;
+    // Note: this is a nested array that emulates a Rust `Hashmap<Address, Hashmap<Address, CreditApproval>>`
+    Approvals[] approvals;
+}
+
+/// @dev Credit approvals to other accounts, keyed by receiver, keyed by caller.
+/// @param receiver (address): The receiver address.
+/// @param approval (Approval[]): The list of approvals. See {Approval} for more details.
+struct Approvals {
+    address receiver;
+    Approval[] approval;
+}
+
+/// @dev Credit approval from one account to another.
+/// @param requiredCaller (address): Optional restriction on caller address, e.g., an object store. Use zero address if
+/// unused, indicating a null value.
+/// @param approval (CreditApproval): The credit approval. See {CreditApproval} for more details.
+struct Approval {
+    address requiredCaller;
+    CreditApproval approval;
 }
 
 /// @dev Credit balance for an account.
@@ -37,20 +53,16 @@ struct Balance {
     uint64 lastDebitEpoch;
 }
 
-/// @dev Params for revoking credit.
-/// @param receiver (address): Account address that is receiving the approval.
-/// @param requiredCaller (address): Optional restriction on caller address, e.g., an object store.
-struct RevokeCreditParams {
-    address receiver;
-    address requiredCaller;
-}
-
 /// @dev Params for approving credit.
+/// @param from (address): Account address that is approving the credit.
 /// @param receiver (address): Account address that is receiving the approval.
-/// @param requiredCaller (address): Optional restriction on caller address, e.g., an object store.
-/// @param limit (uint256): Optional credit approval limit.
-/// @param ttl (uint64): Optional credit approval time-to-live epochs.
+/// @param requiredCaller (address): Optional restriction on caller address, e.g., an object store. Use zero address if
+/// unused, indicating a null value.
+/// @param limit (uint256): Optional credit approval limit. Use zero if unused, indicating a null value.
+/// @param ttl (uint64): Optional credit approval time-to-live epochs. Minimum value is 3600 (1 hour). Use zero if
+/// unused, indicating a null value.
 struct ApproveCreditParams {
+    address from;
     address receiver;
     address requiredCaller;
     uint256 limit;
