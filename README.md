@@ -175,8 +175,10 @@ accepts "optional" arguments. All of the method parameters and return types can 
 
 - `getSubnetStats()`: Get subnet stats.
 - `getCreditStats()`: Get credit stats.
+- `getStorageStats()`: Get credit stats.
 - `getAccount(address)`: Get credit account info for an address.
 - `getCreditBalance(address)`: Get credit balance for an address.
+- `getStorageUsage(address)`: Get storage usage for an address.
 - `buyCredit()`: Buy credits for the `msg.sender`.
 - `buyCredit(address)`: Buy credits for the given address.
 - `approveCredit(address)`: Approve credits for an address (`receiver`), assuming `msg.sender` is
@@ -297,6 +299,31 @@ struct CreditStats {
 }
 ```
 
+##### Get storage stats
+
+We can fetch the overall storage stats for the subnet with the following command:
+
+```solidity
+cast abi-decode "getStorageStats()((uint256,uint256,uint64,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDITS "getStorageStats()")
+```
+
+This will return the following values:
+
+```
+(4294967296 [4.294e9], 0, 0, 0)
+```
+
+Which maps to the `StorageStats` struct:
+
+```
+StorageStats {
+    uint256 capacityFree; // 4294967296
+    uint256 capacityUsed; // 0
+    uint64 numBlobs; // 0
+    uint64 numResolving; // 0
+}
+```
+
 ##### Get credit account info
 
 We can get the credit account info for the address at `EVM_ADDRESS` (the variable we set above), or
@@ -370,6 +397,28 @@ struct Balance {
     uint256 creditFree; // 5000000000000000000000
     uint256 creditCommitted; // 0
     uint64 lastDebitEpoch; // 18061
+}
+```
+
+##### Get storage usage for an account
+
+Fetch the storage usage for the address at `EVM_ADDRESS`:
+
+```solidity
+cast abi-decode "getStorageUsage(address)((uint256))" $(cast call --rpc-url $EVM_RPC_URL $CREDITS "getStorageUsage(address)" $EVM_ADDRESS)
+```
+
+This will return the following values:
+
+```
+(0)
+```
+
+Which maps to the `Usage` struct:
+
+```
+struct Usage {
+    uint256 capacityUsed; // 0
 }
 ```
 
