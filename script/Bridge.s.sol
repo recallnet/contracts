@@ -3,7 +3,8 @@ pragma solidity ^0.8.23;
 
 import {Script, console} from "forge-std/Script.sol";
 import {Hoku} from "../src/Hoku.sol";
-import {IInterchainTokenService} from "@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol";
+import {IInterchainTokenService} from
+    "@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 address constant INTERCHAIN_TOKEN_SERVICE = 0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C;
@@ -48,7 +49,7 @@ contract BridgeTest is Script {
     function setUp() public {}
 
     function isMinter(address proxyAddress, address addressToCheck) public view {
-        console.log('Proxy address: ', proxyAddress);
+        console.log("Proxy address: ", proxyAddress);
 
         // Create Hoku instance
         Hoku hoku = Hoku(proxyAddress);
@@ -56,13 +57,13 @@ contract BridgeTest is Script {
         // Check if the given address has the MINTER_ROLE
         bool hasMinterRole = hoku.hasRole(hoku.MINTER_ROLE(), addressToCheck);
 
-        console.log('Address to check: ', addressToCheck);
-        console.log('Has MINTER_ROLE: ', hasMinterRole);
+        console.log("Address to check: ", addressToCheck);
+        console.log("Has MINTER_ROLE: ", hasMinterRole);
     }
 
     function mintFunds(address proxyAddress, address recipient, uint256 amount) public {
-        console.log('Minting funds to address: ', recipient);
-        console.log('Amount: ', amount);
+        console.log("Minting funds to address: ", recipient);
+        console.log("Amount: ", amount);
 
         Hoku hoku = Hoku(proxyAddress);
         vm.startBroadcast();
@@ -73,21 +74,23 @@ contract BridgeTest is Script {
         hoku.mint(recipient, amount);
         vm.stopBroadcast();
 
-        console.log('Minting successful');
+        console.log("Minting successful");
     }
 
     function estimateGas(string memory destinationChain) public returns (uint256) {
         string memory sourceChain = destinationChain.equal(FILECOIN) ? ETHEREUM : FILECOIN;
         string[] memory inputs = new string[](3);
-        inputs[0] = 'bash';
-        inputs[1] = '-c';
-        inputs[2] = string(abi.encodePacked(
-            'curl -s \'https://api.gmp.axelarscan.io?method=estimateGasFee&destinationChain=',
-            destinationChain,
-            '&sourceChain=',
-            sourceChain,
-            destinationChain.equal(FILECOIN) ? '&gasLimit=700000&gasMultiplier=1000\'' : '&gasLimit=70000\''
-        ));
+        inputs[0] = "bash";
+        inputs[1] = "-c";
+        inputs[2] = string(
+            abi.encodePacked(
+                "curl -s \'https://api.gmp.axelarscan.io?method=estimateGasFee&destinationChain=",
+                destinationChain,
+                "&sourceChain=",
+                sourceChain,
+                destinationChain.equal(FILECOIN) ? "&gasLimit=700000&gasMultiplier=1000\'" : "&gasLimit=70000\'"
+            )
+        );
         // console.log('Curl command:', inputs[2]);
         bytes memory res = vm.ffi(inputs);
         string memory resString = string(res);
@@ -109,13 +112,13 @@ contract BridgeTest is Script {
             estimatedGas = parseInt(resString);
         }
 
-        console.log('Estimated gas:', estimatedGas);
+        console.log("Estimated gas:", estimatedGas);
         return estimatedGas;
     }
 
     function decodeBytes(bytes memory data) internal pure returns (uint256) {
         uint256 result = 0;
-        for (uint i = 0; i < data.length; i++) {
+        for (uint256 i = 0; i < data.length; i++) {
             uint8 value = uint8(data[i]);
             uint8 tens = value / 16;
             uint8 ones = value % 16;
@@ -136,21 +139,19 @@ contract BridgeTest is Script {
         return result;
     }
 
-    function xChainTransfer(
-        address proxyAddress,
-        string memory destinationChain,
-        address recipient,
-        uint256 amount
-    ) public payable {
-        console.log('Making cross-chain transfer');
-        console.log('Destination chain: ', destinationChain);
-        console.log('Recipient: ', recipient);
-        console.log('Amount: ', amount);
+    function xChainTransfer(address proxyAddress, string memory destinationChain, address recipient, uint256 amount)
+        public
+        payable
+    {
+        console.log("Making cross-chain transfer");
+        console.log("Destination chain: ", destinationChain);
+        console.log("Recipient: ", recipient);
+        console.log("Amount: ", amount);
 
         Hoku hoku = Hoku(proxyAddress);
 
         uint256 gasEstimate = estimateGas(destinationChain);
-        console.log('Gas estimate result: ', gasEstimate);
+        console.log("Gas estimate result: ", gasEstimate);
 
         // Convert recipient address to bytes
         // bytes memory recipientBytes = abi.encode(recipient);
@@ -160,51 +161,51 @@ contract BridgeTest is Script {
 
         // Log balance of the sender
         uint256 senderBalance = hoku.balanceOf(msg.sender);
-        console.log('Sender balance: ', senderBalance);
+        console.log("Sender balance: ", senderBalance);
 
         // Approve the token manager to spend tokens on behalf of the sender
         hoku.approve(INTERCHAIN_TOKEN_SERVICE, amount);
         // Log the currently approved amount for the its
         uint256 currentApproval = hoku.allowance(msg.sender, INTERCHAIN_TOKEN_SERVICE);
-        console.log('Current approval for ITS: ', currentApproval);
+        console.log("Current approval for ITS: ", currentApproval);
 
-        vm.breakpoint('a');
+        vm.breakpoint("a");
         // Perform the interchain transfer with empty metadata
         hoku.interchainTransfer{value: gasEstimate}(destinationChain, recipientBytes, amount, "");
 
         vm.stopBroadcast();
 
-        console.log('Interchain transfer initiated');
+        console.log("Interchain transfer initiated");
     }
 
     function checkBalance(address proxyAddress, address accountToCheck) public view {
-        console.log('Checking balance for address: ', accountToCheck);
+        console.log("Checking balance for address: ", accountToCheck);
 
         Hoku hoku = Hoku(proxyAddress);
         // Get the balance of the account
         uint256 balance = hoku.balanceOf(accountToCheck);
 
-        console.log('Balance: ', balance);
+        console.log("Balance: ", balance);
     }
 
     function setApproval(address proxyAddress, address account, uint256 amount) public {
-        console.log('Setting approval for address: ', account);
-        console.log('Amount: ', amount);
+        console.log("Setting approval for address: ", account);
+        console.log("Amount: ", amount);
 
         Hoku hoku = Hoku(proxyAddress);
 
         vm.startBroadcast();
 
         uint256 currentApproval = hoku.allowance(msg.sender, account);
-        console.log('Current approval: ', currentApproval);
+        console.log("Current approval: ", currentApproval);
 
         hoku.approve(account, amount + 1);
 
         currentApproval = hoku.allowance(msg.sender, account);
-        console.log('Current approval: ', currentApproval);
+        console.log("Current approval: ", currentApproval);
 
         vm.stopBroadcast();
 
-        console.log('Approval set successfully');
+        console.log("Approval set successfully");
     }
 }

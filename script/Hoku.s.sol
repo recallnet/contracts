@@ -3,8 +3,9 @@ pragma solidity ^0.8.23;
 
 import {Script, console} from "forge-std/Script.sol";
 import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
-import { IInterchainTokenService } from '@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol';
-import { ITokenManagerType } from '@axelar-network/interchain-token-service/contracts/interfaces/ITokenManagerType.sol';
+import {IInterchainTokenService} from
+    "@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol";
+import {ITokenManagerType} from "@axelar-network/interchain-token-service/contracts/interfaces/ITokenManagerType.sol";
 import {Hoku} from "../src/Hoku.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
@@ -30,14 +31,14 @@ contract DeployScript is Script {
         }
         vm.startBroadcast();
 
-
         bytes32 itsSalt = keccak256("HOKU_SALT");
-        proxyAddress = Upgrades.deployUUPSProxy("Hoku.sol", abi.encodeCall(Hoku.initialize, (prefix, INTERCHAIN_TOKEN_SERVICE, itsSalt)));
+        proxyAddress = Upgrades.deployUUPSProxy(
+            "Hoku.sol", abi.encodeCall(Hoku.initialize, (prefix, INTERCHAIN_TOKEN_SERVICE, itsSalt))
+        );
 
         // Check implementation
         address implAddr = Upgrades.getImplementationAddress(proxyAddress);
         console.log("Implementation address: ", implAddr);
-
 
         Hoku hoku = Hoku(proxyAddress);
 

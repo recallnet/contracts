@@ -2,14 +2,18 @@
 pragma solidity ^0.8.23;
 
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
-import {ERC20BurnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
+import {ERC20BurnableUpgradeable} from
+    "@openzeppelin/contracts-upgradeable/contracts/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
+import {AccessControlUpgradeable} from
+    "@openzeppelin/contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from
     "@openzeppelin/contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol";
-import { InterchainTokenStandard } from '@axelar-network/interchain-token-service/contracts/interchain-token/InterchainTokenStandard.sol';
-import { IInterchainTokenService } from '@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol';
+import {InterchainTokenStandard} from
+    "@axelar-network/interchain-token-service/contracts/interchain-token/InterchainTokenStandard.sol";
+import {IInterchainTokenService} from
+    "@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol";
 
 contract Hoku is
     ERC20BurnableUpgradeable,
@@ -90,7 +94,10 @@ contract Hoku is
      * @notice A method to be overwritten that will decrease the allowance of the `spender` from `sender` by `amount`.
      * @dev Needs to be overwritten. This provides flexibility for the choice of ERC20 implementation used. Must revert if allowance is not sufficient.
      */
-    function _spendAllowance(address sender, address spender, uint256 amount) internal override(ERC20Upgradeable, InterchainTokenStandard) {
+    function _spendAllowance(address sender, address spender, uint256 amount)
+        internal
+        override(ERC20Upgradeable, InterchainTokenStandard)
+    {
         uint256 _allowance = allowance(sender, spender);
         if (_allowance != type(uint256).max) {
             _approve(sender, spender, _allowance - amount);
@@ -104,7 +111,13 @@ contract Hoku is
         return super.transfer(to, amount);
     }
 
-    function transferFrom(address from, address to, uint256 amount) public virtual override whenNotPaused returns (bool) {
+    function transferFrom(address from, address to, uint256 amount)
+        public
+        virtual
+        override
+        whenNotPaused
+        returns (bool)
+    {
         return super.transferFrom(from, to, amount);
     }
 
