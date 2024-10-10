@@ -7,6 +7,9 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /// @dev Error thrown when a user tries to request tokens too soon
 error TryLater();
 
+/// @dev Error thrown when the faucet is empty
+error FaucetEmpty();
+
 /// @dev Error thrown when an invalid funding amount is provided
 /// @param from The address attempting to fund
 /// @param value The invalid funding amount
