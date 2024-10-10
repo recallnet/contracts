@@ -119,4 +119,15 @@ contract Hoku is
     function burnFrom(address account, uint256 amount) public virtual override whenNotPaused {
         super.burnFrom(account, amount);
     }
+
+    /**
+     * Interchain overrides to enable pausing
+     */
+    function _beforeInterchainTransfer(
+        address from,
+        string calldata destinationChain,
+        bytes calldata destinationAddress,
+        uint256 amount,
+        bytes calldata metadata
+    ) internal override(InterchainTokenStandard) whenNotPaused {}
 }
