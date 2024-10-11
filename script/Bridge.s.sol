@@ -82,6 +82,7 @@ contract BridgeTest is Script {
         string[] memory inputs = new string[](3);
         inputs[0] = "bash";
         inputs[1] = "-c";
+        // axelar api docs: https://docs.axelarscan.io/gmp#estimateGasFee
         inputs[2] = string(
             abi.encodePacked(
                 "curl -s \'https://api.gmp.axelarscan.io?method=estimateGasFee&destinationChain=",
