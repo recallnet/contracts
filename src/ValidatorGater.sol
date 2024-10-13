@@ -6,6 +6,7 @@ import {InvalidSubnet, NotAuthorized, ValidatorPowerChangeDenied} from "./errors
 import {SubnetID} from "./structs/Subnet.sol";
 import {SubnetIDHelper} from "./lib/SubnetIDHelper.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import "forge-std/console.sol";
 
 /// The power range that an approved validator can have.
 struct PowerRange {
@@ -46,7 +47,7 @@ contract ValidatorGater is IValidatorGater, Ownable {
         external
         view
         override
-    {
+    {//TODO what is getting done here?
         SubnetID memory targetSubnet = subnet;
 
         if (!id.equals(targetSubnet)) {
