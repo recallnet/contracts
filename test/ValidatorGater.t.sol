@@ -11,6 +11,7 @@ import {InvalidSubnet, NotAuthorized, ValidatorPowerChangeDenied} from "../src/e
 
 contract ValidatorGaterTest is Test, Utilities {
     using SubnetIDHelper for SubnetID;
+
     ValidatorGater internal gater;
     SubnetID subnet;
     address owner = address(1);
@@ -30,7 +31,6 @@ contract ValidatorGaterTest is Test, Utilities {
         vm.prank(owner);
         gater.setSubnet(subnet);
     }
-
 
     function testSetSubnet() public view {
         uint64 result = gater.subnet();
@@ -76,7 +76,7 @@ contract ValidatorGaterTest is Test, Utilities {
 
         // Check if the validator is allowed within the range
         assertTrue(gater.isAllow(validator1, 50));
-        assertFalse(gater.isAllow(validator1, 5));   // Below range
+        assertFalse(gater.isAllow(validator1, 5)); // Below range
         assertFalse(gater.isAllow(validator1, 101)); // Above range
     }
 
@@ -100,7 +100,6 @@ contract ValidatorGaterTest is Test, Utilities {
         // Test invalid power change
         vm.expectRevert(ValidatorPowerChangeDenied.selector);
         gater.interceptPowerDelta(subnet, validator1, 0, 5); // out of range
-        
 
         // Test invalid subnet
         SubnetID memory wrongSubnet = subnet = ROOT_SUBNET_ID.createSubnetId(address(this));
