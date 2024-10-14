@@ -29,6 +29,10 @@ jobs:
         run: |
           forge --version
 
+      - name: Show Node version
+        run: |
+          node --version
+
       - name: Run Forge fmt
         run: |
           forge fmt --check
