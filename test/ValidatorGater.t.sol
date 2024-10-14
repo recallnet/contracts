@@ -108,4 +108,27 @@ contract ValidatorGaterTest is Test, Utilities {
         gater.interceptPowerDelta(wrongSubnet, validator1, 0, 50);
         vm.stopPrank();
     }
+
+    function testUnactiveGater() public {
+        address validator = address(4);
+        // Must be possible to desactivate the gater
+        vm.expectRevert();
+        gater.setActive(false);// Not the owner
+        assertEq(gater.isActive(), true);
+
+        vm.prank(owner);
+        gater.setActive(false);
+        assertEq(gater.isActive(), false);
+
+
+        // Must not execute functions if inactive
+        vm.startPrank(owner);
+        gater.approve(validator1, 10, 10);
+
+        (uint256 min, uint256 max) = gater.allowed(validator);
+        assertEq(min, 0);
+        assertEq(max, 0);
+
+        vm.stopPrank();
+    }
 }

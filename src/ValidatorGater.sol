@@ -13,33 +13,56 @@ struct PowerRange {
     uint256 min;
     uint256 max;
 }
-
+// TODO add notice to all functions
 /// This is a simple implementation of `IValidatorGater`. It makes sure the exact power change
 /// request is approved. This is a very strict requirement.
 contract ValidatorGater is IValidatorGater, Ownable {
     using SubnetIDHelper for SubnetID;
+    bool private _active;
 
     SubnetID public subnet;
     mapping(address => PowerRange) public allowed;
+    // New active status and who was the owner at change time
+    event ActiveStateChange(bool active, address account);
 
-    constructor() Ownable(msg.sender) {}
+    constructor() Ownable(msg.sender) {
+        _active = true;
+    }
 
-    function setSubnet(SubnetID calldata id) external onlyOwner {
+    function isActive() view external returns(bool) {
+        return _active;
+    }
+
+    /// @notice Sets the contract as active or inactive.
+    /// @dev Only the owner can change the active state.
+    function setActive(bool active) external onlyOwner {
+        _active = active;
+        emit ActiveStateChange(active, msg.sender);
+    }
+
+    modifier whenActive() {
+        if (!_active) {
+            return; // Skip execution if not active
+        }
+        _; // Continue with function execution if active
+    }
+
+    function setSubnet(SubnetID calldata id) external onlyOwner whenActive {
         subnet = id;
     }
 
-    function isAllow(address validator, uint256 power) public view returns (bool) {
+    function isAllow(address validator, uint256 power) public view whenActive returns (bool) {
         PowerRange memory range = allowed[validator];
         return range.min <= power && power <= range.max;
     }
 
     /// Only owner can approve the validator join request
-    function approve(address validator, uint256 minPower, uint256 maxPower) external onlyOwner {
+    function approve(address validator, uint256 minPower, uint256 maxPower) external onlyOwner whenActive {
         allowed[validator] = PowerRange({min: minPower, max: maxPower});
     }
 
     /// Revoke approved power range
-    function revoke(address validator) external onlyOwner {
+    function revoke(address validator) external onlyOwner whenActive {
         delete allowed[validator];
     }
 
@@ -47,6 +70,7 @@ contract ValidatorGater is IValidatorGater, Ownable {
         external
         view
         override
+        whenActive
     {//TODO what is getting done here?
         SubnetID memory targetSubnet = subnet;
 
