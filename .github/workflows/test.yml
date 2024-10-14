@@ -36,6 +36,7 @@ jobs:
       
       - name: Run Forge clean
         run: |
+          rm -rf cache out
           forge clean
         id: clean
 
