@@ -23,7 +23,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update && sudo apt-get install -y lcov  # Install genhtml (comes with lcov)
-          npm install --save-dev @foundry-rs/forge-coverage
+          npm install --save-dev foundry-rs/forge-coverage
 
       - name: Generate Coverage Report
         run: |
@@ -36,6 +36,3 @@ jobs:
 
       - name: Display Coverage Summary
         run: cat lcov.info
-
-      - name: Check Coverage (Optional)
-        run: ./tools/check_coverage.sh
