@@ -71,7 +71,7 @@ contract ValidatorGater is IValidatorGater, Ownable {
         view
         override
         whenActive
-    {//TODO what is getting done here?
+    {
         SubnetID memory targetSubnet = subnet;
 
         if (!id.equals(targetSubnet)) {
