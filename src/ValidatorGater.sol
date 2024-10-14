@@ -16,20 +16,23 @@ struct PowerRange {
 // TODO add notice to all functions
 /// This is a simple implementation of `IValidatorGater`. It makes sure the exact power change
 /// request is approved. This is a very strict requirement.
+
 contract ValidatorGater is IValidatorGater, Ownable {
     using SubnetIDHelper for SubnetID;
+
     bool private _active;
 
     SubnetID public subnet;
     mapping(address => PowerRange) public allowed;
     // New active status and who was the owner at change time
+
     event ActiveStateChange(bool active, address account);
 
     constructor() Ownable(msg.sender) {
         _active = true;
     }
 
-    function isActive() view external returns(bool) {
+    function isActive() external view returns (bool) {
         return _active;
     }
 
