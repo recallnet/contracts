@@ -9,11 +9,12 @@ import {SubnetIDHelper} from "../../src/lib/SubnetIDHelper.sol";
 /// All security checks were removed due to them not being relevant for the workflow being tested.
 contract SubnetActorManagerFacetMock {
     using SubnetIDHelper for SubnetID;
+
     address validatorGater;
     mapping(address => uint256) validatorsStake;
     SubnetID parentId;
 
-    function getStakeAmount(address validator) public view returns(uint256) {
+    function getStakeAmount(address validator) public view returns (uint256) {
         return validatorsStake[validator];
     }
 
@@ -30,11 +31,9 @@ contract SubnetActorManagerFacetMock {
     ///         or equal to minimum activation collateral as a result of this operation,
     ///         then  subnet will be registered.
     /// @param amount The amount of collateral provided as stake
-    function join(bytes calldata, uint256 amount) external payable  {
-
+    function join(bytes calldata, uint256 amount) external payable {
         gateValidatorPowerDelta(msg.sender, 0, amount);
         validatorsStake[msg.sender] = amount;
-
     }
 
     /// @notice method that allows a validator to increase its stake.
@@ -43,7 +42,6 @@ contract SubnetActorManagerFacetMock {
     ///         then  subnet will be registered.
     /// @param amount The amount of collateral provided as stake
     function stake(uint256 amount) external payable {
-
         uint256 collateral = getStakeAmount(msg.sender);
         gateValidatorPowerDelta(msg.sender, collateral, collateral + amount);
         validatorsStake[msg.sender] += amount;
@@ -52,15 +50,14 @@ contract SubnetActorManagerFacetMock {
     /// @notice method that allows a validator to unstake a part of its collateral from a subnet.
     /// @dev `leave` must be used to unstake the entire stake.
     /// @param amount The amount to unstake.
-    function unstake(uint256 amount) external  {
+    function unstake(uint256 amount) external {
         uint256 collateral = getStakeAmount(msg.sender);
         gateValidatorPowerDelta(msg.sender, collateral, collateral - amount);
         validatorsStake[msg.sender] -= amount;
-
     }
 
     /// @notice method that allows a validator to leave the subnet.
-    function leave() external  {
+    function leave() external {
         uint256 collateral = getStakeAmount(msg.sender);
         gateValidatorPowerDelta(msg.sender, collateral, 0);
         validatorsStake[msg.sender] = 0;

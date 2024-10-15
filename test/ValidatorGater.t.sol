@@ -113,13 +113,12 @@ contract ValidatorGaterTest is Test, Utilities {
         address validator = address(4);
         // Must be possible to desactivate the gater
         vm.expectRevert();
-        gater.setActive(false);// Not the owner
+        gater.setActive(false); // Not the owner
         assertEq(gater.isActive(), true);
 
         vm.prank(owner);
         gater.setActive(false);
         assertEq(gater.isActive(), false);
-
 
         // Must not execute functions if inactive
         vm.startPrank(owner);
@@ -132,10 +131,9 @@ contract ValidatorGaterTest is Test, Utilities {
         vm.stopPrank();
     }
 
-
     function testSubnetManagerIntegration() public {
         uint256 minStake = 5;
-        uint256 maxStake = 100;//TODO handle different values for differnt validators
+        uint256 maxStake = 100; //TODO handle different values for differnt validators
         // Deploy SAMf
         SubnetActorManagerFacetMock sa = new SubnetActorManagerFacetMock();
 
@@ -151,7 +149,7 @@ contract ValidatorGaterTest is Test, Utilities {
         // Enforce Min Stake constrain
         vm.prank(validator1);
         vm.expectRevert();
-        sa.join("", minStake - 1);// Cannot join if less than minimum
+        sa.join("", minStake - 1); // Cannot join if less than minimum
 
         assertEq(sa.getStakeAmount(validator1), 0, "Invalid stake amount after join, expected revert");
 
@@ -159,26 +157,26 @@ contract ValidatorGaterTest is Test, Utilities {
         sa.join("", minStake);
 
         assertEq(sa.getStakeAmount(validator1), minStake, "Invalid stake amount after join");
-    
+
         // Stake
         // Enforce Max Stake constrain
         vm.startPrank(validator1);
-        sa.stake(maxStake - minStake);// Remaining amount before maxStake
+        sa.stake(maxStake - minStake); // Remaining amount before maxStake
 
         vm.expectRevert();
-        sa.stake(maxStake + 1);// Cannot stake more than max amount
+        sa.stake(maxStake + 1); // Cannot stake more than max amount
 
         assertEq(sa.getStakeAmount(validator1), maxStake, "Invalid stake amount after stake");
         // Unstake
         // Enforce Min Stake constrain
-        sa.unstake(maxStake - minStake);// Remaining amount before min stake
+        sa.unstake(maxStake - minStake); // Remaining amount before min stake
 
         vm.expectRevert();
-        sa.unstake(1);// The current stake is min Stake so should allow a single token withdraw
+        sa.unstake(1); // The current stake is min Stake so should allow a single token withdraw
 
         assertEq(sa.getStakeAmount(validator1), minStake, "Invalid stake amount after unstake");
         // Leave
-        sa.leave();//TODO cehck this one
+        sa.leave(); //TODO cehck this one
 
         assertEq(sa.getStakeAmount(validator1), 0, "Invalid stake amount after leave");
         vm.stopPrank();
