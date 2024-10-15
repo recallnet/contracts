@@ -12,12 +12,12 @@ for Hoku. It includes the following:
 
 - `Hoku.sol`: An ERC20 token implementation.
 - `Faucet.sol`: The accompanying onchain faucet (rate limiter) contract for dripping testnet funds.
-- `Credits.sol`: Manage subnet credits, including credit purchases, approvals/rejections, and
-  related read-only operations.
-- `interfaces/ICredits.sol`: The interface for the credits contract.
-- `utils/Wrapper.sol`: A library for facilitating proxy calls to WASM contracts from Solidity.
-- `utils/Types.sol`: A library which defines all of the method parameters and return types for the
-  credits contract.
+- `Credit.sol`: Manage subnet credit, including credit purchases, approvals/rejections, and related
+  read-only operations (uses the `LibCredit` library).
+- `interfaces/ICredit.sol`: The interface for the credit contract.
+- `types/`: Various method parameters and return types for core contracts.
+- `utils/LibCredit.sol`: A library for interacting with credits.
+- `utils/LibWasm.sol`: A library for facilitating proxy calls to WASM contracts from Solidity.
 - `utils/solidity-cbor`: Libraries for encoding and decoding CBOR data, used in proxy WASM calls
   (forked from [this repo](https://github.com/smartcontractkit/solidity-cborutils)).
 
@@ -30,7 +30,7 @@ subnet):
 | ------------ | ----------- | -------------------------------------------- |
 | Hoku (ERC20) | Calibration | `0x8e3Fd2b47e564E7D636Fa80082f286eD038BE54b` |
 | Faucet       | Subnet      | `0xA089Efd61db801B27077257b9EB4E95C3b8aD90F` |
-| Credits      | Subnet      | `0x31D31BF66Ed7526c8B44fAa057d68049C18197a7` |
+| Credit       | Subnet      | `0x31D31BF66Ed7526c8B44fAa057d68049C18197a7` |
 
 To get testnet tokens, visit: [https://faucet.hoku.sh](https://faucet.hoku.sh). Also, you can check
 out the `foundry.toml` file to see the RPC URLs for each network (described in more detail below).
@@ -59,7 +59,7 @@ forge build
 
 The scripts for deploying contracts are in `script/` directory:
 
-- `Credits.s.sol`: Deploy the credits contract.
+- `Credit.s.sol`: Deploy the credit contract.
 - `Hoku.s.sol`: Deploy the Hoku ERC20 contract.
 - `Faucet.s.sol`: Deploy the faucet contract.
 
@@ -112,10 +112,10 @@ with 10\*\*18 decimal units).
 PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript 0 5000000000000000000000 --sig 'run(uint8,uint256)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
 ```
 
-Deploy the Credits contract to the localnet subnet:
+Deploy the Credit contract to the localnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Credits.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
 ```
 
 #### Testnet
@@ -135,10 +135,10 @@ with 10\*\*18 decimal units).
 PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript 1 5000000000000000000000 --sig 'run(uint8,uint256)'--rpc-url testnet_subnet --broadcast -g 100000 -vv
 ```
 
-Deploy the Credits contract to the testnet subnet:
+Deploy the Credit contract to the testnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Credits.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url testnet_subnet --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url testnet_subnet --broadcast -g 100000 -vv
 ```
 
 #### Devnet
@@ -152,23 +152,23 @@ pointing to the same environment as the testnet.
 
 ## Development
 
-### Credits contract
+### Credit contract
 
-You can interact with the existing credits contract on the testnet via the address above. If you're
+You can interact with the existing credit contract on the testnet via the address above. If you're
 working on `localnet`, you'll have to deploy this yourself. Here's a quick one-liner to do so—also
-setting the `CREDITS` environment variable to the deployed address:
+setting the `CREDIT` environment variable to the deployed address:
 
 ```
-CREDITS=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/Credits.s.sol \
+CREDIT=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/Credit.s.sol \
 --tc DeployScript 0 \
 --sig 'run(uint8)' \
 --rpc-url localnet_subnet \
---broadcast -g 100000 | grep "0: contract Credits" | awk '{print $NF}')
+--broadcast -g 100000 | grep "0: contract Credit" | awk '{print $NF}')
 ```
 
 #### Methods
 
-The following methods are available on the credits contract, shown with their function signatures.
+The following methods are available on the credit contract, shown with their function signatures.
 Note that overloads are available for some methods, primarily, where the underlying WASM contract
 accepts "optional" arguments. All of the method parameters and return types can be found in
 `util/Types.sol`.
@@ -179,33 +179,33 @@ accepts "optional" arguments. All of the method parameters and return types can 
 - `getAccount(address)`: Get credit account info for an address.
 - `getCreditBalance(address)`: Get credit balance for an address.
 - `getStorageUsage(address)`: Get storage usage for an address.
-- `buyCredit()`: Buy credits for the `msg.sender`.
-- `buyCredit(address)`: Buy credits for the given address.
-- `approveCredit(address)`: Approve credits for an address (`receiver`), assuming `msg.sender` is
-  the owner of the credits (inferred as `from` in underlying logic).
-- `approveCredit(address,address)`: Approve credits for the credit owner (`from`) for an address
+- `buyCredit()`: Buy credit for the `msg.sender`.
+- `buyCredit(address)`: Buy credit for the given address.
+- `approveCredit(address)`: Approve credit for an address (`receiver`), assuming `msg.sender` is the
+  owner of the credit (inferred as `from` in underlying logic).
+- `approveCredit(address,address)`: Approve credit for the credit owner (`from`) for an address
   (`receiver`). Effectively, the same as `approveCredit(address)` but explicitly sets the `from`
   address.
-- `approveCredit(address,address,address)`: Approve credits for the credit owner (`from`) for an
+- `approveCredit(address,address,address)`: Approve credit for the credit owner (`from`) for an
   address (`receiver`), with a restriction on the caller address (`requiredCaller`) (e.g., enforce
   receiver can only use credit at `requiredCaller`).
-- `approveCredit(address,address,address,uint256)`: Approve credits for the credit owner (`from`)
-  for an address (`receiver`), with a restriction on the caller address (`requiredCaller`), also
+- `approveCredit(address,address,address,uint256)`: Approve credit for the credit owner (`from`) for
+  an address (`receiver`), with a restriction on the caller address (`requiredCaller`), also
   providing the `limit` field.
-- `approveCredit(address,address,address,uint256,uint64)`: Approve credits for the credit owner
+- `approveCredit(address,address,address,uint256,uint64)`: Approve credit for the credit owner
   (`from`) for an address (`receiver`), providing all of the optional fields (`requiredCaller`,
   `limit`, and `ttl`).
-- `revokeCredit(address)`: Revoke credits for an address (`receiver`), assuming `msg.sender` is the
-  owner of the credits (inferred as `from` in underlying logic).
-- `revokeCredit(address,address)`: Revoke credits for the credit owner (`from`) for an address
+- `revokeCredit(address)`: Revoke credit for an address (`receiver`), assuming `msg.sender` is the
+  owner of the credit (inferred as `from` in underlying logic).
+- `revokeCredit(address,address)`: Revoke credit for the credit owner (`from`) for an address
   (`receiver`). Effectively, the same as `approveCredit(address)` but explicitly sets the `from`
   address.
-- `revokeCredit(address,address,address)`: Revoke credits for the credit owner (`from`) for an
+- `revokeCredit(address,address,address)`: Revoke credit for the credit owner (`from`) for an
   address (`receiver`), with a restriction on the caller address (`requiredCaller`) (e.g., remove
   permissions for `receiver` at `requiredCaller`).
 
-The overloads above have a bit of nuance when it comes to "optional" arguments. See the `ICredits`
-interface in `interfaces/ICredits.sol` for more details. For example, zero values are interpreted as
+The overloads above have a bit of nuance when it comes to "optional" arguments. See the `ICredit`
+interface in `interfaces/ICredit.sol` for more details. For example, zero values are interpreted as
 null values when encoded in WASM calls.
 
 #### Examples
@@ -227,15 +227,15 @@ of these RPC URLs so these examples can be run as-is:
 export EVM_RPC_URL=testnet_subnet
 ```
 
-We'll define a `CREDITS` environment variable, which points to the credits contract deployment
+We'll define a `CREDIT` environment variable, which points to the credit contract deployment
 address. For example:
 
 ```sh
-export CREDITS=0x138E3aFeb7dC8944d464326cb2ff2b429cdA808b
+export CREDIT=0x138E3aFeb7dC8944d464326cb2ff2b429cdA808b
 ```
 
 And lastly, we'll define a `RECEIVER_ADDR` environment variable, which points to the receiver
-address we'll be approving and revoking credits for. For example:
+address we'll be approving and revoking credit for. For example:
 
 ```sh
 export RECEIVER_ADDR=0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
@@ -245,8 +245,8 @@ export RECEIVER_ADDR=0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
 
 We can fetch the overall subnet stats with the following command:
 
-```solidity
-cast abi-decode "getSubnetStats()((uint256,uint256,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDITS "getSubnetStats()")
+```sh
+cast abi-decode "getSubnetStats()((uint256,uint256,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getSubnetStats()")
 ```
 
 This will return the following values:
@@ -257,7 +257,7 @@ This will return the following values:
 
 Which maps to the `SubnetStats` struct:
 
-```
+```solidity
 struct SubnetStats {
     uint256 balance; // 50000000000000000000000
     uint256 capacityFree; // 4294967296
@@ -276,8 +276,8 @@ struct SubnetStats {
 
 We can fetch the overall credit stats for the subnet with the following command:
 
-```solidity
-cast abi-decode "getCreditStats()((uint256,uint256,uint256,uint256,uint64,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDITS "getCreditStats()")
+```sh
+cast abi-decode "getCreditStats()((uint256,uint256,uint256,uint256,uint64,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getCreditStats()")
 ```
 
 This will return the following values:
@@ -288,7 +288,7 @@ This will return the following values:
 
 Which maps to the `CreditStats` struct:
 
-```
+```solidity
 struct CreditStats {
     uint256 balance; // 50000000000000000000000
     uint256 creditSold; // 50000000000000000000000
@@ -303,8 +303,8 @@ struct CreditStats {
 
 We can fetch the overall storage stats for the subnet with the following command:
 
-```solidity
-cast abi-decode "getStorageStats()((uint256,uint256,uint64,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDITS "getStorageStats()")
+```sh
+cast abi-decode "getStorageStats()((uint256,uint256,uint64,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getStorageStats()")
 ```
 
 This will return the following values:
@@ -315,7 +315,7 @@ This will return the following values:
 
 Which maps to the `StorageStats` struct:
 
-```
+```solidity
 StorageStats {
     uint256 capacityFree; // 4294967296
     uint256 capacityUsed; // 0
@@ -330,7 +330,7 @@ We can get the credit account info for the address at `EVM_ADDRESS` (the variabl
 you could provide any account's EVM public key that exists in the subnet.
 
 ```solidity
-cast abi-decode "getAccount(address)((uint256,uint256,uint256,uint64,(address,(address,(uint256,uint256,uint64))[])[]))" $(cast call --rpc-url $EVM_RPC_URL $CREDITS "getAccount(address)" $EVM_ADDRESS)
+cast abi-decode "getAccount(address)((uint256,uint256,uint256,uint64,(address,(address,(uint256,uint256,uint64))[])[]))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)
 ```
 
 This will return the following values:
@@ -341,7 +341,7 @@ This will return the following values:
 
 Which maps to the `Account` struct:
 
-```
+```solidity
 struct Account {
     uint256 capacityUsed; // 0
     uint256 creditFree; // 5000000000000000000000
@@ -354,7 +354,7 @@ struct Account {
 The `approvals` array is empty if no approvals have been made. However, our example _does_ have
 approvals authorized. We can expand this to be interpreted as the following:
 
-```
+```solidity
 struct Approvals {
     address receiver; // 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
     Approval[] approval; // See Approval struct below
@@ -374,14 +374,14 @@ struct CreditApproval {
 
 Due to intricacies with optional arguments in WASM being used in Solidity, you can interpret zero
 values as null values in the structs above. That is, the example address has no restrictions on the
-`limit` or `expiry` with using the delegated/approved credits from the owner's account.
+`limit` or `expiry` with using the delegated/approved credit from the owner's account.
 
 ##### Get credit balance for an account
 
 Fetch the credit balance for the address at `EVM_ADDRESS`:
 
-```solidity
-cast abi-decode "getCreditBalance(address)((uint256,uint256,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDITS "getCreditBalance(address)" $EVM_ADDRESS)
+```sh
+cast abi-decode "getCreditBalance(address)((uint256,uint256,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getCreditBalance(address)" $EVM_ADDRESS)
 ```
 
 This will return the following values:
@@ -392,7 +392,7 @@ This will return the following values:
 
 Which maps to the `Balance` struct:
 
-```
+```solidity
 struct Balance {
     uint256 creditFree; // 5000000000000000000000
     uint256 creditCommitted; // 0
@@ -404,8 +404,8 @@ struct Balance {
 
 Fetch the storage usage for the address at `EVM_ADDRESS`:
 
-```solidity
-cast abi-decode "getStorageUsage(address)((uint256))" $(cast call --rpc-url $EVM_RPC_URL $CREDITS "getStorageUsage(address)" $EVM_ADDRESS)
+```sh
+cast abi-decode "getStorageUsage(address)((uint256))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getStorageUsage(address)" $EVM_ADDRESS)
 ```
 
 This will return the following values:
@@ -416,36 +416,36 @@ This will return the following values:
 
 Which maps to the `Usage` struct:
 
-```
+```solidity
 struct Usage {
     uint256 capacityUsed; // 0
 }
 ```
 
-##### Buy credits for an address
+##### Buy credit for an address
 
-You can buy credits for your address with the following command, which will buy credits equivalent
-to 1 native subnet token (via `msg.value`) for the `msg.sender`:
+You can buy credit for your address with the following command, which will buy credit equivalent to
+1 native subnet token (via `msg.value`) for the `msg.sender`:
 
-```solidity
-cast send --rpc-url $EVM_RPC_URL $CREDITS "buyCredit()" $EVM_ADDRESS --value 1ether --private-key $PRIVATE_KEY
+```sh
+cast send --rpc-url $EVM_RPC_URL $CREDIT "buyCredit()" $EVM_ADDRESS --value 1ether --private-key $PRIVATE_KEY
 ```
 
-Or, you can buy credits for a specific EVM address with the following command:
+Or, you can buy credit for a specific EVM address with the following command:
 
-```solidity
-cast send --rpc-url $EVM_RPC_URL $CREDITS "buyCredit(address)" $EVM_ADDRESS --value 1ether --private-key $PRIVATE_KEY
+```sh
+cast send --rpc-url $EVM_RPC_URL $CREDIT "buyCredit(address)" $EVM_ADDRESS --value 1ether --private-key $PRIVATE_KEY
 ```
 
-##### Approve credits for an address
+##### Approve credit for an address
 
-Approving credits has a few variations. The first variation is approving credits for the address
-defined in the call, assuming the `msg.sender` is the owner of the credits. The `RECEIVER_ADDR`
-address is the `receiver` we want to approve credits for (defined as
+Approving credit has a few variations. The first variation is approving credit for the address
+defined in the call, assuming the `msg.sender` is the owner of the credit. The `RECEIVER_ADDR`
+address is the `receiver` we want to approve credit for (defined as
 `0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65` above).
 
-```solidity
-cast send --rpc-url $EVM_RPC_URL $CREDITS "approveCredit(address)" $RECEIVER_ADDR --private-key $PRIVATE_KEY
+```sh
+cast send --rpc-url $EVM_RPC_URL $CREDIT "approveCredit(address)" $RECEIVER_ADDR --private-key $PRIVATE_KEY
 ```
 
 There also exists `approveCredit(address,address)` and `approveCredit(address,address,address)`,
@@ -453,15 +453,15 @@ which inherently assumes a null value for the `limit` and `ttl` fields, and the 
 addresses is `from`, `receiver`, and `requiredCaller` (for the latter variation). Here's an example
 using the latter variation, effectively the same as the former due to the use of the zero address:
 
-```
-cast send --rpc-url $EVM_RPC_URL $CREDITS "approveCredit(address,address,address)" $EVM_ADDRESS $RECEIVER_ADDR 0x0000000000000000000000000000000000000000 --private-key $PRIVATE_KEY
+```sh
+cast send --rpc-url $EVM_RPC_URL $CREDIT "approveCredit(address,address,address)" $EVM_ADDRESS $RECEIVER_ADDR 0x0000000000000000000000000000000000000000 --private-key $PRIVATE_KEY
 ```
 
-If, instead, we wanted to also restrict how the `receiver` can use the credits, we would set the
+If, instead, we wanted to also restrict how the `receiver` can use the credit, we would set the
 `requiredCaller` (e.g., a contract address at `0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc`):
 
-```
-cast send --rpc-url $EVM_RPC_URL $CREDITS "approveCredit(address,address,address)" $EVM_ADDRESS $RECEIVER_ADDR 0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc --private-key $PRIVATE_KEY
+```sh
+cast send --rpc-url $EVM_RPC_URL $CREDIT "approveCredit(address,address,address)" $EVM_ADDRESS $RECEIVER_ADDR 0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc --private-key $PRIVATE_KEY
 ```
 
 This would restrict the `receiver` to only be able to use the approved `from` address at the
@@ -474,29 +474,29 @@ This would restrict the `receiver` to only be able to use the approved `from` ad
 
 Lastly, if we want to include all of the optional fields, we can use the following command:
 
+```sh
+cast send --rpc-url $EVM_RPC_URL $CREDIT "approveCredit(address,address,address,uint256,uint64)" $EVM_ADDRESS $RECEIVER_ADDR 0x0000000000000000000000000000000000000000 100 3600 --private-key $PRIVATE_KEY
 ```
-cast send --rpc-url $EVM_RPC_URL $CREDITS "approveCredit(address,address,address,uint256,uint64)" $EVM_ADDRESS $RECEIVER_ADDR 0x0000000000000000000000000000000000000000 100 3600 --private-key $PRIVATE_KEY
-```
 
-This includes the `limit` field set to `100` credits, and the `ttl` set to `3600` seconds (`1`
-hour). If either of these should instead be null, just set them to `0`.
+This includes the `limit` field set to `100` credit, and the `ttl` set to `3600` seconds (`1` hour).
+If either of these should instead be null, just set them to `0`.
 
-##### Revoke credits for an address
+##### Revoke credit for an address
 
-Revoking credits is the opposite of approving credits and also has a few variations. The simplest
-form is revoking credits for the address defining in the call (`receiver`), which assumes the
-`msg.sender` is the owner of the credits.
+Revoking credit is the opposite of approving credit and also has a few variations. The simplest form
+is revoking credit for the address defining in the call (`receiver`), which assumes the `msg.sender`
+is the owner of the credit.
 
-```
-cast send --rpc-url $EVM_RPC_URL $CREDITS "revokeCredit(address)" $RECEIVER_ADDR --private-key $PRIVATE_KEY
+```sh
+cast send --rpc-url $EVM_RPC_URL $CREDIT "revokeCredit(address)" $RECEIVER_ADDR --private-key $PRIVATE_KEY
 ```
 
 The other variants are `revokeCredit(address,address)` and `revokeCredit(address,address,address)`.
 Just like `approveCredit`, the order is: `from`, `receiver`, and `requiredCaller`. Here's an example
 using the latter variation:
 
-```
-cast send --rpc-url $EVM_RPC_URL $CREDITS "revokeCredit(address,address,address)" $EVM_ADDRESS $RECEIVER_ADDR 0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc --private-key $PRIVATE_KEY
+```sh
+cast send --rpc-url $EVM_RPC_URL $CREDIT "revokeCredit(address,address,address)" $EVM_ADDRESS $RECEIVER_ADDR 0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc --private-key $PRIVATE_KEY
 ```
 
 This would revoke the `receiver`'s ability to use the `from` address at the `requiredCaller`

@@ -1,18 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-/// @dev Environment helper for setting the chain environment in scripts or contracts.
-/// @param Local: Local (localnet or devnet) chain
-/// @param Testnet: Testnet chain
-/// @param Mainnet: Mainnet chain
-/// @param Foundry: Testing environment only within `forge test`
-enum Environment {
-    Local,
-    Testnet,
-    Mainnet,
-    Foundry
-}
-
 /// @dev The stored representation of a credit account.
 /// @param capacityUsed (uint256): Total size of all blobs managed by the account.
 /// @param creditFree (uint256): Current free credit in byte-blocks that can be used for new commitments.

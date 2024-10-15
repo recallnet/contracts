@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-import {Account, Balance, CreditApproval, CreditStats, StorageStats, SubnetStats, Usage} from "../util/Types.sol";
+import {
+    Account, Balance, CreditApproval, CreditStats, StorageStats, SubnetStats, Usage
+} from "../types/CreditTypes.sol";
 
 /// @dev Hoku Blobs actor EVM interface for managing credits, and querying credit or storage stats.
 /// See Rust implementation for details:
 /// https://github.com/hokunet/ipc/blob/develop/fendermint/actors/blobs/src/actor.rs
-interface ICredits {
+interface ICredit {
     /// @dev Emitted when an account buys credits.
     event BuyCredit(address indexed addr, uint256 amount);
 
     /// @dev Emitted when an account approves credits.
-    event ApproveCredit(address indexed from, address indexed receiver, CreditApproval approval);
-
-    /// @dev Emitted when an account revokes credits.
-    event RevokeCredit(address indexed from, address indexed receiver);
+    event ApproveCredit(
+        address indexed from, address indexed receiver, address indexed requiredCaller, uint256 limit, uint64 ttl
+    );
 
     /// @dev Emitted when an account revokes credits.
     event RevokeCredit(address indexed from, address indexed receiver, address indexed requiredCaller);

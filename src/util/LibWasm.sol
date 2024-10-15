@@ -11,9 +11,9 @@ import {ByteParser} from "./solidity-cbor/ByteParser.sol";
 import {CBORDecoding} from "./solidity-cbor/CBORDecoding.sol";
 import {CBOR} from "./solidity-cbor/CBOREncoding.sol";
 
-/// @title Wrapper Library
+/// @title WASM adapter library
 /// @dev Utility functions for interacting with WASM actors and encoding/decoding CBOR.
-library Wrapper {
+library LibWasm {
     uint64 internal constant EMPTY_CODEC = Misc.NONE_CODEC;
     uint64 internal constant CBOR_CODEC = Misc.CBOR_CODEC;
 

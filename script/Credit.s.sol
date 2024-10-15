@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-import {Credits} from "../src/Credits.sol";
-import {Environment} from "../src/util/Types.sol";
 import {Script} from "forge-std/Script.sol";
 import {console2 as console} from "forge-std/console2.sol";
+
+import {Credit} from "../src/Credit.sol";
+import {Environment} from "../src/types/CommonTypes.sol";
 
 contract DeployScript is Script {
     string constant PRIVATE_KEY = "PRIVATE_KEY";
 
     function setUp() public {}
 
-    function run(Environment env) public returns (Credits) {
+    function run(Environment env) public returns (Credit) {
         if (vm.envExists(PRIVATE_KEY)) {
             uint256 privateKey = vm.envUint(PRIVATE_KEY);
             if (env == Environment.Local) {
@@ -29,10 +30,10 @@ contract DeployScript is Script {
             revert("PRIVATE_KEY not set");
         }
 
-        Credits credits = new Credits();
+        Credit credit = new Credit();
 
         vm.stopBroadcast();
 
-        return credits;
+        return credit;
     }
 }

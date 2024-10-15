@@ -8,7 +8,7 @@ import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts
 import {ReentrancyGuardUpgradeable} from
     "@openzeppelin/contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol";
 
-import {Environment} from "./util/Types.sol";
+import {Environment} from "./types/CommonTypes.sol";
 
 /// @title Hoku Token Contract
 /// @dev Implements an upgradeable ERC20 token with additional features like pausing and minting

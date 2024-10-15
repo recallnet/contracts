@@ -6,7 +6,7 @@ import {Script} from "forge-std/Script.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
 import {Hoku} from "../src/Hoku.sol";
-import {Environment} from "../src/util/Types.sol";
+import {Environment} from "../src/types/CommonTypes.sol";
 
 contract DeployScript is Script {
     string constant PRIVATE_KEY = "PRIVATE_KEY";

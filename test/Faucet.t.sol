@@ -9,7 +9,7 @@ import {DeployScript as FaucetDeployer} from "../script/Faucet.s.sol";
 import {DeployScript as TokenDeployer} from "../script/Hoku.s.sol";
 import {Faucet, TryLater} from "../src/Faucet.sol";
 import {Hoku} from "../src/Hoku.sol";
-import {Environment} from "../src/util/Types.sol";
+import {Environment} from "../src/types/CommonTypes.sol";
 
 contract FaucetTest is Test {
     Faucet internal faucet;
