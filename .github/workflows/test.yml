@@ -45,7 +45,7 @@ jobs:
           forge build --sizes
         id: build
 
-      - name: Run Forge tests with coverage
+      - name: Run Forge tests
         run: |
-          forge coverage -vvv
+          forge test -vvv
         id: test

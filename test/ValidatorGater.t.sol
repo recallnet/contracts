@@ -8,6 +8,7 @@ import {SubnetIDHelper} from "../src/lib/SubnetIDHelper.sol";
 import {Utilities} from "../src/Utilities.sol";
 import {DeployScript} from "../script/ValidatorGater.s.sol";
 import {InvalidSubnet, NotAuthorized, ValidatorPowerChangeDenied} from "../src/errors/IPCErrors.sol";
+import {SubnetActorManagerFacetMock} from "./mocks/SubnetActorManagerFacetMock.sol";
 
 contract ValidatorGaterTest is Test, Utilities {
     using SubnetIDHelper for SubnetID;
@@ -105,6 +106,81 @@ contract ValidatorGaterTest is Test, Utilities {
         SubnetID memory wrongSubnet = subnet = ROOT_SUBNET_ID.createSubnetId(address(this));
         vm.expectRevert(InvalidSubnet.selector);
         gater.interceptPowerDelta(wrongSubnet, validator1, 0, 50);
+        vm.stopPrank();
+    }
+
+    function testUnactiveGater() public {
+        address validator = address(4);
+        // Must be possible to desactivate the gater
+        vm.expectRevert();
+        gater.setActive(false);// Not the owner
+        assertEq(gater.isActive(), true);
+
+        vm.prank(owner);
+        gater.setActive(false);
+        assertEq(gater.isActive(), false);
+
+
+        // Must not execute functions if inactive
+        vm.startPrank(owner);
+        gater.approve(validator1, 10, 10);
+
+        (uint256 min, uint256 max) = gater.allowed(validator);
+        assertEq(min, 0);
+        assertEq(max, 0);
+
+        vm.stopPrank();
+    }
+
+
+    function testSubnetManagerIntegration() public {
+        uint256 minStake = 5;
+        uint256 maxStake = 100;//TODO handle different values for differnt validators
+        // Deploy SAMf
+        SubnetActorManagerFacetMock sa = new SubnetActorManagerFacetMock();
+
+        sa.setValidatorGater(address(gater));
+        SubnetID memory saSubnet = ROOT_SUBNET_ID.createSubnetId(address(sa));
+        sa.setParentId(ROOT_SUBNET_ID);
+
+        vm.startPrank(owner);
+        gater.setSubnet(saSubnet);
+        gater.approve(validator1, minStake, maxStake);
+        vm.stopPrank();
+        // Join
+        // Enforce Min Stake constrain
+        vm.prank(validator1);
+        vm.expectRevert();
+        sa.join("", minStake - 1);// Cannot join if less than minimum
+
+        assertEq(sa.getStakeAmount(validator1), 0, "Invalid stake amount after join, expected revert");
+
+        vm.prank(validator1);
+        sa.join("", minStake);
+
+        assertEq(sa.getStakeAmount(validator1), minStake, "Invalid stake amount after join");
+    
+        // Stake
+        // Enforce Max Stake constrain
+        vm.startPrank(validator1);
+        sa.stake(maxStake - minStake);// Remaining amount before maxStake
+
+        vm.expectRevert();
+        sa.stake(maxStake + 1);// Cannot stake more than max amount
+
+        assertEq(sa.getStakeAmount(validator1), maxStake, "Invalid stake amount after stake");
+        // Unstake
+        // Enforce Min Stake constrain
+        sa.unstake(maxStake - minStake);// Remaining amount before min stake
+
+        vm.expectRevert();
+        sa.unstake(1);// The current stake is min Stake so should allow a single token withdraw
+
+        assertEq(sa.getStakeAmount(validator1), minStake, "Invalid stake amount after unstake");
+        // Leave
+        sa.leave();//TODO cehck this one
+
+        assertEq(sa.getStakeAmount(validator1), 0, "Invalid stake amount after leave");
         vm.stopPrank();
     }
 }
