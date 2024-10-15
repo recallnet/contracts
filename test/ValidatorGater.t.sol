@@ -133,7 +133,7 @@ contract ValidatorGaterTest is Test, Utilities {
 
     function testSubnetManagerIntegration() public {
         uint256 minStake = 5;
-        uint256 maxStake = 100; //TODO handle different values for differnt validators
+        uint256 maxStake = 100;
         // Deploy SAMf
         SubnetActorManagerFacetMock sa = new SubnetActorManagerFacetMock();
 
@@ -144,6 +144,7 @@ contract ValidatorGaterTest is Test, Utilities {
         vm.startPrank(owner);
         gater.setSubnet(saSubnet);
         gater.approve(validator1, minStake, maxStake);
+        gater.approve(validator2, minStake + 1, maxStake + 1);
         vm.stopPrank();
         // Join
         // Enforce Min Stake constrain
@@ -157,6 +158,19 @@ contract ValidatorGaterTest is Test, Utilities {
         sa.join("", minStake);
 
         assertEq(sa.getStakeAmount(validator1), minStake, "Invalid stake amount after join");
+        // Different validators have different requirements
+        vm.prank(validator2);
+        vm.expectRevert();
+        sa.join("", minStake); // Invalid range for validator #2
+
+        assertEq(
+            sa.getStakeAmount(validator2), 0, "Invalid stake amount after join, expected revert for second validator"
+        );
+
+        vm.prank(validator2);
+        sa.join("", minStake + 1);
+
+        assertEq(sa.getStakeAmount(validator2), minStake + 1, "Invalid stake amount after join for second validator");
 
         // Stake
         // Enforce Max Stake constrain
