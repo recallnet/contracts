@@ -75,6 +75,9 @@ contract ValidatorGater is IValidatorGater, Ownable {
         override
         whenActive
     {
+        // unstake has checks to avoid newPower being zero, therefore zero means its leaving the network
+        if (newPower == 0) return;
+
         SubnetID memory targetSubnet = subnet;
 
         if (!id.equals(targetSubnet)) {

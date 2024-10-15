@@ -176,7 +176,7 @@ contract ValidatorGaterTest is Test, Utilities {
 
         assertEq(sa.getStakeAmount(validator1), minStake, "Invalid stake amount after unstake");
         // Leave
-        sa.leave(); //TODO cehck this one
+        sa.leave();
 
         assertEq(sa.getStakeAmount(validator1), 0, "Invalid stake amount after leave");
         vm.stopPrank();
