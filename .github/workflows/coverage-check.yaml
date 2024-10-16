@@ -32,8 +32,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Install forge (foundry)
-        run: curl -L https://foundry.paradigm.xyz | bash && foundryup
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
 
       - name: Install forge-coverage
         run: forge install foundry-rs/forge-coverage
