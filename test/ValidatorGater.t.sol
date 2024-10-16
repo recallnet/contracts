@@ -29,8 +29,9 @@ contract ValidatorGaterTest is Test, Utilities {
         subnet = ROOT_SUBNET_ID.createSubnetId(SUBNET_ROUTE);
         owner = gater.owner();
         //  Set a subnet
-        vm.prank(owner);
+        vm.startPrank(owner);
         gater.setSubnet(subnet);
+        vm.stopPrank();
     }
 
     function testSetSubnet() public view {

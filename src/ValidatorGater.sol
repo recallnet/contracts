@@ -5,19 +5,18 @@ import {IValidatorGater} from "./interfaces/IValidatorGater.sol";
 import {InvalidSubnet, NotAuthorized, ValidatorPowerChangeDenied} from "./errors/IPCErrors.sol";
 import {SubnetID} from "./structs/Subnet.sol";
 import {SubnetIDHelper} from "./lib/SubnetIDHelper.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import "forge-std/console.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 
 /// The power range that an approved validator can have.
 struct PowerRange {
     uint256 min;
     uint256 max;
 }
-// TODO add notice to all functions
+
 /// This is a simple implementation of `IValidatorGater`. It makes sure the exact power change
 /// request is approved. This is a very strict requirement.
-
-contract ValidatorGater is IValidatorGater, Ownable {
+contract ValidatorGater is IValidatorGater, Initializable, OwnableUpgradeable {
     using SubnetIDHelper for SubnetID;
 
     bool private _active;
@@ -28,10 +27,12 @@ contract ValidatorGater is IValidatorGater, Ownable {
 
     event ActiveStateChange(bool active, address account);
 
-    constructor() Ownable(msg.sender) {
+    function initialize() public initializer {
+        __Ownable_init(msg.sender);
         _active = true;
     }
 
+    /// @notice Indicates whether the gate is active or not
     function isActive() external view returns (bool) {
         return _active;
     }
