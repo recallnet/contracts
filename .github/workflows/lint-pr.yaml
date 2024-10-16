@@ -1,4 +1,4 @@
-name: "Lint PR"
+name: "Lint PR title and commits"
 
 on:
   pull_request:
@@ -22,7 +22,6 @@ jobs:
         with:
           ## A non-comprehensive list of scopes. Scope is not required, but strongly encouraged, as it brings
           ## structure to changelogs.
-          ## Note: releases are committed with "chore(release): <version or [module@version]> ".
           scopes: |
             contracts 
             test

@@ -1,0 +1,51 @@
+name: Solidity Lint, and Coverage
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Solidity Linter
+        run: npx solhint 'contracts/**/*.sol'
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Install forge (foundry)
+        run: curl -L https://foundry.paradigm.xyz | bash && foundryup
+
+      - name: Install forge-coverage
+        run: forge install foundry-rs/forge-coverage
+
+      - name: Run Coverage
+        run: forge coverage --report lcov
+    # Check fails if coverage percentage falls under 80%
+      - name: Check Coverage Threshold
+        run: |
+          COVERAGE=$(forge coverage --report summary | grep 'Total coverage:' | awk '{print $3}' | cut -d'%' -f1)
+          echo "Coverage is $COVERAGE%"
+          if [ "$COVERAGE" -lt 80 ]; then
+            echo "Code coverage ($COVERAGE%) is below the threshold (80%)"
+            exit 1
+          fi
