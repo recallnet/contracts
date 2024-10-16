@@ -10,104 +10,101 @@ import {LibCredit} from "./util/LibCredit.sol";
 /// @title Credits Contract
 /// @dev Implementation of the Hoku Blobs actor EVM interface. See {ICredit} for details.
 contract Credit is ICredit {
-    using LibCredit for bytes;
-
     /// @dev See {ICredit-getSubnetStats}.
-    function getSubnetStats() external view returns (SubnetStats memory stats) {
-        return LibCredit.getSubnetStats();
+    function getSubnetStats() public view returns (SubnetStats memory stats) {
+        bytes memory data = LibCredit.getSubnetStats();
+        return LibCredit.decodeSubnetStats(data);
     }
 
     /// @dev See {ICredit-getAccount}.
-    function getAccount(address addr) external view returns (Account memory account) {
-        return LibCredit.getAccount(addr);
+    function getAccount(address addr) public view returns (Account memory account) {
+        bytes memory data = LibCredit.getAccount(addr);
+        return LibCredit.decodeAccount(data);
     }
 
     /// @dev See {ICredit-getStorageUsage}.
     function getStorageUsage(address addr) external view returns (Usage memory usage) {
-        return LibCredit.getStorageUsage(addr);
+        Account memory account = getAccount(addr);
+        return LibCredit.accountToUsage(account);
     }
 
     /// @dev See {ICredit-getStorageStats}.
     function getStorageStats() external view returns (StorageStats memory stats) {
-        return LibCredit.getStorageStats();
+        SubnetStats memory subnetStats = getSubnetStats();
+        return LibCredit.subnetStatsToStorageStats(subnetStats);
     }
 
     /// @dev See {ICredit-getCreditStats}.
     function getCreditStats() external view returns (CreditStats memory stats) {
-        return LibCredit.getCreditStats();
+        SubnetStats memory subnetStats = getSubnetStats();
+        return LibCredit.subnetStatsToCreditStats(subnetStats);
     }
 
     /// @dev See {ICredit-getCreditBalance}.
     function getCreditBalance(address addr) external view returns (Balance memory balance) {
-        return LibCredit.getCreditBalance(addr);
+        Account memory account = getAccount(addr);
+        return LibCredit.accountToBalance(account);
     }
 
     /// @dev See {ICredit-buyCredit}.
-    function buyCredit() external payable returns (Balance memory balance) {
+    function buyCredit() external payable {
+        LibCredit.buyCredit(msg.sender);
         emit BuyCredit(msg.sender, msg.value);
-        return LibCredit.buyCredit(msg.sender);
     }
 
     /// @dev See {ICredit-buyCredit}.
-    function buyCredit(address recipient) external payable returns (Balance memory balance) {
+    function buyCredit(address recipient) external payable {
+        LibCredit.buyCredit(recipient);
         emit BuyCredit(recipient, msg.value);
-        return LibCredit.buyCredit(recipient);
     }
 
     /// @dev See {ICredit-approveCredit}.
-    function approveCredit(address receiver) external returns (CreditApproval memory approval) {
+    function approveCredit(address receiver) external {
+        LibCredit.approveCredit(msg.sender, receiver, address(0), 0, 0);
         emit ApproveCredit(msg.sender, receiver, address(0), 0, 0);
-        return LibCredit.approveCredit(msg.sender, receiver, address(0), 0, 0);
     }
 
     /// @dev See {ICredit-approveCredit}.
-    function approveCredit(address from, address receiver) external returns (CreditApproval memory approval) {
+    function approveCredit(address from, address receiver) external {
+        LibCredit.approveCredit(from, receiver, address(0), 0, 0);
         emit ApproveCredit(from, receiver, address(0), 0, 0);
-        return LibCredit.approveCredit(from, receiver, address(0), 0, 0);
     }
 
     /// @dev See {ICredit-approveCredit}.
-    function approveCredit(address from, address receiver, address requiredCaller)
-        external
-        returns (CreditApproval memory approval)
-    {
+    function approveCredit(address from, address receiver, address requiredCaller) external {
+        LibCredit.approveCredit(from, receiver, requiredCaller, 0, 0);
         emit ApproveCredit(from, receiver, requiredCaller, 0, 0);
-        return LibCredit.approveCredit(from, receiver, requiredCaller, 0, 0);
     }
 
     /// @dev See {ICredit-approveCredit}.
-    function approveCredit(address from, address receiver, address requiredCaller, uint256 limit)
-        external
-        returns (CreditApproval memory approval)
-    {
+    function approveCredit(address from, address receiver, address requiredCaller, uint256 limit) external {
+        LibCredit.approveCredit(from, receiver, requiredCaller, limit, 0);
         emit ApproveCredit(from, receiver, requiredCaller, limit, 0);
-        return LibCredit.approveCredit(from, receiver, requiredCaller, limit, 0);
     }
 
     /// @dev See {ICredit-approveCredit}.
     function approveCredit(address from, address receiver, address requiredCaller, uint256 limit, uint64 ttl)
         external
-        returns (CreditApproval memory approval)
     {
+        LibCredit.approveCredit(from, receiver, requiredCaller, limit, ttl);
         emit ApproveCredit(from, receiver, requiredCaller, limit, ttl);
-        return LibCredit.approveCredit(from, receiver, requiredCaller, limit, ttl);
     }
 
     /// @dev See {ICredit-revokeCredit}.
     function revokeCredit(address receiver) external {
+        LibCredit.revokeCredit(msg.sender, receiver, address(0));
         emit RevokeCredit(msg.sender, receiver, address(0));
-        return LibCredit.revokeCredit(msg.sender, receiver, address(0));
     }
 
     /// @dev See {ICredit-revokeCredit}.
     function revokeCredit(address from, address receiver) external {
+        LibCredit.revokeCredit(from, receiver, address(0));
         emit RevokeCredit(from, receiver, address(0));
-        return LibCredit.revokeCredit(from, receiver, address(0));
     }
 
     /// @dev See {ICredit-revokeCredit}.
     function revokeCredit(address from, address receiver, address requiredCaller) external {
+        LibCredit.revokeCredit(from, receiver, requiredCaller);
         emit RevokeCredit(from, receiver, requiredCaller);
-        return LibCredit.revokeCredit(from, receiver, requiredCaller);
     }
 }
