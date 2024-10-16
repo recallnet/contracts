@@ -17,3 +17,4 @@ docs/
 settings.json
 
 .DS_Store
+node_modules/
