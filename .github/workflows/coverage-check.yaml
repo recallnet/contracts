@@ -21,7 +21,7 @@ jobs:
           node-version: '18'
 
       - name: Install Dependencies
-        run: npm install
+        run: forge install
 
       - name: Run Solidity Linter
         run: npx solhint 'contracts/**/*.sol'
