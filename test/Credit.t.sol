@@ -17,4 +17,6 @@ contract CreditTest is Test, Credit {
         CreditDeployer creditDeployer = new CreditDeployer();
         credit = creditDeployer.run(Environment.Foundry);
     }
+
+    // TODO: add integration tests once it's possible in CI
 }

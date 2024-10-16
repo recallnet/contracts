@@ -11,39 +11,33 @@ import {LibCredit} from "./util/LibCredit.sol";
 /// @dev Implementation of the Hoku Blobs actor EVM interface. See {ICredit} for details.
 contract Credit is ICredit {
     /// @dev See {ICredit-getSubnetStats}.
-    function getSubnetStats() public view returns (SubnetStats memory stats) {
-        bytes memory data = LibCredit.getSubnetStats();
-        return LibCredit.decodeSubnetStats(data);
+    function getSubnetStats() external view returns (SubnetStats memory stats) {
+        return LibCredit.getSubnetStats();
     }
 
     /// @dev See {ICredit-getAccount}.
-    function getAccount(address addr) public view returns (Account memory account) {
-        bytes memory data = LibCredit.getAccount(addr);
-        return LibCredit.decodeAccount(data);
+    function getAccount(address addr) external view returns (Account memory account) {
+        return LibCredit.getAccount(addr);
     }
 
     /// @dev See {ICredit-getStorageUsage}.
     function getStorageUsage(address addr) external view returns (Usage memory usage) {
-        Account memory account = getAccount(addr);
-        return LibCredit.accountToUsage(account);
+        return LibCredit.getStorageUsage(addr);
     }
 
     /// @dev See {ICredit-getStorageStats}.
     function getStorageStats() external view returns (StorageStats memory stats) {
-        SubnetStats memory subnetStats = getSubnetStats();
-        return LibCredit.subnetStatsToStorageStats(subnetStats);
+        return LibCredit.getStorageStats();
     }
 
     /// @dev See {ICredit-getCreditStats}.
     function getCreditStats() external view returns (CreditStats memory stats) {
-        SubnetStats memory subnetStats = getSubnetStats();
-        return LibCredit.subnetStatsToCreditStats(subnetStats);
+        return LibCredit.getCreditStats();
     }
 
     /// @dev See {ICredit-getCreditBalance}.
     function getCreditBalance(address addr) external view returns (Balance memory balance) {
-        Account memory account = getAccount(addr);
-        return LibCredit.accountToBalance(account);
+        return LibCredit.getCreditBalance(addr);
     }
 
     /// @dev See {ICredit-buyCredit}.

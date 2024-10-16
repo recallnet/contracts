@@ -28,7 +28,7 @@ library LibCredit {
     /// @dev Helper function to decode the subnet stats from CBOR to solidity.
     /// @param data The encoded CBOR array of stats.
     /// @return stats The decoded stats.
-    function decodeSubnetStats(bytes memory data) external view returns (SubnetStats memory stats) {
+    function decodeSubnetStats(bytes memory data) internal view returns (SubnetStats memory stats) {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return stats;
         stats.balance = decoded[0].decodeCborBytesToUint256();
@@ -46,7 +46,7 @@ library LibCredit {
     /// @dev Helper function to decode an account from CBOR to solidity.
     /// @param data The encoded CBOR array of the account.
     /// @return account The decoded account.
-    function decodeAccount(bytes memory data) external view returns (Account memory account) {
+    function decodeAccount(bytes memory data) internal view returns (Account memory account) {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return account;
         account.capacityUsed = decoded[0].decodeCborBigIntToUint256();
@@ -59,7 +59,7 @@ library LibCredit {
     /// @dev Helper function to decode a credit approval from CBOR to solidity.
     /// @param data The encoded CBOR array of a credit approval.
     /// @return approval The decoded approval.
-    function decodeCreditApproval(bytes memory data) public view returns (CreditApproval memory approval) {
+    function decodeCreditApproval(bytes memory data) internal view returns (CreditApproval memory approval) {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return approval;
         // Note: `limit` is encoded as a BigUInt (single array with no sign bit and values) when writing data, but it
@@ -102,7 +102,7 @@ library LibCredit {
         address requiredCaller,
         uint256 limit,
         uint64 ttl
-    ) public pure returns (bytes memory) {
+    ) internal pure returns (bytes memory) {
         bytes[] memory encoded = new bytes[](5);
         encoded[0] = from.encodeCborAddress();
         encoded[1] = receiver.encodeCborAddress();
@@ -122,7 +122,7 @@ library LibCredit {
     /// if unused, indicating a null value.
     /// @return encoded The encoded params.
     function encodeRevokeCreditParams(address from, address receiver, address requiredCaller)
-        public
+        internal
         pure
         returns (bytes memory)
     {
@@ -137,7 +137,7 @@ library LibCredit {
     /// @dev Helper function to convert a credit account to a balance.
     /// @param account The account to convert.
     /// @return balance The balance of the account.
-    function accountToBalance(Account memory account) external pure returns (Balance memory balance) {
+    function accountToBalance(Account memory account) internal pure returns (Balance memory balance) {
         balance.creditFree = account.creditFree;
         balance.creditCommitted = account.creditCommitted;
         balance.lastDebitEpoch = account.lastDebitEpoch;
@@ -147,7 +147,7 @@ library LibCredit {
     /// @param subnetStats The subnet stats to convert.
     /// @return stats The storage stats.
     function subnetStatsToStorageStats(SubnetStats memory subnetStats)
-        external
+        internal
         pure
         returns (StorageStats memory stats)
     {
@@ -160,7 +160,7 @@ library LibCredit {
     /// @dev Helper function to convert a credit account to a usage.
     /// @param account The account to convert.
     /// @return usage The usage of the account.
-    function accountToUsage(Account memory account) external pure returns (Usage memory usage) {
+    function accountToUsage(Account memory account) internal pure returns (Usage memory usage) {
         usage.capacityUsed = account.capacityUsed;
     }
 
@@ -168,7 +168,7 @@ library LibCredit {
     /// @param subnetStats The subnet stats to convert.
     /// @return stats The credit stats.
     function subnetStatsToCreditStats(SubnetStats memory subnetStats)
-        external
+        internal
         pure
         returns (CreditStats memory stats)
     {
@@ -181,17 +181,49 @@ library LibCredit {
     }
 
     /// @dev Get the subnet stats.
-    /// @return data The subnet stats.
-    function getSubnetStats() external view returns (bytes memory data) {
-        return LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_STATS);
+    /// @return stats The subnet stats.
+    function getSubnetStats() public view returns (SubnetStats memory stats) {
+        bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_STATS);
+        return decodeSubnetStats(data);
     }
 
     /// @dev Get the credit account for an address.
     /// @param addr The address of the account.
-    /// @return data The credit account for the address.
-    function getAccount(address addr) external view returns (bytes memory data) {
+    /// @return account The credit account for the address.
+    function getAccount(address addr) public view returns (Account memory account) {
         bytes memory params = addr.encodeCborAddress();
-        return LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_ACCOUNT, params);
+        bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_ACCOUNT, params);
+        return decodeAccount(data);
+    }
+
+    /// @dev Get the storage usage for an account.
+    /// @param addr The address of the account.
+    /// @return usage The storage usage for the account.
+    function getStorageUsage(address addr) external view returns (Usage memory usage) {
+        Account memory account = getAccount(addr);
+        return accountToUsage(account);
+    }
+
+    /// @dev Get the storage stats for the subnet.
+    /// @return stats The storage stats for the subnet.
+    function getStorageStats() external view returns (StorageStats memory stats) {
+        SubnetStats memory subnetStats = getSubnetStats();
+        return subnetStatsToStorageStats(subnetStats);
+    }
+
+    /// @dev Get the subnet-wide credit statistics.
+    /// @return stats The subnet-wide credit statistics.
+    function getCreditStats() external view returns (CreditStats memory stats) {
+        SubnetStats memory subnetStats = getSubnetStats();
+        return subnetStatsToCreditStats(subnetStats);
+    }
+
+    /// @dev Get the credit balance of an account.
+    /// @param addr The address of the account.
+    /// @return balance The credit balance of the account.
+    function getCreditBalance(address addr) external view returns (Balance memory balance) {
+        Account memory account = getAccount(addr);
+        return accountToBalance(account);
     }
 
     /// @dev Buy credits for a specified account with a `msg.value` for number of native currency to spend on credits.
@@ -210,7 +242,7 @@ library LibCredit {
     /// @param limit Optional credit approval limit. Use zero if unused, indicating a null value.
     /// @param ttl Optional credit approval time-to-live epochs. Minimum value is 3600 (1 hour). Use zero if
     /// unused, indicating a null value.
-    /// @return data The credit approval response.
+    /// @return data The credit approval (`CreditApproval`) response as bytes.
     function approveCredit(address from, address receiver, address requiredCaller, uint256 limit, uint64 ttl)
         external
         returns (bytes memory data)
@@ -225,6 +257,7 @@ library LibCredit {
     /// @param requiredCaller Optional restriction on caller address, e.g., an object store.
     function revokeCredit(address from, address receiver, address requiredCaller) external {
         bytes memory params = encodeRevokeCreditParams(from, receiver, requiredCaller);
+        // Note: response bytes are always empty
         LibWasm.writeToWasmActor(ACTOR_ID, METHOD_REVOKE_CREDIT, params);
     }
 }

@@ -13,10 +13,10 @@ for Hoku. It includes the following:
 - `Hoku.sol`: An ERC20 token implementation.
 - `Faucet.sol`: The accompanying onchain faucet (rate limiter) contract for dripping testnet funds.
 - `Credit.sol`: Manage subnet credit, including credit purchases, approvals/rejections, and related
-  read-only operations (uses the `LibCredit` library).
+  read-only operations (uses the `LibCredit` and `LibWasm` libraries).
 - `interfaces/ICredit.sol`: The interface for the credit contract.
 - `types/`: Various method parameters and return types for core contracts.
-- `utils/LibCredit.sol`: A library for interacting with credits.
+- `utils/LibCredit.sol`: A library for interacting with credits, wrapped by the `Credit` contract.
 - `utils/LibWasm.sol`: A library for facilitating proxy calls to WASM contracts from Solidity.
 - `utils/solidity-cbor`: Libraries for encoding and decoding CBOR data, used in proxy WASM calls
   (forked from [this repo](https://github.com/smartcontractkit/solidity-cborutils)).
