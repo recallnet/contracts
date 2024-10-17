@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-import {Script, console2} from "forge-std/Script.sol";
-import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
-import {Hoku} from "../src/Hoku.sol";
-import {Utilities} from "../src/Utilities.sol";
+import {Options, Upgrades} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
+import {Script} from "forge-std/Script.sol";
+import {console2 as console} from "forge-std/console2.sol";
 
-contract DeployScript is Script, Utilities {
+import {Hoku} from "../src/Hoku.sol";
+import {Environment} from "../src/types/CommonTypes.sol";
+
+contract DeployScript is Script {
     string constant PRIVATE_KEY = "PRIVATE_KEY";
     address public proxyAddress;
 
@@ -19,18 +21,27 @@ contract DeployScript is Script, Utilities {
     function run(Environment env) public returns (Hoku) {
         if (vm.envExists(PRIVATE_KEY)) {
             uint256 privateKey = vm.envUint(PRIVATE_KEY);
+            if (env == Environment.Local) {
+                console.log("Deploying to local network");
+            } else if (env == Environment.Testnet) {
+                console.log("Deploying to testnet network");
+            } else {
+                revert("Mainnet is not supported");
+            }
             vm.startBroadcast(privateKey);
-        } else if (env == Environment.Local) {
+        } else if (env == Environment.Foundry) {
+            console.log("Deploying to foundry");
             vm.startBroadcast();
         } else {
-            revert("PRIVATE_KEY not set in non-local environment");
+            revert("PRIVATE_KEY not set");
         }
+
         proxyAddress = Upgrades.deployUUPSProxy("Hoku.sol", abi.encodeCall(Hoku.initialize, (env)));
         vm.stopBroadcast();
 
         // Check implementation
         address implAddr = Upgrades.getImplementationAddress(proxyAddress);
-        console2.log("Implementation address: ", implAddr);
+        console.log("Implementation address: ", implAddr);
 
         Hoku hoku = Hoku(proxyAddress);
         return hoku;
@@ -46,11 +57,11 @@ contract UpgradeProxyScript is Script {
 
         // Get proxy address
         address proxy = vm.envAddress("PROXY_ADDR");
-        console2.log("proxy address: ", proxy);
+        console.log("proxy address: ", proxy);
 
         // Check current implementation
         address implOld = Upgrades.getImplementationAddress(proxy);
-        console2.log("Implementation address: ", implOld);
+        console.log("Implementation address: ", implOld);
 
         // Upgrade proxy to new implementation
         Options memory opts;
@@ -61,7 +72,7 @@ contract UpgradeProxyScript is Script {
 
         // Check new implementation
         address implNew = Upgrades.getImplementationAddress(proxy);
-        console2.log("Implementation address: ", implNew);
+        console.log("Implementation address: ", implNew);
 
         require(implOld != implNew, "Implementation address not changed");
     }

@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.23;
 
-import "forge-std/Test.sol";
-import "forge-std/console.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Test, Vm} from "forge-std/Test.sol";
+import {console2 as console} from "forge-std/console2.sol";
 
+import {DeployScript as FaucetDeployer} from "../script/Faucet.s.sol";
+import {DeployScript as TokenDeployer} from "../script/Hoku.s.sol";
 import {Faucet, TryLater} from "../src/Faucet.sol";
 import {Hoku} from "../src/Hoku.sol";
-import {Utilities} from "../src/Utilities.sol";
-import {DeployScript as TokenDeployer} from "../script/Hoku.s.sol";
-import {DeployScript as FaucetDeployer} from "../script/Faucet.s.sol";
+import {Environment} from "../src/types/CommonTypes.sol";
 
-contract FaucetTest is Test, Utilities {
+contract FaucetTest is Test {
     Faucet internal faucet;
     Vm.Wallet internal wallet;
     Vm.Wallet internal chain;
@@ -22,9 +22,8 @@ contract FaucetTest is Test, Utilities {
         chain = vm.createWallet("chain");
         vm.deal(chain.addr, mintAmount);
         wallet = vm.createWallet("user");
-        vm.prank(chain.addr);
         FaucetDeployer faucetDeployer = new FaucetDeployer();
-        faucet = faucetDeployer.run(Environment.Local, mintAmount / 2);
+        faucet = faucetDeployer.run(Environment.Foundry, mintAmount / 2);
         assertEq(faucet.supply(), mintAmount / 2);
     }
 
