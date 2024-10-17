@@ -16,10 +16,10 @@ Examples of how to call each function using forge script
 
 Command prefixes:
 Ethereum:
-forge script script/Bridge.s.sol:BridgeTest -vvv --rpc-url https://eth.merkle.io
+forge script script/Bridge.s.sol:BridgeOps -vvv --rpc-url https://eth.merkle.io
 
 Filecoin:
-forge script script/Bridge.s.sol:BridgeTest -vvv -g 100000 --rpc-url https://api.node.glif.io/rpc/v1
+forge script script/Bridge.s.sol:BridgeOps -vvv -g 100000 --rpc-url https://api.node.glif.io/rpc/v1
 
 To check if an address is a minter:
 --sig "isMinter(address,address)" <proxy_address> <address_to_check>
@@ -43,7 +43,7 @@ The -vvv flag increases verbosity for more detailed output.
 For <amount>, use the full token amount including decimal places. For example, if the token has 18 decimal places and you want to transfer 1 token, use 1000000000000000000.
 */
 
-contract BridgeTest is Script {
+contract BridgeOps is Script {
     using Strings for string;
 
     function setUp() public {}
@@ -92,15 +92,10 @@ contract BridgeTest is Script {
                 destinationChain.equal(FILECOIN) ? "&gasLimit=700000&gasMultiplier=1000\'" : "&gasLimit=70000\'"
             )
         );
+        // Uncomment if you need to debug the curl command
         // console.log('Curl command:', inputs[2]);
         bytes memory res = vm.ffi(inputs);
         string memory resString = string(res);
-        // console.log('Raw API response (string):', resString);
-        // console.log('Raw API response (hex):');
-        // for (uint i = 0; i < res.length; i++) {
-        //     console.logBytes1(res[i]);
-        // }
-        // console.log('Response length:', res.length);
 
         uint256 estimatedGas;
         // this party is pretty hacky. For some reason vm.ffi interprets the string containing

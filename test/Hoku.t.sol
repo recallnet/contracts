@@ -154,7 +154,5 @@ contract HokuTest is Test, Utilities {
 
         vm.prank(user);
         token.transfer(address(0x456), 100);
-
-        // Add more assertions for other functions if needed
     }
 }
