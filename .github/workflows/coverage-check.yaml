@@ -28,7 +28,7 @@ jobs:
         run: pnpm install
 
       - name: Run Solidity Linter
-        run: pnpm exec solhint 'contracts/**/*.sol'
+        run: pnpm exec solhint 'contracts/*.sol'
 
   coverage:
     runs-on: ubuntu-latest
@@ -42,7 +42,7 @@ jobs:
           version: nightly
 
       - name: Install forge-coverage
-        run: forge install foundry-rs/forge-coverage
+        run: forge install
 
       - name: Run Coverage
         run: forge coverage --report lcov
