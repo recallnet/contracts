@@ -40,7 +40,7 @@ jobs:
           cache: false
 
       - name: Install Node dependencies
-        run: cd src && pnpm i --unsafe-perm
+        run: pnpm install
 
       - name: Storage check
-        run: cd src && pnpm exec hardhat storage-layout --check
+        run: pnpm exec hardhat storage-layout --check

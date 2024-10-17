@@ -10,6 +10,11 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@nomicfoundation/hardhat-foundry": "^1.1.2",
+    "hardhat": "^2.22.13",
     "solhint": "^5.0.3"
+  },
+  "dependencies": {
+    "hardhat-storage-layout-changes": "^0.1.2"
   }
 }
