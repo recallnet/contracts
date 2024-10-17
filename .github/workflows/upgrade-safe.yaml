@@ -25,7 +25,8 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: pnpm/action-setup@v2
+      - name: Install pnpm
+        run: npm install -g pnpm
 
       - name: Setup Node
         uses: actions/setup-node@v4
