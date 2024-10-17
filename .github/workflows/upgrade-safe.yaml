@@ -1,8 +1,9 @@
 name: 'Contracts: Storage check'
 
-# This workflow is triggered from the main CI workflow.
 on:
-  workflow_call:
+    push:
+    pull_request:
+    workflow_dispatch:
 
 env:
   RPC_URL: https://filecoin-calibration.chainup.net/rpc/v1
