@@ -3,10 +3,11 @@ pragma solidity ^0.8.26;
 
 import {InvalidSubnet, NotAuthorized, ValidatorPowerChangeDenied} from "./errors/IPCErrors.sol";
 import {IValidatorGater} from "./interfaces/IValidatorGater.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+
 import {SubnetIDHelper} from "./lib/SubnetIDHelper.sol";
 import {SubnetID} from "./structs/Subnet.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 /// The power range that an approved validator can have.
 struct PowerRange {
@@ -97,5 +98,5 @@ contract ValidatorGater is IValidatorGater, UUPSUpgradeable, OwnableUpgradeable 
     /// @dev Function that should revert when `msg.sender` is not authorized to upgrade the contract
     /// @param newImplementation Address of the new implementation contract
     function _authorizeUpgrade(address newImplementation) internal view override onlyOwner {} // solhint-disable
-    // no-empty-blocks
+        // no-empty-blocks
 }
