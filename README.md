@@ -30,7 +30,8 @@ subnet):
 | ------------ | ----------- | -------------------------------------------- |
 | Hoku (ERC20) | Calibration | `0x8e3Fd2b47e564E7D636Fa80082f286eD038BE54b` |
 | Faucet       | Subnet      | `0xA089Efd61db801B27077257b9EB4E95C3b8aD90F` |
-| Credit       | Subnet      | `0x31D31BF66Ed7526c8B44fAa057d68049C18197a7` |
+| Credit       | Subnet      | `0x8c2e3e8ba0d6084786d60A6600e832E8df84846C` |
+| LibCredit    | Subnet      | `0xfF73c2705B8b77a832c7ec33864B8BEF201002E1` |
 
 To get testnet tokens, visit: [https://faucet.hoku.sh](https://faucet.hoku.sh). Also, you can check
 out the `foundry.toml` file to see the RPC URLs for each network (described in more detail below).
@@ -163,7 +164,8 @@ CREDIT=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/Credit.s.sol \
 --tc DeployScript 0 \
 --sig 'run(uint8)' \
 --rpc-url localnet_subnet \
---broadcast -g 100000 | grep "0: contract Credit" | awk '{print $NF}')
+--broadcast -g 100000 \
+| grep "0: contract Credit" | awk '{print $NF}')
 ```
 
 #### Methods
@@ -175,7 +177,7 @@ accepts "optional" arguments. All of the method parameters and return types can 
 
 - `getSubnetStats()`: Get subnet stats.
 - `getCreditStats()`: Get credit stats.
-- `getStorageStats()`: Get credit stats.
+- `getStorageStats()`: Get storage stats.
 - `getAccount(address)`: Get credit account info for an address.
 - `getCreditBalance(address)`: Get credit balance for an address.
 - `getStorageUsage(address)`: Get storage usage for an address.
