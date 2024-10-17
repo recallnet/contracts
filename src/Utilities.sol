@@ -7,6 +7,4 @@ abstract contract Utilities {
         Testnet,
         Mainnet
     }
-
-    constructor() {}
 }

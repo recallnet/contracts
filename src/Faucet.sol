@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
-import "forge-std/console.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -48,9 +47,8 @@ contract Faucet is Ownable {
             revert FaucetEmpty();
         }
 
-        recipient.transfer(_dripAmount);
-
         _nextRequestAt[recipient] = block.timestamp + (5 minutes);
+        recipient.transfer(_dripAmount);
     }
 
     /// Used to set the drip amount per request

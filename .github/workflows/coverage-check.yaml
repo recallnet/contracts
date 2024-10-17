@@ -28,7 +28,7 @@ jobs:
         run: pnpm install
 
       - name: Run Solidity Linter
-        run: pnpm exec solhint 'contracts/*.sol'
+        run: pnpm exec solhint 'src/**/*.sol'
 
   coverage:
     runs-on: ubuntu-latest
