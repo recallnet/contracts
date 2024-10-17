@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "forge-std/Test.sol";
-import {Hoku} from "../src/Hoku.sol";
-import {Utilities} from "../src/Utilities.sol";
-import {DeployScript} from "../script/Hoku.s.sol";
-import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
+import {Options, Upgrades} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
+import {Test, Vm} from "forge-std/Test.sol";
+import {console2 as console} from "forge-std/console2.sol";
 
-contract HokuTest is Test, Utilities {
+import {DeployScript} from "../script/Hoku.s.sol";
+import {Hoku} from "../src/Hoku.sol";
+import {Environment} from "../src/types/CommonTypes.sol";
+
+contract HokuTest is Test {
     Hoku internal token;
     address internal user;
     uint256 constant mintAmount = 1000 * 10 ** 18;
@@ -15,7 +17,7 @@ contract HokuTest is Test, Utilities {
 
     function setUp() public {
         DeployScript deployer = new DeployScript();
-        token = deployer.run(Environment.Local);
+        token = deployer.run(Environment.Foundry);
 
         user = address(0x123);
     }
