@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import {DeployScript} from "../script/ValidatorGater.s.sol";
+import {SubnetID, ValidatorGater} from "../src/ValidatorGater.sol";
+import {InvalidSubnet, NotAuthorized, ValidatorPowerChangeDenied} from "../src/errors/IPCErrors.sol";
+import {SubnetIDHelper} from "../src/lib/SubnetIDHelper.sol";
+
+import {Environment} from "../src/types/CommonTypes.sol";
+import {SubnetActorManagerFacetMock} from "./mocks/SubnetActorManagerFacetMock.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
-import {ValidatorGater, SubnetID} from "../src/ValidatorGater.sol";
-import {SubnetIDHelper} from "../src/lib/SubnetIDHelper.sol";
-import {Utilities} from "../src/Utilities.sol";
-import {DeployScript} from "../script/ValidatorGater.s.sol";
-import {InvalidSubnet, NotAuthorized, ValidatorPowerChangeDenied} from "../src/errors/IPCErrors.sol";
-import {SubnetActorManagerFacetMock} from "./mocks/SubnetActorManagerFacetMock.sol";
 
-contract ValidatorGaterTest is Test, Utilities {
+contract ValidatorGaterTest is Test {
     using SubnetIDHelper for SubnetID;
 
     ValidatorGater internal gater;

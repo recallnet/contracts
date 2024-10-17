@@ -2,8 +2,9 @@
 pragma solidity ^0.8.23;
 
 import {IValidatorGater} from "../../src/interfaces/IValidatorGater.sol";
-import {SubnetID} from "../../src/structs/Subnet.sol";
+
 import {SubnetIDHelper} from "../../src/lib/SubnetIDHelper.sol";
+import {SubnetID} from "../../src/structs/Subnet.sol";
 
 /// A simplified mock of the Subnet Actor Manager Facet, where any power change can occur (join, stake, unstake, leave).
 /// All security checks were removed due to them not being relevant for the workflow being tested.

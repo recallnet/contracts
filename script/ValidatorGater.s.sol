@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {Script, console2} from "forge-std/Script.sol";
-import {Utilities} from "../src/Utilities.sol";
-import {SubnetID} from "../src/structs/Subnet.sol";
 import {ValidatorGater} from "../src/ValidatorGater.sol";
-import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
+import {SubnetID} from "../src/structs/Subnet.sol";
 
-contract DeployScript is Script, Utilities {
+import {Environment} from "../src/types/CommonTypes.sol";
+import {Options, Upgrades} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
+import {Script, console2} from "forge-std/Script.sol";
+
+contract DeployScript is Script {
     string constant PRIVATE_KEY = "PRIVATE_KEY";
     address public proxyAddress;
 
