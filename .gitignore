@@ -1,6 +1,8 @@
 # Compiler files
 cache/
 out/
+cache_hardhat/
+artifacts/
 
 # Ignores development broadcast logs
 !/broadcast
@@ -17,3 +19,4 @@ docs/
 settings.json
 
 .DS_Store
+node_modules/

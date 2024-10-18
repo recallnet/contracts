@@ -66,9 +66,8 @@ contract Faucet is Ownable {
             revert FaucetEmpty();
         }
 
-        recipient.transfer(_dripAmount);
-
         _nextRequestAt[recipient] = block.timestamp + (5 minutes);
+        recipient.transfer(_dripAmount);
     }
 
     /// @dev Sets the amount of tokens to distribute per request
