@@ -20,7 +20,7 @@ module.exports = {
     storageLayouts: ".storage-layouts",
   },
   storageLayoutConfig: {
-    contracts: ['src/Hoku.sol:Hoku'],
+    contracts: ['src/Hoku.sol:Hoku', 'src/ValidatorGater.sol:ValidatorGater'],
     fullPath: true
   },
   resolve: {

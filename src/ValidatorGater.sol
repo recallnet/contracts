@@ -25,6 +25,7 @@ contract ValidatorGater is IValidatorGater, UUPSUpgradeable, OwnableUpgradeable 
     SubnetID public subnet;
     mapping(address => PowerRange) public allowed;
     // New active status and who was the owner at change time
+
     event ActiveStateChange(bool active, address account);
 
     function initialize() public initializer {
