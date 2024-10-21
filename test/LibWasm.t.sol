@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
+import {Base32} from "../src/util/Base32.sol";
 import {LibWasm} from "../src/util/LibWasm.sol";
 
 contract LibWasmTest is Test {
@@ -207,5 +208,44 @@ contract LibWasmTest is Test {
         bytes memory addr = hex"040a15d34aaf54267db7d7c367839aaf71a00a2c6a65";
         address result = LibWasm.decodeCborAddress(addr);
         assertEq(result, 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
+    }
+
+    function testEncodeCborActorAddress() public pure {
+        string memory addr = "t2o4gsdesxam4qui3pnd4e54ouglffoqwecfnrdzq";
+        bytes memory result = LibWasm.encodeCborActorAddress(addr);
+        assertEq(result, hex"02770d21925703390a236f68f84ef1d432ca5742c4");
+        addr = "t2i4roxxdp6hgryxqbwfee6t7uzrkr6lyz257le7a";
+        result = LibWasm.encodeCborActorAddress(addr);
+        assertEq(result, hex"024722ebdc6ff1cd1c5e01b1484f4ff4cc551f2f19");
+    }
+
+    function testDecodeCborActorAddress() public view {
+        bytes memory addr = hex"02770d21925703390a236f68f84ef1d432ca5742c4";
+        string memory result = LibWasm.decodeCborActorAddress(addr);
+        assertEq(result, "t2o4gsdesxam4qui3pnd4e54ouglffoqwecfnrdzq");
+    }
+
+    function testDecodeCborString() public view {
+        bytes memory data = hex"6b4f626a65637453746f726555";
+        bytes memory result = LibWasm.decodeStringToBytes(data);
+        assertEq(string(result), "ObjectStore");
+    }
+
+    function testDecodeCborBytesToString() public pure {
+        bytes memory data = hex"8618681865186c186c186f182f";
+        bytes memory result = LibWasm.decodeCborBytesArrayToBytes(data);
+        assertEq(string(result), "hello/");
+    }
+
+    function testDecodeBase32() public pure {
+        string memory data = "o4gsdesxam4qui3pnd4e54ouglffoqwecfnrdzq";
+        bytes memory result = Base32.decode(bytes(data));
+        assertEq(result, hex"770d21925703390a236f68f84ef1d432ca5742c4115b11e6");
+    }
+
+    function testEncodeBase32() public pure {
+        bytes memory data = hex"770d21925703390a236f68f84ef1d432ca5742c4115b11e6";
+        bytes memory result = Base32.encode(data);
+        assertEq(string(result), "o4gsdesxam4qui3pnd4e54ouglffoqwecfnrdzq");
     }
 }

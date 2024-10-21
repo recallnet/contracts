@@ -7,6 +7,8 @@ import {CommonTypes} from "@filecoin-solidity/v0.8/types/CommonTypes.sol";
 import {Actor} from "@filecoin-solidity/v0.8/utils/Actor.sol";
 import {FilAddresses} from "@filecoin-solidity/v0.8/utils/FilAddresses.sol";
 
+import {Base32} from "./Base32.sol";
+import {Blake2b} from "./Blake2b.sol";
 import {ByteParser} from "./solidity-cbor/ByteParser.sol";
 import {CBORDecoding} from "./solidity-cbor/CBORDecoding.sol";
 import {CBOR} from "./solidity-cbor/CBOREncoding.sol";
@@ -17,20 +19,64 @@ library LibWasm {
     uint64 internal constant EMPTY_CODEC = Misc.NONE_CODEC;
     uint64 internal constant CBOR_CODEC = Misc.CBOR_CODEC;
 
-    /// @dev Decode a CBOR encoded array to bytes.
+    /// @dev Decode a CBOR encoded array to bytes, extracting each value into an array of bytes.
     /// @param data The encoded CBOR array, including handling for null array (0xf6).
     /// @return decoded The decoded CBOR array. Returns empty bytes[] if the input is null.
-    function decodeCborArrayToBytes(bytes memory data) internal view returns (bytes[] memory decoded) {
-        if (data.length == 1 && data[0] == 0xf6) return new bytes[](0);
-        decoded = CBORDecoding.decodeArray(data);
+    function decodeCborArrayToBytes(bytes memory data) internal view returns (bytes[] memory) {
+        if (data.length == 1) return new bytes[](0); // Null value (0x80, 0xf6, 0x00) only case where 1 byte is possible
+        return CBORDecoding.decodeArray(data);
+    }
+
+    /// @dev Decode CBOR encoded bytes array to underlying bytes string (e.g., a serialized Rust `Vec<u8>`).
+    /// @param data The encoded CBOR bytes (e.g., 0x8618681865...).
+    /// @return result The decoded bytes.
+    function decodeCborBytesArrayToBytes(bytes memory data) internal pure returns (bytes memory) {
+        require(uint8(data[0]) >= 0x80 && uint8(data[0]) <= 0x97, "Invalid fixed array indicator");
+        // Initial data is a CBOR array (0x8<length>) of single byte values (0x18<byte>18<byte>)
+        uint8 length = uint8(data[0]) - 0x80;
+        bytes memory result = new bytes(length);
+        // Skip first byte (indicator + length) and the second byte (first instance of 0x18 indicator)
+        // Then, get every other byte since this is the raw value (skipping the 0x18 indicator)
+        for (uint8 i = 0; i < length; i++) {
+            result[i] = data[2 * i + 2];
+        }
+        return result;
+    }
+
+    /// @dev Decode a CBOR encoded fixed array/slice to bytes (e.g., a serialized Rust slice `[u8; N]`).
+    /// @param data The encoded CBOR fixed array (e.g., `0x9820188e184c...` is a 32 byte array).
+    /// @return decoded The decoded CBOR fixed array. Returns empty bytes[] if the input is null.
+    function decodeBytesSliceToBytes(bytes memory data) internal pure returns (bytes memory) {
+        require(data[0] == 0x98, "Invalid fixed array indicator");
+        uint8 length = uint8(data[1]);
+        bytes memory result = new bytes(length);
+        uint256 index = 2; // Start at the third byte (i.e., the first instance of 0x18 or 0x00 to 0x17)
+        for (uint8 i = 0; i < length; i++) {
+            if (data[index] == 0x18) {
+                result[i] = data[index + 1];
+                index += 2;
+            } else {
+                // Assume that if the value is not a single byte (i.e., 0x18), it's the direct value (0x00..0x17)
+                result[i] = data[index];
+                index += 1;
+            }
+        }
+        return result;
     }
 
     /// @dev Decode a CBOR encoded array to bytes.
     /// @param data The encoded CBOR array, including handling for null array (0xf6).
     /// @return decoded The decoded CBOR array. Returns empty bytes[] if the input is null.
-    function decodeCborMappingToBytes(bytes memory data) internal view returns (bytes[2][] memory decoded) {
+    function decodeCborMappingToBytes(bytes memory data) internal view returns (bytes[2][] memory) {
         if (data.length == 1 && data[0] == 0xa0) return new bytes[2][](0);
-        decoded = CBORDecoding.decodeMapping(data);
+        return CBORDecoding.decodeMapping(data);
+    }
+
+    /// @dev Decode a CBOR encoded string to bytes.
+    /// @param data The encoded CBOR string.
+    /// @return decoded The decoded CBOR string.
+    function decodeStringToBytes(bytes memory data) internal view returns (bytes memory) {
+        return CBORDecoding.decodePrimitive(data);
     }
 
     /// @dev Decode CBOR encoded bytes to uint64.
@@ -60,6 +106,36 @@ library LibWasm {
             result := shr(96, mload(add(addr, 34)))
         }
         return result;
+    }
+
+    /// @dev Decode a CBOR encoded Wasm actor address to a string.
+    /// @param encoded The encoded Wasm actor address as CBOR bytes.
+    /// @return result The decoded Wasm actor address as a string.
+    function decodeCborActorAddress(bytes memory encoded) internal pure returns (string memory) {
+        require(encoded.length == 21, "Invalid encoded length");
+        require(encoded[0] == 0x02, "Invalid protocol");
+
+        bytes memory checksum = Blake2b.hash(encoded, 4);
+        // combine payload and checksum
+        bytes memory combined = new bytes(24);
+        for (uint8 i = 0; i < 20; i++) {
+            combined[i] = encoded[i + 1];
+        }
+        for (uint8 i = 0; i < 4; i++) {
+            combined[20 + i] = checksum[i];
+        }
+        // 02770d21925703390a236f68f84ef1d432ca5742c4
+        // t2o4gsdesxam4qui3pnd4e54ouglffoqwecfnrdzq
+        bytes memory base32Encoded = Base32.encode(combined);
+
+        bytes memory addrBytes = new bytes(41);
+        addrBytes[0] = "t";
+        addrBytes[1] = "2";
+        for (uint256 i = 0; i < 39; i++) {
+            addrBytes[i + 2] = base32Encoded[i];
+        }
+
+        return string(addrBytes);
     }
 
     /// @dev Decode a CBOR encoded BigInt (unsigned) to a uint256. Assumptions:
@@ -169,6 +245,14 @@ library LibWasm {
         return result;
     }
 
+    /// @dev Decode a CBOR encoded blob hash to a string (a Rust Iroh hash value `Hash(pub [u8; 32])`).
+    /// @param value The encoded CBOR blob hash (e.g,. `0x9820188e184c...`)
+    /// @return result The decoded blob hash as base32 encoded bytes.
+    function decodeBlobHash(bytes memory value) internal pure returns (bytes memory) {
+        bytes memory decoded = decodeBytesSliceToBytes(value);
+        return Base32.encode(decoded);
+    }
+
     /// @dev Write raw bytes values to a CBOR buffer.
     /// @param data The bytes array to concatenate.
     function concatBytes(bytes[] memory data) internal pure returns (bytes memory) {
@@ -182,24 +266,40 @@ library LibWasm {
     /// @dev Encode a series of already encoded CBOR values as a CBOR array.
     /// @param params The already encoded params as a bytes array of CBOR encoded values.
     /// @return encoded The encoded params as a CBOR array.
-    function encodeCborArray(bytes memory params) internal pure returns (bytes memory encoded) {
-        // 1 for the array indicator/length (0x82) and the params length
-        CBOR.CBORBuffer memory buf = CBOR.create(1 + params.length);
-        CBOR.startFixedArray(buf, uint64(params.length));
-        CBOR.writeRaw(buf, params);
-        encoded = CBOR.data(buf);
-    }
-
-    /// @dev Encode a series of already encoded CBOR values as a CBOR array.
-    /// @param params The already encoded params as a bytes array of CBOR encoded values.
-    /// @return encoded The encoded params as a CBOR array.
-    function encodeCborArray(bytes[] memory params) internal pure returns (bytes memory encoded) {
+    function encodeCborArray(bytes[] memory params) internal pure returns (bytes memory) {
         bytes memory concat = concatBytes(params);
         // 1 for the array indicator/length (0x82) and the concat params length
         CBOR.CBORBuffer memory buf = CBOR.create(1 + concat.length);
         CBOR.startFixedArray(buf, uint64(params.length));
         CBOR.writeRaw(buf, concat);
-        encoded = CBOR.data(buf);
+        return CBOR.data(buf);
+    }
+
+    /// @dev Prepare bytes parameter for a method call by serializing it.
+    /// @return params The serialized bytes as CBOR bytes.
+    function encodeCborBytes(bytes memory value) internal pure returns (bytes memory) {
+        uint256 capacity = value.length;
+        CBOR.CBORBuffer memory buf = CBOR.create(1 + capacity);
+        CBOR.writeBytes(buf, value);
+        return CBOR.data(buf);
+    }
+
+    /// @dev Prepare string parameter for a method call by serializing it.
+    /// @return params The serialized string as CBOR bytes.
+    function encodeCborBytes(string memory value) internal pure returns (bytes memory) {
+        uint256 capacity = bytes(value).length;
+        CBOR.CBORBuffer memory buf = CBOR.create(1 + capacity);
+        CBOR.writeBytes(buf, bytes(value));
+        return CBOR.data(buf);
+    }
+
+    /// @dev Prepare string parameter for a method call by serializing it.
+    /// @return params The serialized string as CBOR bytes.
+    function encodeCborString(string memory str) internal pure returns (bytes memory) {
+        uint256 capacity = bytes(str).length;
+        CBOR.CBORBuffer memory buf = CBOR.create(1 + capacity);
+        CBOR.writeString(buf, str);
+        return CBOR.data(buf);
     }
 
     /// @dev Prepare address parameter for a method call by serializing it.
@@ -212,26 +312,49 @@ library LibWasm {
     /// @param addr The address of the account.
     /// @return encoded The serialized address as CBOR bytes.
     // TODO: figure out if a `t2` address can work here
-    function encodeCborAddress(address addr) internal pure returns (bytes memory encoded) {
+    function encodeCborAddress(address addr) internal pure returns (bytes memory) {
         CommonTypes.FilAddress memory filAddr = FilAddresses.fromEthAddress(addr);
-        encoded = FilecoinCBOR.serializeAddress(filAddr);
+        return FilecoinCBOR.serializeAddress(filAddr);
+    }
+
+    /// @dev Prepare actor address parameter for a method call by serializing it. Assumes the address is a valid `t2`
+    /// address.
+    /// @param addr The address of the Wasm actor (e.g, `t2...`).
+    /// @return encoded The serialized Wasm actor address as CBOR bytes.
+    function encodeCborActorAddress(string memory addr) internal pure returns (bytes memory) {
+        bytes memory addrBytes = bytes(addr);
+        bytes1 protocol = addrBytes[1]; // Second value of `t2` is the protocol
+        require(addrBytes.length == 41, "Invalid address length");
+        require(protocol == 0x32, "Invalid protocol"); // Protocol `2` is an actor; `2` from a string is 0x32
+        bytes memory subAddr = new bytes(39); // Ignore the first 2 bytes (network + protocol)
+        for (uint256 i = 0; i < 39; i++) {
+            subAddr[i] = addrBytes[i + 2];
+        }
+        bytes memory decoded = Base32.decode(subAddr); // 24 bytes
+        // Payload's first byte is the protocol actor (0x02) + the first 20 bytes (ignore last 4 bytes; checksum)
+        bytes memory encoded = new bytes(21);
+        encoded[0] = 0x02;
+        assembly {
+            let decodedPtr := add(decoded, 32)
+            let encodedPtr := add(encoded, 33)
+            mstore(encodedPtr, xor(mload(encodedPtr), mload(decodedPtr)))
+        }
+        return encoded;
     }
 
     /// @dev Prepare uint64 parameter for a method call by serializing it.
     /// @param value A uint64 value.
     /// @return encoded The serialized uint64 as CBOR bytes.
-    function encodeCborUint64(uint64 value) internal pure returns (bytes memory encoded) {
-        bytes memory valueBytes = abi.encodePacked(value);
-        uint256 capacity = Misc.getBytesSize(valueBytes);
-        CBOR.CBORBuffer memory buf = CBOR.create(capacity);
+    function encodeCborUint64(uint64 value) internal pure returns (bytes memory) {
+        CBOR.CBORBuffer memory buf = CBOR.create(1); // Minimum of 1 byte; will expand if exceeded
         CBOR.writeUInt64(buf, value);
-        encoded = CBOR.data(buf);
+        return CBOR.data(buf);
     }
 
     /// @dev Encode a uint256 to a CBOR encoded BigInt (CBOR array with sign and big endian values of uint32).
     /// @param value The uint256 value to encode.
     /// @return encoded The CBOR encoded BigInt.
-    function encodeCborBigInt(uint256 value) internal pure returns (bytes memory encoded) {
+    function encodeCborBigInt(uint256 value) internal pure returns (bytes memory) {
         if (value == 0) return hex"820080"; // Case: 0x820080 (zero; empty array)
 
         // Minimum possible size: 1 (0x82) + 1 (sign; 0x01) + 2 (smallest possible inner array; e.g. 0x8101)
@@ -257,13 +380,13 @@ library LibWasm {
             CBOR.writeUInt32(buf, values[i - 1]);
         }
 
-        encoded = CBOR.data(buf);
+        return CBOR.data(buf);
     }
 
     /// @dev Encode a uint256 to a CBOR encoded BigUInt (CBOR array with no sign and big endian values of uint32).
     /// @param value The uint256 value to encode.
     /// @return encoded The CBOR encoded BigUInt.
-    function encodeCborBigUint(uint256 value) internal pure returns (bytes memory encoded) {
+    function encodeCborBigUint(uint256 value) internal pure returns (bytes memory) {
         // TODO: in Rust, if a value is null, it's `0xf6`, but if a value is zero, it's `0x80`
         if (value == 0) return hex"80"; // Case: 0x80 (zero; empty array)
 
@@ -288,7 +411,7 @@ library LibWasm {
             CBOR.writeUInt32(buf, values[i - 1]);
         }
 
-        encoded = CBOR.data(buf);
+        return CBOR.data(buf);
     }
 
     /// @dev Read from a wasm actor with empty params.
@@ -317,6 +440,22 @@ library LibWasm {
         require(params.length > 0, "Params must be non-empty");
         (int256 exit, bytes memory data) =
             Actor.callByIDReadOnly(CommonTypes.FilActorId.wrap(actorId), methodNum, CBOR_CODEC, params);
+
+        require(exit == 0, "Actor returned an error");
+        return data;
+    }
+
+    /// @dev Read from a Wasm actor (by its `t2` address) with encoded params.
+    /// @param addr The actor address (e.g, `t2...`).
+    /// @param methodNum The method number.
+    /// @param params The parameters.
+    /// @return data The data returned from the actor.
+    function readFromWasmActorByAddress(bytes memory addr, uint64 methodNum, bytes memory params)
+        internal
+        returns (bytes memory)
+    {
+        require(params.length > 0, "Params must be non-empty");
+        (int256 exit, bytes memory data) = Actor.callByAddress(addr, methodNum, CBOR_CODEC, params, 0, true);
 
         require(exit == 0, "Actor returned an error");
         return data;

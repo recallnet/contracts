@@ -5,6 +5,27 @@
 
 > Hoku core Solidity contracts and libraries
 
+## Table of Contents
+
+- [Background](#background)
+  - [Deployments](#deployments)
+- [Usage](#usage)
+  - [Setup](#setup)
+  - [Deploying contracts](#deploying-contracts)
+    - [Localnet](#localnet)
+    - [Testnet](#testnet)
+    - [Devnet](#devnet)
+    - [Mainnet](#mainnet)
+- [Development](#development)
+  - [Examples usage](#examples-usage)
+  - [Credit contract](#credit-contract)
+    - [Methods](#methods)
+    - [Examples](#examples)
+  - [Buckets contract](#buckets-contract)
+    - [Methods](#methods-1)
+    - [Examples](#examples-1)
+    - [Query objects](#query-objects)
+
 ## Background
 
 This project is built with [Foundry](https://book.getfoundry.sh/) and contains the core contracts
@@ -14,6 +35,8 @@ for Hoku. It includes the following:
 - `Faucet.sol`: The accompanying onchain faucet (rate limiter) contract for dripping testnet funds.
 - `Credit.sol`: Manage subnet credit, including credit purchases, approvals/rejections, and related
   read-only operations (uses the `LibCredit` and `LibWasm` libraries).
+- `Bucket.sol`: Manage buckets, including creating buckets, listing buckets, querying objects, and
+  other object-related operations.
 - `interfaces/ICredit.sol`: The interface for the credit contract.
 - `types/`: Various method parameters and return types for core contracts.
 - `utils/LibCredit.sol`: A library for interacting with credits, wrapped by the `Credit` contract.
@@ -29,8 +52,9 @@ subnet):
 | Contract     | Chain       | Address                                      |
 | ------------ | ----------- | -------------------------------------------- |
 | Hoku (ERC20) | Calibration | `0x8e3Fd2b47e564E7D636Fa80082f286eD038BE54b` |
-| Faucet       | Subnet      | `0xA089Efd61db801B27077257b9EB4E95C3b8aD90F` |
+| Faucet       | Subnet      | `0x10bc34a0C11E5e51774833603955CB7Ec3c79AC6` |
 | Credit       | Subnet      | `0x8c2e3e8ba0d6084786d60A6600e832E8df84846C` |
+| Buckets      | Subnet      | `0x6352eb346Bb5bd1c21e26d8E5aA94B60fd35f10B` |
 | LibCredit    | Subnet      | `0xfF73c2705B8b77a832c7ec33864B8BEF201002E1` |
 
 To get testnet tokens, visit: [https://faucet.hoku.sh](https://faucet.hoku.sh). Also, you can check
@@ -115,8 +139,9 @@ To get 5e18 tokens on a given address:
 The scripts for deploying contracts are in `script/` directory:
 
 - `Credit.s.sol`: Deploy the credit contract.
-- `Hoku.s.sol`: Deploy the Hoku ERC20 contract.
+- `Bucket.s.sol`: Deploy the bucket contract.
 - `Faucet.s.sol`: Deploy the faucet contract.
+- `Hoku.s.sol`: Deploy the Hoku ERC20 contract.
 
 > [!NOTE] If you're deploying _to_ the Hoku subnet or Filecoin Calibration, you'll need to
 > (significantly) bump the gas estimation multiplier by adding a `-g 100000` flag to the
@@ -173,6 +198,12 @@ Deploy the Credit contract to the localnet subnet:
 PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
 ```
 
+Deploy the Bucket contract to the localnet subnet:
+
+```shell
+PRIVATE_KEY=<0x...> forge script script/Bucket.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
+```
+
 #### Testnet
 
 Deploy the Hoku ERC20 contract to the testnet parent chain. Note the `-g` flag _is_ used here (this
@@ -196,6 +227,12 @@ Deploy the Credit contract to the testnet subnet:
 PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url testnet_subnet --broadcast -g 100000 -vv
 ```
 
+Deploy the Bucket contract to the testnet subnet:
+
+```shell
+PRIVATE_KEY=<0x...> forge script script/Bucket.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url testnet_subnet --broadcast -g 100000 -vv
+```
+
 #### Devnet
 
 The devnet does not have the concept of a "parent" chain, so all RPCs would use `--rpc-url devnet`.
@@ -206,6 +243,28 @@ Mainnet is not yet available. The RPC URLs (`mainnet_parent` and `mainnet_subnet
 pointing to the same environment as the testnet.
 
 ## Development
+
+### Examples usage
+
+Below are examples for interacting with various contracts. We'll set a few environment variables to
+demonstrate usage patterns, all of which will assume you've first defined the following. We'll first
+set the `PRIVATE_KEY` to the hex-encoded private key (same as with the deployment scripts above),
+and an arbitrary `EVM_ADDRESS` that is the public key of this private key.
+
+```sh
+export PRIVATE_KEY=0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6
+export EVM_ADDRESS=0x90f79bf6eb2c4f870365e785982e1f101e93b906
+```
+
+The `--rpc-url` flag can use the same RPC URLs as the deployments scripts, as defined in
+`foundry.toml`. For simplicity sake, we'll define an environment variable `EVM_RPC_URL` set to one
+of these RPC URLs so these examples can be run as-is:
+
+```sh
+export EVM_RPC_URL=testnet_subnet
+```
+
+The subsequent sections will define other environment variables as needed.
 
 ### Credit contract
 
@@ -266,28 +325,12 @@ null values when encoded in WASM calls.
 
 #### Examples
 
-We'll set a few environment variables to demonstrate the examples below. We'll first set the
-`PRIVATE_KEY` to the hex-encoded private key (same as with the deployment scripts above), and an
-arbitrary `EVM_ADDRESS` that is the public key of this private key.
+Make sure you've already set the `PRIVATE_KEY`, `EVM_ADDRESS`, and `EVM_RPC_URL` environment
+variables. Then, define a `CREDIT` environment variable, which points to the credit contract
+deployment address. For example:
 
 ```sh
-export PRIVATE_KEY=0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6
-export EVM_ADDRESS=0x90f79bf6eb2c4f870365e785982e1f101e93b906
-```
-
-The `--rpc-url` flag can use the same RPC URLs as the deployments scripts, as defined in
-`foundry.toml`. For simplicity sake, we'll define an environment variable `EVM_RPC_URL` set to one
-of these RPC URLs so these examples can be run as-is:
-
-```sh
-export EVM_RPC_URL=testnet_subnet
-```
-
-We'll define a `CREDIT` environment variable, which points to the credit contract deployment
-address. For example:
-
-```sh
-export CREDIT=0x138E3aFeb7dC8944d464326cb2ff2b429cdA808b
+export CREDIT=0x8c2e3e8ba0d6084786d60A6600e832E8df84846C
 ```
 
 And lastly, we'll define a `RECEIVER_ADDR` environment variable, which points to the receiver
@@ -484,7 +527,7 @@ You can buy credit for your address with the following command, which will buy c
 1 native subnet token (via `msg.value`) for the `msg.sender`:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $CREDIT "buyCredit()" $EVM_ADDRESS --value 1ether --private-key $PRIVATE_KEY
+cast send --rpc-url $EVM_RPC_URL $CREDIT "buyCredit()" --value 1ether --private-key $PRIVATE_KEY
 ```
 
 Or, you can buy credit for a specific EVM address with the following command:
@@ -557,3 +600,205 @@ cast send --rpc-url $EVM_RPC_URL $CREDIT "revokeCredit(address,address,address)"
 
 This would revoke the `receiver`'s ability to use the `from` address at the `requiredCaller`
 address.
+
+### Buckets contract
+
+You can interact with the existing buckets contract on the testnet via the address above. If you're
+working on `localnet`, you'll have to deploy this yourself. Here's a quick one-liner to do so—also
+setting the `BUCKETS` environment variable to the deployed address:
+
+```
+BUCKETS=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/Buckets.s.sol \
+--tc DeployScript 0 \
+--sig 'run(uint8)' \
+--rpc-url localnet_subnet \
+--broadcast -g 100000 \
+| grep "0: contract Bucket" | awk '{print $NF}')
+```
+
+#### Methods
+
+The following methods are available on the credit contract, shown with their function signatures.
+
+- `list()`: List all buckets for the sender.
+- `list(address)`: List all buckets for the specified address.
+- `query(string)`: Query the bucket (`t2...` string address) with no prefix (defaults to `/`
+  delimiter and the default offset and limit in the underlying WASM layer).
+- `query(string,string)`: Query the bucket with a prefix (e.g., `<prefix>/` string value), but no
+  delimiter, offset, or limit.
+- `query(string,string,string)`: Query the bucket with a custom delimiter (e.g., something besides
+  the default `/` delimeter value), but default offset and limit.
+- `query(string,string,string,uint64)`: Query the bucket with a prefix and delimiter, but no limit.
+- `query(string,string,string,uint64,uint64)`: Query the bucket with a prefix, delimiter, offset,
+  and limit.
+- `create()`: Create a bucket for the sender.
+- `create(address)`: Create a bucket for the specified address.
+
+#### Examples
+
+Make sure you've already set the `PRIVATE_KEY`, `EVM_ADDRESS`, and `EVM_RPC_URL` environment
+variables. Then, define a `BUCKET` environment variable, which points to the bucket contract
+deployment address. For example:
+
+```sh
+export BUCKETS=0x6352eb346Bb5bd1c21e26d8E5aA94B60fd35f10B
+```
+
+The account you use to create buckets should have the following:
+
+- A HOKU token balance in the subnet (e.g., from the faucet at:
+  [https://faucet.hoku.sh](https://faucet.hoku.sh)). You can verify this with the
+  [Hoku CLI](https://github.com/hokunet/rust-hoku): `hoku account info`
+- A credit balance in the subnet. You can verify this with `hoku credit balance`. If you don't have
+  credits, you can buy them with the Credits contract above, or run the `hoku credit buy <amount>`
+  command.
+
+Creating a bucket will cost native HOKU tokens, and writing to it will cost credit.
+
+##### List buckets
+
+You can list buckets for a specific address with the following command. Note you can use the
+overloaded `list()` to list buckets for the sender.
+
+```sh
+cast abi-decode "list(address)((uint8,string,(string,string)[])[])" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "list(address)" $EVM_ADDRESS)
+```
+
+This will return the following output:
+
+```
+(0, "t2pdadfrian5jrvtk2sulbc7uuyt5cnxmfdmet3ri", [("foo", "bar")])
+```
+
+Which maps to an array of the `Machine` struct:
+
+```solidity
+struct Machine {
+    Kind kind; // See `Kind` struct below
+    string address; // t2pdadfrian5jrvtk2sulbc7uuyt5cnxmfdmet3ri
+    Metadata[] metadata; // See `Metadata` struct below
+}
+
+struct Kind {
+    ObjectStore, // 0 == `ObjectStore`
+    Accumulator, // 1 == `Accumulator`
+}
+
+struct Metadata {
+    string key; // "foo"
+    string value; // "bar"
+}
+```
+
+#### Query objects
+
+Given a bucket address, you can query the objects in the bucket with the following command. First,
+we'll simply query for all objects in the bucket with no prefix parameter, setting `BUCKET_ADDR` to
+an existing bucket:
+
+```sh
+export BUCKET_ADDR=t2pdadfrian5jrvtk2sulbc7uuyt5cnxmfdmet3ri
+```
+
+```sh
+cast abi-decode "query(string)(((string,(string,uint64,uint64,(string,string)[]))[],string[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "query(string)" $BUCKET_ADDR)
+```
+
+This will return the following `Query` output:
+
+```
+([], ["hello/"])
+```
+
+Where the first array is an empty set of objects, and the second array is the common prefixes in the
+bucket:
+
+```solidity
+struct Query {
+    Object[] objects; // Empty array if no objects
+    string[] commonPrefixes; // ["hello/"]
+}
+```
+
+In the next example, we'll set `PREFIX` to query objects with the prefix `hello/`:
+
+```sh
+export PREFIX="hello/"
+```
+
+Now, we can query for these objects with the following command:
+
+```sh
+cast abi-decode "query(string,string)(((string,(string,uint64,uint64,(string,string)[]))[],string[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "query(string,string)" $BUCKET_ADDR $PREFIX)
+```
+
+This will return the following `Query` output:
+
+```
+([("hello/world", ("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", 6, 403769 [4.037e5], [("foo", "bar")]))], [])
+```
+
+Which maps to the following structs:
+
+```solidity
+struct Query {
+    Object[] objects; // See `Object` struct below
+    string[] commonPrefixes; // Empty array if no common prefixes
+}
+
+struct Object {
+    string key; // "hello/world"
+    Value value; // See `Value` struct below
+}
+
+struct Value {
+    string hash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
+    uint64 size; // 6
+    uint64 expiry; // 403769
+    Metadata[] metadata; // See `Metadata` struct below
+}
+
+struct Metadata {
+    string key; // "foo"
+    string value; // "bar"
+}
+```
+
+##### Create a bucket
+
+To create a bucket, you can use the following command:
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "create(address)" $EVM_ADDRESS --private-key $PRIVATE_KEY
+```
+
+This will execute an onchain transaction to create a bucket for the provided address. Alternatively,
+you can create a bucket for the sender with the following command:
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "create()" --private-key $PRIVATE_KEY
+```
+
+##### Add an object
+
+TODO
+
+```sh
+
+```
+
+##### Get an object
+
+TODO
+
+```sh
+
+```
+
+##### Delete an object
+
+TODO
+
+```sh
+
+```
