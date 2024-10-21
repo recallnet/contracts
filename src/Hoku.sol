@@ -32,8 +32,8 @@ contract Hoku is
     address internal _interchainTokenService;
     bytes32 internal _itsSalt;
 
-    bytes32 public ADMIN_ROLE;
-    bytes32 public MINTER_ROLE;
+    bytes32 public ADMIN_ROLE; // solhint-disable-line var-name-mixedcase
+    bytes32 public MINTER_ROLE; // solhint-disable-line var-name-mixedcase
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
