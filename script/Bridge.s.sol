@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-import {Script, console} from "forge-std/Script.sol";
 import {Hoku} from "../src/Hoku.sol";
 import {IInterchainTokenService} from
     "@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {Script, console} from "forge-std/Script.sol";
 
 address constant INTERCHAIN_TOKEN_SERVICE = 0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C;
 string constant FILECOIN = "filecoin";
@@ -28,20 +28,24 @@ To check the balance of an address:
 --sig "checkBalance(address,address)" <proxy_address> <address_to_check>
 
 To mint funds:
---broadcast --sig "mintFunds(address,address,uint256)" <proxy_address> <recipient_address> <amount> --private-key <your_private_key>
+--broadcast --sig "mintFunds(address,address,uint256)" <proxy_address> <recipient_address> <amount> --private-key
+<your_private_key>
 
 To perform a cross-chain transfer:
---broadcast --sig "xChainTransfer(address,string,address,uint256)" <proxy_address> <destination_chain> <recipient_address> <amount> --private-key <your_private_key>
+--broadcast --sig "xChainTransfer(address,string,address,uint256)" <proxy_address> <destination_chain>
+<recipient_address> <amount> --private-key <your_private_key>
 
 To burn tokens:
---broadcast --sig "burnTokens(address,address,uint256)" <proxy_address> <account> <amount> --private-key <your_private_key>
+--broadcast --sig "burnTokens(address,address,uint256)" <proxy_address> <account> <amount> --private-key
+<your_private_key>
 
-Note: Replace <proxy_address>, <address_to_check>, <recipient_address>, <amount>, <your_private_key>, and <destination_chain> with actual values.
+Note: Replace <proxy_address>, <address_to_check>, <recipient_address>, <amount>, <your_private_key>, and
+<destination_chain> with actual values.
 The --broadcast flag is used for functions that modify state (mintFunds and xChainTransfer).
 For Filecoin, we add the -g 100000 flag due to gas price estimation issues. Adjust this value as needed.
 The -vvv flag increases verbosity for more detailed output.
-For <amount>, use the full token amount including decimal places. For example, if the token has 18 decimal places and you want to transfer 1 token, use 1000000000000000000.
-*/
+For <amount>, use the full token amount including decimal places. For example, if the token has 18 decimal places and
+you want to transfer 1 token, use 1000000000000000000.*/
 
 contract BridgeOps is Script {
     using Strings for string;

@@ -1,18 +1,28 @@
+# DO NOT install deps that require `evm_version = 'cancun'` and use transient storage operations
+# since it causes runtime errors in the Hoku subnet: `ABORT(...): undefined instruction (35)`
+[submodule "lib/buffer"]
+	path = lib/buffer
+	url = https://github.com/ensdomains/buffer
+[submodule "lib/filecoin-solidity"]
+	path = lib/filecoin-solidity
+	url = https://github.com/filecoin-project/filecoin-solidity
 [submodule "lib/forge-std"]
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+# Note: MUST use v5.0.2; v5.1.0+ uses transient storage, which is not supported in Hoku's runtime.
 [submodule "lib/openzeppelin-contracts"]
 	path = lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
-[submodule "lib/openzeppelin-foundry-upgrades"]
-	path = lib/openzeppelin-foundry-upgrades
-	url = https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades
+# Note: MUST use v5.0.2 due to point above.
 [submodule "lib/openzeppelin-contracts-upgradeable"]
 	path = lib/openzeppelin-contracts-upgradeable
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable
 [submodule "lib/interchain-token-service"]
 	path = lib/interchain-token-service
 	url = https://github.com/axelarnetwork/interchain-token-service
+[submodule "lib/openzeppelin-foundry-upgrades"]
+	path = lib/openzeppelin-foundry-upgrades
+	url = https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades
 [submodule "lib/axelar-gmp-sdk-solidity"]
 	path = lib/axelar-gmp-sdk-solidity
 	url = https://github.com/axelarnetwork/axelar-gmp-sdk-solidity

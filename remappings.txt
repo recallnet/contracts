@@ -1,4 +1,6 @@
 forge-std/=lib/forge-std/src/
+@ensdomains/buffer/contracts/=lib/buffer/contracts/
+@filecoin-solidity/v0.8/=lib/filecoin-solidity/contracts/v0.8/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 @openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/
 @openzeppelin/foundry-upgrades/=lib/openzeppelin-foundry-upgrades/src/

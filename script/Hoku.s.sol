@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-import {Script, console} from "forge-std/Script.sol";
-import {Upgrades, Options} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
+import {Hoku} from "../src/Hoku.sol";
 import {IInterchainTokenService} from
     "@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol";
 import {ITokenManagerType} from "@axelar-network/interchain-token-service/contracts/interfaces/ITokenManagerType.sol";
-import {Hoku} from "../src/Hoku.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {Options, Upgrades} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
+import {Script, console} from "forge-std/Script.sol";
 
 address constant INTERCHAIN_TOKEN_SERVICE = 0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C;
 
