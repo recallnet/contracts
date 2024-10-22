@@ -1,15 +1,14 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// import {IBucket} from "./interfaces/IBucket.sol";
-// import {} from "./util/Types.sol";
+import {
+    CreateBucketParams, Kind, Machine, Metadata, Object, Query, Value, WriteAccess
+} from "../types/BucketTypes.sol";
+import {LibWasm} from "./LibWasm.sol";
 
-import {CreateBucketParams, Kind, Machine, Metadata, Object, Query, Value, WriteAccess} from "./types/BucketTypes.sol";
-import {LibWasm} from "./util/LibWasm.sol";
-
-/// @title Bucket Contract
-/// @dev Implementation of the Hoku Bucket actor EVM interface. See {IBucket} for details.
-contract Buckets {
+/// @title Bucket Library
+/// @dev Utility functions for interacting with the Hoku Bucket actor.
+library LibBucket {
     using LibWasm for *;
 
     // Constants for the actor and method IDs of the Hoku ADM actor
@@ -28,7 +27,7 @@ contract Buckets {
     /// @dev Decode a CBOR encoded array of objects.
     /// @param data The CBOR encoded array of objects.
     /// @return objects The decoded objects.
-    function decodeObjects(bytes memory data) public view returns (Object[] memory objects) {
+    function decodeObjects(bytes memory data) internal view returns (Object[] memory objects) {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return objects;
         objects = new Object[](decoded.length);
@@ -44,7 +43,7 @@ contract Buckets {
     /// @dev Decode a CBOR encoded value.
     /// @param data The CBOR encoded value.
     /// @return value The decoded value.
-    function decodeValue(bytes memory data) public view returns (Value memory value) {
+    function decodeValue(bytes memory data) internal view returns (Value memory value) {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return value;
         value = Value({
@@ -58,7 +57,7 @@ contract Buckets {
     /// @dev Decode a CBOR encoded array of metadata.
     /// @param data The CBOR encoded array of metadata.
     /// @return metadata The decoded metadata.
-    function decodeMetadata(bytes memory data) public view returns (Metadata[] memory metadata) {
+    function decodeMetadata(bytes memory data) internal view returns (Metadata[] memory metadata) {
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
         if (decoded.length == 0) return metadata;
         metadata = new Metadata[](decoded.length);
@@ -71,7 +70,7 @@ contract Buckets {
     /// @dev Decode a CBOR encoded array of common prefixes.
     /// @param data The CBOR encoded array of common prefixes.
     /// @return commonPrefixes The decoded common prefixes.
-    function decodeCommonPrefixes(bytes memory data) public view returns (string[] memory commonPrefixes) {
+    function decodeCommonPrefixes(bytes memory data) internal view returns (string[] memory commonPrefixes) {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return commonPrefixes;
         commonPrefixes = new string[](decoded.length);
@@ -83,7 +82,7 @@ contract Buckets {
     /// @dev Decode a CBOR encoded query.
     /// @param data The CBOR encoded query.
     /// @return decodedQuery The decoded query.
-    function decodeQuery(bytes memory data) public view returns (Query memory decodedQuery) {
+    function decodeQuery(bytes memory data) internal view returns (Query memory decodedQuery) {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return decodedQuery;
         decodedQuery.objects = decodeObjects(decoded[0]);
@@ -93,7 +92,7 @@ contract Buckets {
     /// @dev Decode a CBOR encoded machine metadata.
     /// @param data The CBOR encoded machine metadata.
     /// @return machine The decoded machine metadata.
-    function decodeMachine(bytes memory data) public view returns (Machine memory machine) {
+    function decodeMachine(bytes memory data) internal view returns (Machine memory machine) {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return machine;
         machine = Machine({
@@ -106,7 +105,7 @@ contract Buckets {
     /// @dev Decode a CBOR encoded list.
     /// @param data The CBOR encoded list.
     /// @return decodedList The decoded list.
-    function decodeList(bytes memory data) public view returns (Machine[] memory decodedList) {
+    function decodeList(bytes memory data) internal view returns (Machine[] memory decodedList) {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return decodedList;
         decodedList = new Machine[](decoded.length);
@@ -118,7 +117,7 @@ contract Buckets {
     /// @dev Encode a CBOR encoded create bucket params.
     /// @param params The create bucket params.
     /// @return encoded The CBOR encoded create bucket params.
-    function encodeCreateBucketParams(CreateBucketParams memory params) public pure returns (bytes memory) {
+    function encodeCreateBucketParams(CreateBucketParams memory params) internal pure returns (bytes memory) {
         bytes[] memory encoded = new bytes[](4);
         encoded[0] = params.owner.encodeCborAddress();
         encoded[1] = kindToString(params.kind).encodeCborString();
@@ -134,7 +133,7 @@ contract Buckets {
     /// @param limit The limit.
     /// @return encoded The CBOR encoded query params.
     function encodeQueryParams(string memory prefix, string memory delimiter, uint64 offset, uint64 limit)
-        public
+        internal
         pure
         returns (bytes memory)
     {
@@ -183,58 +182,6 @@ contract Buckets {
 
     /// @dev Query the bucket.
     /// @param bucket The bucket.
-    /// @return The CBOR encoded query data.
-    function query(string memory bucket) external returns (Query memory) {
-        bytes memory bucketAddr = bucket.encodeCborActorAddress();
-        bytes memory params = encodeQueryParams("", "/", 0, 0);
-        bytes memory data = LibWasm.readFromWasmActorByAddress(bucketAddr, METHOD_LIST_OBJECTS, params);
-        return decodeQuery(data);
-    }
-
-    /// @dev Query the bucket.
-    /// @param bucket The bucket.
-    /// @param prefix The prefix.
-    /// @return The CBOR encoded query data.
-    function query(string memory bucket, string memory prefix) external returns (Query memory) {
-        bytes memory bucketAddr = bucket.encodeCborActorAddress();
-        bytes memory params = encodeQueryParams(prefix, "/", 0, 0);
-        bytes memory data = LibWasm.readFromWasmActorByAddress(bucketAddr, METHOD_LIST_OBJECTS, params);
-        return decodeQuery(data);
-    }
-
-    /// @dev Query the bucket.
-    /// @param bucket The bucket.
-    /// @param prefix The prefix.
-    /// @param delimiter The delimiter.
-    /// @return The CBOR encoded query data.
-    function query(string memory bucket, string memory prefix, string memory delimiter)
-        external
-        returns (Query memory)
-    {
-        bytes memory bucketAddr = bucket.encodeCborActorAddress();
-        bytes memory params = encodeQueryParams(prefix, delimiter, 0, 0);
-        bytes memory data = LibWasm.readFromWasmActorByAddress(bucketAddr, METHOD_LIST_OBJECTS, params);
-        return decodeQuery(data);
-    }
-
-    /// @dev Query the bucket.
-    /// @param bucket The bucket.
-    /// @param prefix The prefix.
-    /// @param delimiter The delimiter.
-    /// @param offset The offset.
-    /// @return The CBOR encoded query data.
-    function query(string memory bucket, string memory prefix, string memory delimiter, uint64 offset)
-        external
-        returns (Query memory)
-    {
-        bytes memory bucketAddr = bucket.encodeCborActorAddress();
-        bytes memory params = encodeQueryParams(prefix, delimiter, offset, 0);
-        bytes memory data = LibWasm.readFromWasmActorByAddress(bucketAddr, METHOD_LIST_OBJECTS, params);
-        return decodeQuery(data);
-    }
-
-    /// @dev Query the bucket.
-    /// @param bucket The bucket.
     /// @param prefix The prefix.
     /// @param delimiter The delimiter.
     /// @param offset The offset.
@@ -263,28 +210,16 @@ contract Buckets {
     }
 
     /// @dev List the metadata of the bucket.
-    /// @param addr The owner of the buckets.
+    /// @param owner The owner of the buckets.
     /// @return The CBOR encoded metadata data.
-    function list(address addr) external view returns (Machine[] memory) {
-        bytes memory addrEncoded = addr.encodeCborAddress();
+    function list(address owner) external view returns (Machine[] memory) {
+        bytes memory addrEncoded = owner.encodeCborAddress();
         bytes[] memory encoded = new bytes[](1);
         encoded[0] = addrEncoded;
         bytes memory params = encoded.encodeCborArray();
         bytes memory data = LibWasm.readFromWasmActor(ADM_ACTOR_ID, METHOD_LIST_METADATA, params);
 
         return decodeList(data);
-    }
-
-    /// @dev Create a bucket. Uses the sender as the owner.
-    function create() external {
-        CreateBucketParams memory createParams = CreateBucketParams({
-            owner: msg.sender,
-            kind: Kind.ObjectStore,
-            writeAccess: WriteAccess.OnlyOwner,
-            metadata: new Metadata[](0)
-        });
-        bytes memory params = encodeCreateBucketParams(createParams);
-        LibWasm.writeToWasmActor(ADM_ACTOR_ID, METHOD_CREATE_EXTERNAL, params);
     }
 
     /// @dev Create a bucket.

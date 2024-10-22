@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import {Script} from "forge-std/Script.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
-import {Buckets} from "../src/Buckets.sol";
+import {BucketManager} from "../src/BucketManager.sol";
 import {Environment} from "../src/types/CommonTypes.sol";
 
 contract DeployScript is Script {
@@ -12,7 +12,7 @@ contract DeployScript is Script {
 
     function setUp() public {}
 
-    function run(Environment env) public returns (Buckets) {
+    function run(Environment env) public returns (BucketManager) {
         if (vm.envExists(PRIVATE_KEY)) {
             uint256 privateKey = vm.envUint(PRIVATE_KEY);
             if (env == Environment.Local) {
@@ -30,10 +30,10 @@ contract DeployScript is Script {
             revert("PRIVATE_KEY not set");
         }
 
-        Buckets buckets = new Buckets();
+        BucketManager bucketManager = new BucketManager();
 
         vm.stopBroadcast();
 
-        return buckets;
+        return bucketManager;
     }
 }

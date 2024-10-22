@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 /// @dev Implementation of the BLAKE2b hashing algorithm.
+/// See Rust implementation: https://github.com/oconnor663/blake2_simd/blob/master/blake2b/src/lib.rs
 /// TODO: this is very costly and must be optimized, handled by WASM, or fully offchain.
 library Blake2b {
     uint64 constant OUTBYTES = 64;

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
 import {
@@ -14,16 +14,18 @@ import {
 } from "../types/CreditTypes.sol";
 import {LibWasm} from "./LibWasm.sol";
 
+/// @title Credit Library
+/// @dev Utility functions for interacting with the Hoku Credit actor.
 library LibCredit {
     using LibWasm for *;
 
     // Constants for the actor and method IDs of the Hoku Blobs actor
-    uint64 constant ACTOR_ID = 49;
-    uint64 constant METHOD_APPROVE_CREDIT = 2276438360;
-    uint64 constant METHOD_BUY_CREDIT = 1035900737;
-    uint64 constant METHOD_GET_ACCOUNT = 3435393067;
-    uint64 constant METHOD_GET_STATS = 188400153;
-    uint64 constant METHOD_REVOKE_CREDIT = 37550845;
+    uint64 internal constant ACTOR_ID = 49;
+    uint64 internal constant METHOD_APPROVE_CREDIT = 2276438360;
+    uint64 internal constant METHOD_BUY_CREDIT = 1035900737;
+    uint64 internal constant METHOD_GET_ACCOUNT = 3435393067;
+    uint64 internal constant METHOD_GET_STATS = 188400153;
+    uint64 internal constant METHOD_REVOKE_CREDIT = 37550845;
 
     /// @dev Helper function to decode the subnet stats from CBOR to solidity.
     /// @param data The encoded CBOR array of stats.
