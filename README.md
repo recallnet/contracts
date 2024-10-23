@@ -80,59 +80,11 @@ forge install
 forge build
 ```
 
-## Clean
+Also, you can clean the build artifacts with:
+
 ```shell
 forge clean
 ```
-
-## Deploy
-
-To deploy the contract you need the following:
-- Select an environment prefix: `l` = Local, `t` = Testnet, "" = Mainnet
-- The address of the Axelar Interchain Token Service on chain you are deploying to
-- A private key with funds on the target chain
-- An rpc endpoint for the target chain
-
-### Local
-Start a local network using anvil,
-```shell
-anvil
-```
-Anvil will output an address and private key, copy one of the private keys for the step below.
-
-Deploy the contract, in this case we just use the zero-address for the Axelar Interchain Token Service.
-```shell
-forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' local --broadcast -vv --rpc-url http://localhost:8545 --private-key <0x...>
-```
-
-### Testnet
-```shell
-forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' testnet --broadcast -vv --rpc-url <...>  --private-key <0x...>
-```
-
-### Ethereum Mainnet
-```shell
-forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' ethereum --broadcast -vv --rpc-url https://eth.merkle.io --private-key <0x...>
-```
-
-### Filecoin mainnet
-RPC copied from https://docs.filecoin.io/networks/mainnet/rpcs
-```shell
-forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' filecoin --broadcast -vv -g 100000 --rpc-url https://api.node.glif.io/rpc/v1 --private-key <0x...>
-```
-The `-g` flag is a multiplier on the estimated gas price. In this case 100000 is 1000x the estimated gas price. Unclear why filecoin requires such a large multiplier.
-
-## Deployments
-
-|chain | address|
-| -----| ------|
-|calibration |0xEa944dEf4fd96A70f0B53D98E6945f643491B960|
-|base sepolia|0xd02Bc370Ac6D40B57B8D64578c85132dF59f0109|
-
-
-## [Faucet](https://github.com/hokunet/faucet) Usage
-
-To get 5e18 tokens on a given address:
 
 ### Deploying contracts
 
@@ -170,19 +122,32 @@ environment:
 - `1`: Testnet
 - `2`: Mainnet (note: mainnet is not available yet)
 
-Lastly, all scripts use the `--sig` flag with `run(uint8)` (or `run(uint8,uint256)` for the faucet)
-to execute deployment with the given argument above, and the `--broadcast` flag actually sends the
+Most scripts use the `--sig` flag with `run(uint8)` (or `run(uint8,uint256)` for the faucet) to
+execute deployment with the given argument above, and the `--broadcast` flag actually sends the
 transaction to the network. Recall that you **must** set `-g 100000` to ensure the gas estimate is
 sufficiently high.
 
+Lastly, if you're deploying the Hoku ERC20, the environment will dictate different token symbols:
+
+- Local: prefixes `HOKU` with `l`
+- Testnet: prefixes `HOKU` with `t`
+- Mainnet: uses `HOKU`
+
+Mainnet deployments require the address of the Axelar Interchain Token Service on chain you are
+deploying to, which is handled in the ERC20's `DeployScript` logic.
+
 #### Localnet
 
-Deploy the Hoku ERC20 contract to the localnet parent chain. Note the `-g` flag is not used here
-since the gas estimate is sufficiently low on Anvil.
+##### Hoku ERC20
+
+Deploy the Hoku ERC20 contract to the localnet parent chain (i.e., `http://localhost:8545`). Note
+the `-g` flag is not used here since the gas estimate is sufficiently low on Anvil.
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url localnet_parent --broadcast -vv
+PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript local --sig 'run(string)' --rpc-url localnet_parent --broadcast -vv
 ```
+
+##### Faucet
 
 Deploy the Faucet contract to the localnet subnet. The second argument is the initial supply of Hoku
 tokens, owned by the deployer's account which will be transferred to the faucet contract (e.g., 5000
@@ -192,11 +157,15 @@ with 10\*\*18 decimal units).
 PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript 0 5000000000000000000000 --sig 'run(uint8,uint256)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
 ```
 
+##### Credit
+
 Deploy the Credit contract to the localnet subnet:
 
 ```shell
 PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
 ```
+
+##### Bucket
 
 Deploy the Bucket contract to the localnet subnet:
 
@@ -206,14 +175,18 @@ PRIVATE_KEY=<0x...> forge script script/Bucket.s.sol --tc DeployScript 0 --sig '
 
 #### Testnet
 
+##### Hoku ERC20
+
 Deploy the Hoku ERC20 contract to the testnet parent chain. Note the `-g` flag _is_ used here (this
 differs from the localnet setup above since we're deploying to Filecoin Calibration);
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url testnet_parent --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript testnet --sig 'run(string)' --rpc-url testnet_parent --broadcast -g 100000 -vv
 ```
 
-Deploy the Faucet contract to the testnet subnet.The second argument is the initial supply of Hoku
+##### Faucet
+
+Deploy the Faucet contract to the testnet subnet. The second argument is the initial supply of Hoku
 tokens, owned by the deployer's account which will be transferred to the faucet contract (e.g., 5000
 with 10\*\*18 decimal units).
 
@@ -221,11 +194,15 @@ with 10\*\*18 decimal units).
 PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript 1 5000000000000000000000 --sig 'run(uint8,uint256)'--rpc-url testnet_subnet --broadcast -g 100000 -vv
 ```
 
+##### Credit
+
 Deploy the Credit contract to the testnet subnet:
 
 ```shell
 PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url testnet_subnet --broadcast -g 100000 -vv
 ```
+
+##### Bucket
 
 Deploy the Bucket contract to the testnet subnet:
 
@@ -235,12 +212,37 @@ PRIVATE_KEY=<0x...> forge script script/Bucket.s.sol --tc DeployScript 1 --sig '
 
 #### Devnet
 
-The devnet does not have the concept of a "parent" chain, so all RPCs would use `--rpc-url devnet`.
+The devnet does not have the concept of a "parent" chain, so all RPCs would use `--rpc-url devnet`
+and follow the same pattern as the deployments above.
+
+If you're trying to simply deploy to an Anvil node (i.e., `http://localhost:8545`), you can use the
+same pattern, or just explicitly set the RPC URL:
+
+```shell
+PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript local --sig 'run(string)' --rpc-url http://localhost:8545 --broadcast -vv
+```
 
 #### Mainnet
 
 Mainnet is not yet available. The RPC URLs (`mainnet_parent` and `mainnet_subnet`) are placeholders,
 pointing to the same environment as the testnet.
+
+##### Hoku ERC20
+
+However, if you'd like to deploy the HOKU ERC20 contract to mainnet Ethereum or Filecoin, you can
+use the following. Note these will enable behavior for the Axelar Interchain Token Service.
+
+Deploy to Ethereum:
+
+```shell
+PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' ethereum --broadcast -vv --rpc-url https://eth.merkle.io
+```
+
+And for Filecoin:
+
+```shell
+PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' filecoin --broadcast -vv -g 100000 --rpc-url https://api.node.glif.io/rpc/v1
+```
 
 ## Development
 
@@ -568,8 +570,8 @@ This would restrict the `receiver` to only be able to use the approved `from` ad
 
 > [!NOTE] The `requiredCaller` can, in theory, be an EVM or WASM contract address. However, the
 > logic assumes only an EVM address is provided. Namely, it is _generally_ possible to restrict the
-> `requiredCaller` to a specific WASM contract (e.g., object store with `t2...` prefix), but the
-> current Solidity implementation does not account for this and only assumes an EVM address.
+> `requiredCaller` to a specific WASM contract (e.g., bucket with `t2...` prefix), but the current
+> Solidity implementation does not account for this and only assumes an EVM address.
 
 Lastly, if we want to include all of the optional fields, we can use the following command:
 
@@ -633,6 +635,9 @@ The following methods are available on the credit contract, shown with their fun
   and limit.
 - `create()`: Create a bucket for the sender.
 - `create(address)`: Create a bucket for the specified address.
+- `create(address,(string,string)[])`: Create a bucket for the specified address with metadata.
+- `create(address,(string,string)[],uint8)`: Create a bucket for the specified address with metadata
+  and a write access permissions (`0` => only owner, `1` => full public access).
 
 #### Examples
 
@@ -676,15 +681,15 @@ Which maps to an array of the `Machine` struct:
 struct Machine {
     Kind kind; // See `Kind` struct below
     string address; // t2pdadfrian5jrvtk2sulbc7uuyt5cnxmfdmet3ri
-    Metadata[] metadata; // See `Metadata` struct below
+    KeyValue[] metadata; // See `KeyValue` struct below
 }
 
 struct Kind {
-    ObjectStore, // 0 == `ObjectStore`
-    Accumulator, // 1 == `Accumulator`
+    Bucket, // 0 == `Bucket`
+    Timehub, // 1 == `Timehub`
 }
 
-struct Metadata {
+struct KeyValue {
     string key; // "foo"
     string value; // "bar"
 }
@@ -755,10 +760,10 @@ struct Value {
     string hash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
     uint64 size; // 6
     uint64 expiry; // 403769
-    Metadata[] metadata; // See `Metadata` struct below
+    KeyValue[] metadata; // See `KeyValue` struct below
 }
 
-struct Metadata {
+struct KeyValue {
     string key; // "foo"
     string value; // "bar"
 }
@@ -777,6 +782,13 @@ you can create a bucket for the sender with the following command:
 
 ```sh
 cast send --rpc-url $EVM_RPC_URL $BUCKETS "create()" --private-key $PRIVATE_KEY
+```
+
+To create a bucket with metadata, you can use the following command, where each metadata value is a
+`KeyValue` (a pair of strings) within an array—something like `[("alias","foo")]`:
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "create(address,(string,string)[])" $EVM_ADDRESS '[("alias","foo")]' --private-key $PRIVATE_KEY
 ```
 
 ##### Add an object

@@ -5,7 +5,7 @@ import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
 import {Base32} from "../src/util/Base32.sol";
-import {LibWasm} from "../src/util/LibWasm.sol";
+import {KeyValue, LibWasm} from "../src/util/LibWasm.sol";
 
 contract LibWasmTest is Test {
     function testDecodeCborArray() public view {
@@ -247,5 +247,12 @@ contract LibWasmTest is Test {
         bytes memory data = hex"770d21925703390a236f68f84ef1d432ca5742c4115b11e6";
         bytes memory result = Base32.encode(data);
         assertEq(string(result), "o4gsdesxam4qui3pnd4e54ouglffoqwecfnrdzq");
+    }
+
+    function testEncodeCborKeyValueMap() public pure {
+        KeyValue[] memory params = new KeyValue[](1);
+        params[0] = KeyValue("alias", "foo");
+        bytes memory result = LibWasm.encodeCborKeyValueMap(params);
+        assertEq(result, hex"a165616c69617363666f6f");
     }
 }

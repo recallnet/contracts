@@ -12,3 +12,9 @@ enum Environment {
     Mainnet,
     Foundry
 }
+
+/// @dev A key-value pair.
+struct KeyValue {
+    string key;
+    string value;
+}

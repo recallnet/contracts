@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
+import {KeyValue} from "./CommonTypes.sol";
+
 /// @dev The kind of machine.
 enum Kind {
-    /// An object store with S3-like key semantics.
-    ObjectStore,
+    /// A bucket with S3-like key semantics.
+    Bucket,
     /// An MMR accumulator.
-    Accumulator
+    Timehub
 }
 
 /// @dev The write access of the machine.
@@ -17,18 +19,12 @@ enum WriteAccess {
     Public
 }
 
-/// @dev Metadata for the object or machine.
-struct Metadata {
-    string key;
-    string value;
-}
-
 /// @dev Parameters for creating a bucket.
 struct CreateBucketParams {
     address owner;
     Kind kind;
     WriteAccess writeAccess;
-    Metadata[] metadata;
+    KeyValue[] metadata;
 }
 
 /// @dev The result of a bucket query.
@@ -56,7 +52,7 @@ struct Value {
     /// Object expiry.
     uint64 expiry;
     /// Object metadata.
-    Metadata[] metadata;
+    KeyValue[] metadata;
 }
 
 /// @dev A machine in the bucket.
@@ -66,5 +62,5 @@ struct Machine {
     /// Machine robust address.
     string addr;
     /// User-defined metadata.
-    Metadata[] metadata;
+    KeyValue[] metadata;
 }

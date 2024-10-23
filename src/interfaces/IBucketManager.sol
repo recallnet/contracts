@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-import {CreateBucketParams, Kind, Machine, Metadata, Query, WriteAccess} from "../types/BucketTypes.sol";
+import {CreateBucketParams, KeyValue, Kind, Machine, Query, WriteAccess} from "../types/BucketTypes.sol";
 
 /// @dev Hoku Bucket actor EVM interface for managing objects, and querying object or storage stats.
 /// See Rust implementation for details:
 /// https://github.com/hokunet/ipc/blob/develop/fendermint/actors/objectstore/src/actor.rs
 interface IBucketManager {
+    /// @dev Emitted when a bucket is created.
+    // TODO: It'd be nice to emit the bucket t2 address, but decoding the CBOR is too expensive.
+    event BucketCreated(address indexed owner);
+
     /// @dev Query the bucket.
     /// @param bucket The bucket.
     /// @return The CBOR encoded query data.
@@ -63,4 +67,9 @@ interface IBucketManager {
     /// @dev Create a bucket.
     /// @param owner The owner.
     function create(address owner) external;
+
+    /// @dev Create a bucket.
+    /// @param owner The owner.
+    /// @param metadata The metadata.
+    function create(address owner, KeyValue[] memory metadata) external;
 }

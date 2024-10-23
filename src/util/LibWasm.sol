@@ -7,6 +7,7 @@ import {CommonTypes} from "@filecoin-solidity/v0.8/types/CommonTypes.sol";
 import {Actor} from "@filecoin-solidity/v0.8/utils/Actor.sol";
 import {FilAddresses} from "@filecoin-solidity/v0.8/utils/FilAddresses.sol";
 
+import {KeyValue} from "../types/CommonTypes.sol";
 import {Base32} from "./Base32.sol";
 import {Blake2b} from "./Blake2b.sol";
 import {ByteParser} from "./solidity-cbor/ByteParser.sol";
@@ -272,6 +273,19 @@ library LibWasm {
         CBOR.CBORBuffer memory buf = CBOR.create(1 + concat.length);
         CBOR.startFixedArray(buf, uint64(params.length));
         CBOR.writeRaw(buf, concat);
+        return CBOR.data(buf);
+    }
+
+    /// @dev Encode a series of already encoded CBOR values as a CBOR map.
+    /// @param params The already encoded params as a bytes array of CBOR encoded values.
+    /// @return encoded The encoded params as a CBOR map.
+    function encodeCborKeyValueMap(KeyValue[] memory params) internal pure returns (bytes memory) {
+        if (params.length == 0) return hex"a0";
+        CBOR.CBORBuffer memory buf = CBOR.create(1);
+        CBOR.startFixedMap(buf, uint64(params.length));
+        for (uint256 i = 0; i < params.length; i++) {
+            CBOR.writeKVString(buf, params[i].key, params[i].value);
+        }
         return CBOR.data(buf);
     }
 
