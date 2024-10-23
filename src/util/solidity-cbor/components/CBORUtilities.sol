@@ -1,8 +1,9 @@
-//SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
 
 import {CBORByteUtils as ByteUtils} from "./CBORByteUtils.sol";
 import {CBORDataStructures as DataStructures} from "./CBORDataStructures.sol";
+import {InvalidMajorType} from "./CBORErrors.sol";
 import {CBORPrimitives as Primitives} from "./CBORPrimitives.sol";
 import {CBORSpec as Spec} from "./CBORSpec.sol";
 
@@ -48,7 +49,7 @@ library CBORUtilities {
         }
         // Unsupported types (shouldn't ever really)
         else {
-            revert("Unimplemented Major Type!");
+            revert InvalidMajorType();
         }
 
         // `end` is non-inclusive

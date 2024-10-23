@@ -1,7 +1,8 @@
-//SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
 
 import {CBORByteUtils as ByteUtils} from "./CBORByteUtils.sol";
+import {InvalidRFCShortcode, InvalidTagType} from "./CBORErrors.sol";
 import {CBORSpec as Spec} from "./CBORSpec.sol";
 import {CBORUtilities as Utils} from "./CBORUtilities.sol";
 
@@ -39,7 +40,7 @@ library CBORPrimitives {
         } else if (shortCount == 27) {
             dataEnd += 8;
         } else if (shortCount >= 28) {
-            revert("Invalid integer RFC Shortcode!");
+            revert InvalidRFCShortcode();
         }
     }
 
@@ -82,7 +83,7 @@ library CBORPrimitives {
         } else if (shortCount == 27) {
             countEnd += 8;
         } else if (shortCount >= 28 && shortCount <= 30) {
-            revert("Invalid string RFC Shortcode!");
+            revert InvalidRFCShortcode();
         }
 
         // Calculate the value of the count
@@ -115,7 +116,7 @@ library CBORPrimitives {
             (, shortCount) = Utils.parseFieldEncoding(encoding[cursor]);
             (dataStart, dataEnd) = parseString(encoding, cursor, shortCount);
         } else {
-            revert("Unsupported Tag Type!");
+            revert InvalidTagType();
         }
 
         return (dataStart, dataEnd);
@@ -139,13 +140,13 @@ library CBORPrimitives {
 
         // Predetermined sizes
         if (shortCount <= 19 || shortCount >= 28) {
-            revert("Invalid special RFC Shortcount!");
+            revert InvalidRFCShortcode();
         } else if (shortCount >= 20 && shortCount <= 23) {
             // 20-23 are false, true, null, and undefined (respectively).
             // There's no extra data to grab.
             return (cursor, cursor);
         } else if (shortCount >= 24 && shortCount <= 27) {
-            revert("Unimplemented Shortcount!");
+            revert InvalidRFCShortcode();
         }
         // NOTE: - floats could be implemented in the future if needed
         // else if (shortCount == 24) dataEnd += 1;

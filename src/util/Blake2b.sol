@@ -100,7 +100,7 @@ library Blake2b {
             m[i] = bytesToUint64(state.buf, i * 8);
         }
 
-        uint8[16][12] memory sigma = sigma();
+        uint8[16][12] memory sigma = getSigma();
 
         for (uint256 r = 0; r < 12; r++) {
             g(v, m, 0, 4, 8, 12, /* 0, 1, */ r, 0, sigma);
@@ -164,7 +164,7 @@ library Blake2b {
         state.buf[index / 32] = bytes32((uint256(state.buf[index / 32]) & ~mask) | newValue);
     }
 
-    function sigma() internal pure returns (uint8[16][12] memory) {
+    function getSigma() internal pure returns (uint8[16][12] memory) {
         return [
             [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
             [14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3],

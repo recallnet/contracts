@@ -1,12 +1,16 @@
 {
   "name": "contracts",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.0",
+  "description": "Hoku core contracts",
   "main": "index.js",
   "scripts": {
     "test": "forge test",
-    "format": "forge fmt",
-    "lint": "pnpm run format && solhint src/**/*.sol",
+    "build": "forge build",
+    "fmt": "forge fmt --check",
+    "fmt:fix": "forge fmt",
+    "lint": "solhint 'src/**/*.sol'",
+    "lint:fix": "solhint 'src/**/*.sol' --fix",
+    "format": "pnpm run fmt:fix && pnpm run lint:fix",
     "clean": "forge clean"
   },
   "keywords": [],

@@ -1,7 +1,8 @@
-//SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
 
 import {CBORByteUtils as ByteUtils} from "./CBORByteUtils.sol";
+import {InvalidRFCShortcode, InvalidValue} from "./CBORErrors.sol";
 import {CBORSpec as Spec} from "./CBORSpec.sol";
 import {CBORUtilities as Utils} from "./CBORUtilities.sol";
 
@@ -23,7 +24,7 @@ library CBORDataStructures {
         // Count up how many keys we have, set cursor
         (uint256 totalItems, uint256 dataStart,) =
             getDataStructureItemLength(encoding, mappingCursor, Spec.MajorType.Map, shortCount);
-        require(totalItems % 2 == 0, "Invalid mapping provided!");
+        if (totalItems % 2 != 0) revert InvalidValue("Invalid mapping provided");
         mappingCursor = dataStart;
 
         // Allocate new array
@@ -168,7 +169,7 @@ library CBORDataStructures {
         } else if (shortCount == 27) {
             countEnd += 8;
         } else if (shortCount >= 28 && shortCount <= 30) {
-            revert("Invalid data structure RFC Shortcode!");
+            revert InvalidRFCShortcode();
         }
 
         // We have something we need to add up / interpret
