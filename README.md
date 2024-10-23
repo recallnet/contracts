@@ -17,6 +17,7 @@
     - [Devnet](#devnet)
     - [Mainnet](#mainnet)
 - [Development](#development)
+- [Scripts](#scripts)
   - [Examples usage](#examples-usage)
   - [Credit contract](#credit-contract)
     - [Methods](#methods)
@@ -81,6 +82,7 @@ Install the dependencies and build the contracts, which will output the ABIs to 
 directory:
 
 ```shell
+pnpm install
 forge install
 forge build
 ```
@@ -88,7 +90,7 @@ forge build
 Also, you can clean the build artifacts with:
 
 ```shell
-forge clean
+pnpm clean
 ```
 
 ### Deploying contracts
@@ -252,6 +254,15 @@ PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol:DeployScript --sig 'run(strin
 ```
 
 ## Development
+
+## Scripts
+
+Deployment scripts are described above. Additional `pnpm` scripts are available in `package.json`:
+
+- `format`: Run `forge fmt` to format the code.
+- `lint`: Run `forge fmt` and `solhint` to check for linting errors.
+- `test`: Run `forge test` to run the tests.
+- `clean`: Run `forge clean` to clean the build artifacts.
 
 ### Examples usage
 
@@ -651,7 +662,7 @@ variables. Then, define a `BUCKETS` environment variable, which points to the bu
 deployment address. For example:
 
 ```sh
-export BUCKETS=0x6352eb346Bb5bd1c21e26d8E5aA94B60fd35f10B
+export BUCKETS=0x4c74c78B3698cA00473f12eF517D21C65461305F
 ```
 
 The account you use to create buckets should have the following:

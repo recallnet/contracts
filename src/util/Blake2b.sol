@@ -5,8 +5,8 @@ pragma solidity ^0.8.26;
 /// See Rust implementation: https://github.com/oconnor663/blake2_simd/blob/master/blake2b/src/lib.rs
 /// TODO: this is very costly and must be optimized, handled by WASM, or fully offchain.
 library Blake2b {
-    uint64 constant OUTBYTES = 64;
-    uint64 constant BLOCKBYTES = 128;
+    uint64 private constant OUTBYTES = 64;
+    uint64 private constant BLOCKBYTES = 128;
 
     struct State {
         uint64[8] h;
@@ -17,7 +17,7 @@ library Blake2b {
         uint8 outlen;
     }
 
-    function IV() internal pure returns (uint64[8] memory) {
+    function iv() internal pure returns (uint64[8] memory) {
         return [
             0x6A09E667F3BCC908,
             0xBB67AE8584CAA73B,
@@ -31,10 +31,8 @@ library Blake2b {
     }
 
     function init(uint8 outlen) internal pure returns (State memory) {
-        require(outlen > 0 && outlen <= OUTBYTES, "Invalid output length");
-
         State memory state;
-        state.h = IV();
+        state.h = iv();
         state.h[0] = state.h[0] ^ (uint64(outlen) | (0 << 8) | (1 << 16) | (1 << 24));
         state.outlen = outlen;
         state.buflen = 0;
@@ -88,7 +86,7 @@ library Blake2b {
 
         for (uint256 i = 0; i < 8; i++) {
             v[i] = state.h[i];
-            v[i + 8] = IV()[i];
+            v[i + 8] = iv()[i];
         }
 
         v[12] ^= state.t[0];
@@ -102,17 +100,17 @@ library Blake2b {
             m[i] = bytesToUint64(state.buf, i * 8);
         }
 
-        uint8[16][12] memory sigma = SIGMA();
+        uint8[16][12] memory sigma = sigma();
 
         for (uint256 r = 0; r < 12; r++) {
-            G(v, m, 0, 4, 8, 12, /* 0, 1, */ r, 0, sigma);
-            G(v, m, 1, 5, 9, 13, /* 2, 3, */ r, 1, sigma);
-            G(v, m, 2, 6, 10, 14, /* 4, 5, */ r, 2, sigma);
-            G(v, m, 3, 7, 11, 15, /* 6, 7, */ r, 3, sigma);
-            G(v, m, 0, 5, 10, 15, /* 8, 9, */ r, 4, sigma);
-            G(v, m, 1, 6, 11, 12, /* 10, 11, */ r, 5, sigma);
-            G(v, m, 2, 7, 8, 13, /* 12, 13, */ r, 6, sigma);
-            G(v, m, 3, 4, 9, 14, /* 14, 15, */ r, 7, sigma);
+            g(v, m, 0, 4, 8, 12, /* 0, 1, */ r, 0, sigma);
+            g(v, m, 1, 5, 9, 13, /* 2, 3, */ r, 1, sigma);
+            g(v, m, 2, 6, 10, 14, /* 4, 5, */ r, 2, sigma);
+            g(v, m, 3, 7, 11, 15, /* 6, 7, */ r, 3, sigma);
+            g(v, m, 0, 5, 10, 15, /* 8, 9, */ r, 4, sigma);
+            g(v, m, 1, 6, 11, 12, /* 10, 11, */ r, 5, sigma);
+            g(v, m, 2, 7, 8, 13, /* 12, 13, */ r, 6, sigma);
+            g(v, m, 3, 4, 9, 14, /* 14, 15, */ r, 7, sigma);
         }
 
         for (uint256 i = 0; i < 8; i++) {
@@ -120,7 +118,7 @@ library Blake2b {
         }
     }
 
-    function G(
+    function g(
         uint64[16] memory v,
         uint64[16] memory m,
         uint256 a,
@@ -166,7 +164,7 @@ library Blake2b {
         state.buf[index / 32] = bytes32((uint256(state.buf[index / 32]) & ~mask) | newValue);
     }
 
-    function SIGMA() internal pure returns (uint8[16][12] memory) {
+    function sigma() internal pure returns (uint8[16][12] memory) {
         return [
             [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
             [14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3],

@@ -4,11 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "forge test"
+    "test": "forge test",
+    "format": "forge fmt",
+    "lint": "pnpm run format && solhint src/**/*.sol",
+    "clean": "forge clean"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT OR Apache-2.0",
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.1.2",
     "hardhat": "^2.22.13",
