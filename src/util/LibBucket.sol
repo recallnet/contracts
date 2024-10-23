@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {
     CreateBucketParams, KeyValue, Kind, Machine, Object, Query, Value, WriteAccess
 } from "../types/BucketTypes.sol";
-import {LibWasm} from "./LibWasm.sol";
+import {InvalidValue, LibWasm} from "./LibWasm.sol";
 
 /// @title Bucket Library
 /// @dev Utility functions for interacting with the Hoku Bucket actor.
@@ -154,7 +154,7 @@ library LibBucket {
         } else if (kind == Kind.Timehub) {
             return "Timehub";
         }
-        revert("Invalid Kind");
+        revert InvalidValue("Invalid machine kind");
     }
 
     /// @dev Convert a string to a kind.
@@ -163,21 +163,22 @@ library LibBucket {
     function stringToKind(string memory kind) internal pure returns (Kind) {
         if (keccak256(bytes(kind)) == keccak256(bytes("Bucket"))) {
             return Kind.Bucket;
-        } else {
+        } else if (keccak256(bytes(kind)) == keccak256(bytes("Timehub"))) {
             return Kind.Timehub;
         }
+        revert InvalidValue("Invalid machine kind");
     }
 
     /// @dev Convert a write access to a string.
     /// @param writeAccess The write access.
     /// @return string The string representation of the write access.
+    // TODO: we'll eventually remove this since credit approvals handle access control
     function writeAccessToString(WriteAccess writeAccess) internal pure returns (string memory) {
         if (writeAccess == WriteAccess.OnlyOwner) {
             return "OnlyOwner";
-        } else if (writeAccess == WriteAccess.Public) {
+        } else {
             return "Public";
         }
-        revert("Invalid WriteAccess");
     }
 
     /// @dev Query the bucket.
@@ -206,7 +207,6 @@ library LibBucket {
         encoded[0] = addrEncoded;
         bytes memory params = encoded.encodeCborArray();
         bytes memory data = LibWasm.readFromWasmActor(ADM_ACTOR_ID, METHOD_LIST_METADATA, params);
-
         return decodeList(data);
     }
 

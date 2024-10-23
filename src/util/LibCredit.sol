@@ -12,7 +12,7 @@ import {
     SubnetStats,
     Usage
 } from "../types/CreditTypes.sol";
-import {LibWasm} from "./LibWasm.sol";
+import {InvalidValue, LibWasm} from "./LibWasm.sol";
 
 /// @title Credit Library
 /// @dev Utility functions for interacting with the Hoku Credit actor.
@@ -232,7 +232,7 @@ library LibCredit {
     /// @param recipient The address of the account.
     /// @return data The balance of the account after buying credits.
     function buyCredit(address recipient) external returns (bytes memory data) {
-        require(msg.value > 0, "Amount must be greater than zero");
+        if (msg.value == 0) revert InvalidValue("Amount must be greater than zero");
         bytes memory params = recipient.encodeCborAddress();
         return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_BUY_CREDIT, params);
     }

@@ -35,27 +35,32 @@ for Hoku. It includes the following:
 - `Faucet.sol`: The accompanying onchain faucet (rate limiter) contract for dripping testnet funds.
 - `Credit.sol`: Manage subnet credit, including credit purchases, approvals/rejections, and related
   read-only operations (uses the `LibCredit` and `LibWasm` libraries).
-- `Bucket.sol`: Manage buckets, including creating buckets, listing buckets, querying objects, and
-  other object-related operations.
+- `BucketManager.sol`: Manage buckets, including creating buckets, listing buckets, querying
+  objects, and other object-related operations (uses the `LibBucket` and `LibWasm` libraries).
+- `ValidatorGater.sol`: A contract for managing validator access.
 - `interfaces/ICredit.sol`: The interface for the credit contract.
 - `types/`: Various method parameters and return types for core contracts.
 - `utils/LibCredit.sol`: A library for interacting with credits, wrapped by the `Credit` contract.
+- `utils/LibBucket.sol`: A library for interacting with buckets, wrapped by the `BucketManager`
+  contract.
 - `utils/LibWasm.sol`: A library for facilitating proxy calls to WASM contracts from Solidity.
 - `utils/solidity-cbor`: Libraries for encoding and decoding CBOR data, used in proxy WASM calls
   (forked from [this repo](https://github.com/smartcontractkit/solidity-cborutils)).
+- `utils/Base32.sol`: Utilities for encoding and decoding base32.
+- `utils/Blake2b.sol`: Utilities for Blake2b hashing (used for WASM `t2` addresses).
 
 ### Deployments
 
 The following contracts are deployed in the testnet environment (Filecoin Calibration or the Hoku
 subnet):
 
-| Contract     | Chain       | Address                                      |
-| ------------ | ----------- | -------------------------------------------- |
-| Hoku (ERC20) | Calibration | `0x8e3Fd2b47e564E7D636Fa80082f286eD038BE54b` |
-| Faucet       | Subnet      | `0x10bc34a0C11E5e51774833603955CB7Ec3c79AC6` |
-| Credit       | Subnet      | `0x8c2e3e8ba0d6084786d60A6600e832E8df84846C` |
-| Buckets      | Subnet      | `0x6352eb346Bb5bd1c21e26d8E5aA94B60fd35f10B` |
-| LibCredit    | Subnet      | `0xfF73c2705B8b77a832c7ec33864B8BEF201002E1` |
+| Contract      | Chain       | Address                                      |
+| ------------- | ----------- | -------------------------------------------- |
+| Hoku (ERC20)  | Calibration | `0x8e3Fd2b47e564E7D636Fa80082f286eD038BE54b` |
+| Faucet        | Subnet      | `0x10bc34a0C11E5e51774833603955CB7Ec3c79AC6` |
+| Credit        | Subnet      | `0x8c2e3e8ba0d6084786d60A6600e832E8df84846C` |
+| BucketManager | Subnet      | `0x4c74c78B3698cA00473f12eF517D21C65461305F` |
+| LibCredit     | Subnet      | `0xfF73c2705B8b77a832c7ec33864B8BEF201002E1` |
 
 To get testnet tokens, visit: [https://faucet.hoku.sh](https://faucet.hoku.sh). Also, you can check
 out the `foundry.toml` file to see the RPC URLs for each network (described in more detail below).
@@ -90,10 +95,12 @@ forge clean
 
 The scripts for deploying contracts are in `script/` directory:
 
-- `Credit.s.sol`: Deploy the credit contract.
-- `Bucket.s.sol`: Deploy the bucket contract.
-- `Faucet.s.sol`: Deploy the faucet contract.
 - `Hoku.s.sol`: Deploy the Hoku ERC20 contract.
+- `Faucet.s.sol`: Deploy the faucet contract.
+- `ValidatorGater.s.sol`: Deploy the validator gater contract.
+- `Credit.s.sol`: Deploy the credit contract.
+- `BucketManager.s.sol`: Deploy the Bucket Manager contract.
+- `Bridge.s.sol`: Deploy the bridge contract—relevant for the Hoku ERC20 on live chains.
 
 > [!NOTE] If you're deploying _to_ the Hoku subnet or Filecoin Calibration, you'll need to
 > (significantly) bump the gas estimation multiplier by adding a `-g 100000` flag to the
@@ -165,12 +172,12 @@ Deploy the Credit contract to the localnet subnet:
 PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
 ```
 
-##### Bucket
+##### Buckets
 
-Deploy the Bucket contract to the localnet subnet:
+Deploy the Bucket Manager contract to the localnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Bucket.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/BucketManager.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
 ```
 
 #### Testnet
@@ -202,12 +209,12 @@ Deploy the Credit contract to the testnet subnet:
 PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url testnet_subnet --broadcast -g 100000 -vv
 ```
 
-##### Bucket
+##### Buckets
 
-Deploy the Bucket contract to the testnet subnet:
+Deploy the Bucket Manager contract to the testnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Bucket.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url testnet_subnet --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/BucketManager.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url testnet_subnet --broadcast -g 100000 -vv
 ```
 
 #### Devnet
@@ -610,7 +617,7 @@ working on `localnet`, you'll have to deploy this yourself. Here's a quick one-l
 setting the `BUCKETS` environment variable to the deployed address:
 
 ```
-BUCKETS=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/Buckets.s.sol \
+BUCKETS=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/BucketManager.s.sol \
 --tc DeployScript 0 \
 --sig 'run(uint8)' \
 --rpc-url localnet_subnet \
@@ -636,13 +643,11 @@ The following methods are available on the credit contract, shown with their fun
 - `create()`: Create a bucket for the sender.
 - `create(address)`: Create a bucket for the specified address.
 - `create(address,(string,string)[])`: Create a bucket for the specified address with metadata.
-- `create(address,(string,string)[],uint8)`: Create a bucket for the specified address with metadata
-  and a write access permissions (`0` => only owner, `1` => full public access).
 
 #### Examples
 
 Make sure you've already set the `PRIVATE_KEY`, `EVM_ADDRESS`, and `EVM_RPC_URL` environment
-variables. Then, define a `BUCKET` environment variable, which points to the bucket contract
+variables. Then, define a `BUCKETS` environment variable, which points to the bucket contract
 deployment address. For example:
 
 ```sh

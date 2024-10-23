@@ -5,7 +5,7 @@ import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
 import {Base32} from "../src/util/Base32.sol";
-import {KeyValue, LibWasm} from "../src/util/LibWasm.sol";
+import {InvalidValue, KeyValue, LibWasm} from "../src/util/LibWasm.sol";
 
 contract LibWasmTest is Test {
     function testDecodeCborArray() public view {
@@ -129,34 +129,20 @@ contract LibWasmTest is Test {
         assertEq(array[2], hex"820080");
     }
 
-    function testInvalidInitialArray() public view {
-        bool hasError = false;
-        try this.externalDecodeCborBigIntToUint256(hex"810080") {}
-        catch Error(string memory reason) {
-            hasError = true;
-            assertEq(reason, "Must be array of 2 elements");
-        }
-        assertTrue(hasError, "Expected function to revert");
-    }
+    function testInvalidArrayLengthOrSign() public {
+        // Invalid bigint value (zero value will be 0x820080, so 0x810080 is invalid)
+        bytes memory expectedError = abi.encodeWithSelector(InvalidValue.selector, "Invalid array length or sign value");
+        vm.expectRevert(expectedError);
+        this.externalDecodeCborBigIntToUint256(hex"810080");
 
-    function testInvalidSign() public view {
-        bool hasError = false;
-        try this.externalDecodeCborBigIntToUint256(hex"820280") {}
-        catch Error(string memory reason) {
-            hasError = true;
-            assertEq(reason, "Invalid sign value");
-        }
-        assertTrue(hasError, "Expected function to revert");
-    }
+        // Invalid sign
+        vm.expectRevert(expectedError);
+        this.externalDecodeCborBigIntToUint256(hex"820280");
 
-    function testInvalidInnerArrayLength() public view {
-        bool hasError = false;
-        try this.externalDecodeCborBigIntToUint256(hex"820189") {}
-        catch Error(string memory reason) {
-            hasError = true;
-            assertEq(reason, "Invalid array length");
-        }
-        assertTrue(hasError, "Expected function to revert");
+        // Invalid bigint value (array length of 9 exceeds max of 8)
+        expectedError = abi.encodeWithSelector(InvalidValue.selector, "Invalid bigint value");
+        vm.expectRevert(expectedError);
+        this.externalDecodeCborBigIntToUint256(hex"820189");
     }
 
     function testEncodeUint256Zero() public pure {

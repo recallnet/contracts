@@ -7,6 +7,7 @@ import {CommonTypes} from "@filecoin-solidity/v0.8/types/CommonTypes.sol";
 import {Actor} from "@filecoin-solidity/v0.8/utils/Actor.sol";
 import {FilAddresses} from "@filecoin-solidity/v0.8/utils/FilAddresses.sol";
 
+import {ActorError, InvalidValue} from "../errors/WasmErrors.sol";
 import {KeyValue} from "../types/CommonTypes.sol";
 import {Base32} from "./Base32.sol";
 import {Blake2b} from "./Blake2b.sol";
@@ -32,7 +33,7 @@ library LibWasm {
     /// @param data The encoded CBOR bytes (e.g., 0x8618681865...).
     /// @return result The decoded bytes.
     function decodeCborBytesArrayToBytes(bytes memory data) internal pure returns (bytes memory) {
-        require(uint8(data[0]) >= 0x80 && uint8(data[0]) <= 0x97, "Invalid fixed array indicator");
+        if (uint8(data[0]) < 0x80 || uint8(data[0]) > 0x97) revert InvalidValue("Invalid fixed array indicator");
         // Initial data is a CBOR array (0x8<length>) of single byte values (0x18<byte>18<byte>)
         uint8 length = uint8(data[0]) - 0x80;
         bytes memory result = new bytes(length);
@@ -48,7 +49,7 @@ library LibWasm {
     /// @param data The encoded CBOR fixed array (e.g., `0x9820188e184c...` is a 32 byte array).
     /// @return decoded The decoded CBOR fixed array. Returns empty bytes[] if the input is null.
     function decodeBytesSliceToBytes(bytes memory data) internal pure returns (bytes memory) {
-        require(data[0] == 0x98, "Invalid fixed array indicator");
+        if (data[0] != 0x98) revert InvalidValue("Invalid fixed array indicator");
         uint8 length = uint8(data[1]);
         bytes memory result = new bytes(length);
         uint256 index = 2; // Start at the third byte (i.e., the first instance of 0x18 or 0x00 to 0x17)
@@ -113,11 +114,10 @@ library LibWasm {
     /// @param encoded The encoded Wasm actor address as CBOR bytes.
     /// @return result The decoded Wasm actor address as a string.
     function decodeCborActorAddress(bytes memory encoded) internal pure returns (string memory) {
-        require(encoded.length == 21, "Invalid encoded length");
-        require(encoded[0] == 0x02, "Invalid protocol");
+        if (encoded.length != 21 || encoded[0] != 0x02) revert InvalidValue("Invalid address length or protocol");
 
         bytes memory checksum = Blake2b.hash(encoded, 4);
-        // combine payload and checksum
+        // Combine payload and checksum
         bytes memory combined = new bytes(24);
         for (uint8 i = 0; i < 20; i++) {
             combined[i] = encoded[i + 1];
@@ -125,10 +125,8 @@ library LibWasm {
         for (uint8 i = 0; i < 4; i++) {
             combined[20 + i] = checksum[i];
         }
-        // 02770d21925703390a236f68f84ef1d432ca5742c4
-        // t2o4gsdesxam4qui3pnd4e54ouglffoqwecfnrdzq
-        bytes memory base32Encoded = Base32.encode(combined);
 
+        bytes memory base32Encoded = Base32.encode(combined);
         bytes memory addrBytes = new bytes(41);
         addrBytes[0] = "t";
         addrBytes[1] = "2";
@@ -155,13 +153,13 @@ library LibWasm {
     /// @return result Decoded BigInt as a uint256.
     function decodeCborBigIntToUint256(bytes memory data) internal pure returns (uint256) {
         if (data.length == 1 && (data[0] == 0x00 || data[0] == 0xf6)) return 0;
-        require(data[0] == 0x82, "Must be array of 2 elements");
-        require(uint8(data[1]) <= 1, "Invalid sign value");
+        if (data[0] != 0x82 || uint8(data[1]) > 1) revert InvalidValue("Invalid array length or sign value");
 
         // Case: 0x820080 (zero; empty array)
         if (data[2] == 0x80) return 0;
 
-        require(data[2] >= 0x81 && data[2] <= 0x88, "Invalid array length");
+        // Can only be 0x81 to 0x88 (1 to 8 elements)
+        if (data[2] < 0x81 || data[2] > 0x88) revert InvalidValue("Invalid bigint value");
 
         uint256 result;
         uint256 shift;
@@ -188,7 +186,7 @@ library LibWasm {
                 );
                 index += 5;
             } else {
-                revert("Unsupported integer type");
+                revert InvalidValue("Unsupported integer type");
             }
 
             result |= uint256(value) << shift;
@@ -209,7 +207,7 @@ library LibWasm {
     /// @return result Decoded BigUint as a uint256.
     function decodeCborBigUintToUint256(bytes memory data) internal pure returns (uint256) {
         if (data.length == 1 && (data[0] == 0x80 || data[0] == 0xf6)) return 0;
-        require(data[0] >= 0x81 && data[0] <= 0x88, "Invalid array length");
+        if (data[0] < 0x81 || data[0] > 0x88) revert InvalidValue("Invalid bigint value");
 
         uint256 result;
         uint256 shift;
@@ -236,7 +234,7 @@ library LibWasm {
                 );
                 index += 5;
             } else {
-                revert("Unsupported integer type");
+                revert InvalidValue("Unsupported integer type");
             }
 
             result |= uint256(value) << shift;
@@ -338,8 +336,8 @@ library LibWasm {
     function encodeCborActorAddress(string memory addr) internal pure returns (bytes memory) {
         bytes memory addrBytes = bytes(addr);
         bytes1 protocol = addrBytes[1]; // Second value of `t2` is the protocol
-        require(addrBytes.length == 41, "Invalid address length");
-        require(protocol == 0x32, "Invalid protocol"); // Protocol `2` is an actor; `2` from a string is 0x32
+        // A t2 address is 41 bytes long, and protocol `2` is an actor (`2` from a string is 0x32)
+        if (addrBytes.length != 41 || protocol != 0x32) revert InvalidValue("Invalid address length or protocol");
         bytes memory subAddr = new bytes(39); // Ignore the first 2 bytes (network + protocol)
         for (uint256 i = 0; i < 39; i++) {
             subAddr[i] = addrBytes[i + 2];
@@ -437,7 +435,7 @@ library LibWasm {
         (int256 exit, bytes memory data) =
             Actor.callByIDReadOnly(CommonTypes.FilActorId.wrap(actorId), methodNum, EMPTY_CODEC, params);
 
-        require(exit == 0, "Actor returned an error");
+        if (exit != 0) revert ActorError(exit);
         return data;
     }
 
@@ -451,11 +449,11 @@ library LibWasm {
         view
         returns (bytes memory)
     {
-        require(params.length > 0, "Params must be non-empty");
+        if (params.length == 0) revert InvalidValue("Params must be non-empty");
         (int256 exit, bytes memory data) =
             Actor.callByIDReadOnly(CommonTypes.FilActorId.wrap(actorId), methodNum, CBOR_CODEC, params);
 
-        require(exit == 0, "Actor returned an error");
+        if (exit != 0) revert ActorError(exit);
         return data;
     }
 
@@ -468,10 +466,10 @@ library LibWasm {
         internal
         returns (bytes memory)
     {
-        require(params.length > 0, "Params must be non-empty");
+        if (params.length == 0) revert InvalidValue("Params must be non-empty");
         (int256 exit, bytes memory data) = Actor.callByAddress(addr, methodNum, CBOR_CODEC, params, 0, true);
 
-        require(exit == 0, "Actor returned an error");
+        if (exit != 0) revert ActorError(exit);
         return data;
     }
 
@@ -481,7 +479,7 @@ library LibWasm {
     /// @param params The parameters.
     /// @return data The data returned from the actor.
     function writeToWasmActor(uint64 actorId, uint64 methodNum, bytes memory params) internal returns (bytes memory) {
-        require(params.length > 0, "Params must be non-empty");
+        if (params.length == 0) revert InvalidValue("Params must be non-empty");
         uint64 codec = CBOR_CODEC;
         uint256 value = msg.value > 0 ? msg.value : 0;
         (int256 exit, bytes memory data) = Actor.callByID(
@@ -493,7 +491,7 @@ library LibWasm {
             false // static call
         );
 
-        require(exit == 0, "Actor returned an error");
+        if (exit != 0) revert ActorError(exit);
         return data;
     }
 }

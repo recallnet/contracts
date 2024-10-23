@@ -49,8 +49,8 @@ contract BucketManager is IBucketManager {
     }
 
     /// @dev See {IBucketManager-list}.
-    function list(address addr) external view returns (Machine[] memory) {
-        return LibBucket.list(addr);
+    function list(address owner) external view returns (Machine[] memory) {
+        return LibBucket.list(owner);
     }
 
     /// @dev See {IBucketManager-create}.
