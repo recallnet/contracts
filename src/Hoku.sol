@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
 
 import {InterchainTokenStandard} from
     "@axelar-network/interchain-token-service/contracts/interchain-token/InterchainTokenStandard.sol";
