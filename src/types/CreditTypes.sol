@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
 
 /// @dev The stored representation of a credit account.
 /// @param capacityUsed (uint256): Total size of all blobs managed by the account.

@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
 
 import {BytesCBOR} from "@filecoin-solidity/v0.8/cbor/BytesCbor.sol";
 import {FilecoinCBOR, Misc} from "@filecoin-solidity/v0.8/cbor/FilecoinCbor.sol";

@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
 
 /// @dev Implementation of the BLAKE2b hashing algorithm.
 /// See Rust implementation: https://github.com/oconnor663/blake2_simd/blob/master/blake2b/src/lib.rs

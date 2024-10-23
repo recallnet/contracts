@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
 
 import {IBucketManager} from "./interfaces/IBucketManager.sol";
 import {CreateBucketParams, KeyValue, Kind, Machine, Object, Query, Value} from "./types/BucketTypes.sol";

@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
 
 /// @dev Environment helper for setting the chain environment in scripts or contracts.
 /// @param Local: Local (localnet or devnet) chain
