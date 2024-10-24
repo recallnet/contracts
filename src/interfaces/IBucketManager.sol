@@ -42,6 +42,15 @@ interface IBucketManager {
 
     /// @dev Add an object to a bucket.
     /// @param bucket The bucket.
+    /// @param source The source Iroh node ID used for ingestion.
+    /// @param key The object key.
+    /// @param blobHash The object blake3 hash.
+    /// @param size The object size.
+    function add(string memory bucket, string memory source, string memory key, string memory blobHash, uint64 size)
+        external;
+
+    /// @dev Add an object to a bucket.
+    /// @param bucket The bucket.
     /// @param addParams The add object params. See {AddParams} for more details.
     function add(string memory bucket, AddParams memory addParams) external;
 

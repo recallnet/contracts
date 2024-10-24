@@ -645,6 +645,9 @@ The following methods are available on the credit contract, shown with their fun
 - `create(address,(string,string)[])`: Create a bucket for the specified address with metadata.
 - `list()`: List all buckets for the sender.
 - `list(address)`: List all buckets for the specified address.
+- `add(string,string,string,string,uint64)`: Add an object to a bucket and associated object upload
+  parameters. The first value is the bucket address, the subsequent values are all of the "required"
+  values in `AddParams` (`source` node ID, `key`, `blobHash`, and `size`).
 - `add(string,(string,string,string,uint64,uint64,(string,string)[],bool))`: Add an object to a
   bucket (first value) and associated object upload parameters (second value) as the `AddParams`
   struct, described in more detail below.
@@ -780,8 +783,16 @@ We then pass this as a single parameter to the `add` method:
 cast send --rpc-url $EVM_RPC_URL $BUCKETS "add(string,(string,string,string,uint64,uint64,(string,string)[],bool))" $BUCKET_ADDR '("4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a","hello/world","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq",6,0,[("foo","bar")],false)' --private-key $PRIVATE_KEY
 ```
 
-If you're wondering where to get the `source` storage bucket's node ID, you can find it with a
-`curl` request. On localnet, this looks like the following:
+Alternatively, to use the overloaded `add` method that has default values for the `ttl`, `metadata`,
+and `overwrite`, you can do the following:
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "add(string,string,string,string,uint64)" $BUCKET_ADDR "4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a" "hello/world" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" 6 --private-key $PRIVATE_KEY
+```
+
+If you're wondering where to get the `source` storage bucket's node ID (the example's
+`4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a`), you can find it with a `curl` request. On
+localnet, this looks like the following:
 
 ```sh
 curl http://localhost:8001/v1/node | jq '.node_id'

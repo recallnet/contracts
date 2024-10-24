@@ -40,6 +40,23 @@ contract BucketManager is IBucketManager {
     }
 
     /// @dev See {IBucketManager-add}.
+    function add(string memory bucket, string memory source, string memory key, string memory blobHash, uint64 size)
+        external
+    {
+        AddParams memory addParams = AddParams({
+            source: source,
+            key: key,
+            blobHash: blobHash,
+            size: size,
+            ttl: 0, // No expiration
+            metadata: new KeyValue[](0), // No metadata
+            overwrite: false // Do not overwrite
+        });
+        LibBucket.add(bucket, addParams);
+        emit ObjectAdded(msg.sender, bucket, key);
+    }
+
+    /// @dev See {IBucketManager-add}.
     function add(string memory bucket, AddParams memory addParams) external {
         LibBucket.add(bucket, addParams);
         emit ObjectAdded(msg.sender, bucket, addParams.key);
