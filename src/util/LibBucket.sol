@@ -32,6 +32,54 @@ library LibBucket {
     uint64 internal constant METHOD_GET_OBJECT = 1894890866;
     uint64 internal constant METHOD_LIST_OBJECTS = 572676265;
 
+    /// @dev Decode a CBOR encoded list.
+    /// @param data The CBOR encoded list.
+    /// @return decodedList The decoded list.
+    function decodeList(bytes memory data) internal view returns (Machine[] memory decodedList) {
+        bytes[] memory decoded = data.decodeCborArrayToBytes();
+        if (decoded.length == 0) return decodedList;
+        decodedList = new Machine[](decoded.length);
+        for (uint256 i = 0; i < decoded.length; i++) {
+            decodedList[i] = decodeMachine(decoded[i]);
+        }
+    }
+
+    /// @dev Decode a CBOR encoded machine metadata.
+    /// @param data The CBOR encoded machine metadata.
+    /// @return machine The decoded machine metadata.
+    function decodeMachine(bytes memory data) internal view returns (Machine memory machine) {
+        bytes[] memory decoded = data.decodeCborArrayToBytes();
+        if (decoded.length == 0) return machine;
+        machine = Machine({
+            kind: stringToKind(string(decoded[0])), // Decoded array automatically removes leading byte (string length)
+            addr: decoded[1].decodeCborActorAddress(),
+            metadata: decodeMetadata(decoded[2])
+        });
+    }
+
+    /// @dev Decode a CBOR encoded array of metadata.
+    /// @param data The CBOR encoded array of metadata.
+    /// @return metadata The decoded metadata.
+    function decodeMetadata(bytes memory data) internal view returns (KeyValue[] memory metadata) {
+        bytes[2][] memory decoded = data.decodeCborMappingToBytes();
+        if (decoded.length == 0) return metadata;
+        metadata = new KeyValue[](decoded.length);
+        for (uint256 i = 0; i < decoded.length; i++) {
+            metadata[i] = KeyValue({key: string(decoded[i][0]), value: string(decoded[i][1])});
+        }
+        return metadata;
+    }
+
+    /// @dev Decode a CBOR encoded query.
+    /// @param data The CBOR encoded query.
+    /// @return decodedQuery The decoded query.
+    function decodeQuery(bytes memory data) internal view returns (Query memory decodedQuery) {
+        bytes[] memory decoded = data.decodeCborArrayToBytes();
+        if (decoded.length == 0) return decodedQuery;
+        decodedQuery.objects = decodeObjects(decoded[0]);
+        decodedQuery.commonPrefixes = decodeCommonPrefixes(decoded[1]);
+    }
+
     /// @dev Decode a CBOR encoded array of objects.
     /// @param data The CBOR encoded array of objects.
     /// @return objects The decoded objects.
@@ -55,24 +103,11 @@ library LibBucket {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return value;
         value = Value({
-            hash: string(decoded[0].decodeBlobHash()),
+            blobHash: string(decoded[0].decodeBlobHash()),
             size: decoded[1].decodeCborBytesToUint64(),
             expiry: decoded[2].decodeCborBytesToUint64(),
             metadata: decodeMetadata(decoded[3])
         });
-    }
-
-    /// @dev Decode a CBOR encoded array of metadata.
-    /// @param data The CBOR encoded array of metadata.
-    /// @return metadata The decoded metadata.
-    function decodeMetadata(bytes memory data) internal view returns (KeyValue[] memory metadata) {
-        bytes[2][] memory decoded = data.decodeCborMappingToBytes();
-        if (decoded.length == 0) return metadata;
-        metadata = new KeyValue[](decoded.length);
-        for (uint256 i = 0; i < decoded.length; i++) {
-            metadata[i] = KeyValue({key: string(decoded[i][0]), value: string(decoded[i][1])});
-        }
-        return metadata;
     }
 
     /// @dev Decode a CBOR encoded array of common prefixes.
@@ -87,41 +122,6 @@ library LibBucket {
         }
     }
 
-    /// @dev Decode a CBOR encoded query.
-    /// @param data The CBOR encoded query.
-    /// @return decodedQuery The decoded query.
-    function decodeQuery(bytes memory data) internal view returns (Query memory decodedQuery) {
-        bytes[] memory decoded = data.decodeCborArrayToBytes();
-        if (decoded.length == 0) return decodedQuery;
-        decodedQuery.objects = decodeObjects(decoded[0]);
-        decodedQuery.commonPrefixes = decodeCommonPrefixes(decoded[1]);
-    }
-
-    /// @dev Decode a CBOR encoded machine metadata.
-    /// @param data The CBOR encoded machine metadata.
-    /// @return machine The decoded machine metadata.
-    function decodeMachine(bytes memory data) internal view returns (Machine memory machine) {
-        bytes[] memory decoded = data.decodeCborArrayToBytes();
-        if (decoded.length == 0) return machine;
-        machine = Machine({
-            kind: stringToKind(string(decoded[0])), // Decoded array automatically removes leading byte (string length)
-            addr: decoded[1].decodeCborActorAddress(),
-            metadata: decodeMetadata(decoded[2])
-        });
-    }
-
-    /// @dev Decode a CBOR encoded list.
-    /// @param data The CBOR encoded list.
-    /// @return decodedList The decoded list.
-    function decodeList(bytes memory data) internal view returns (Machine[] memory decodedList) {
-        bytes[] memory decoded = data.decodeCborArrayToBytes();
-        if (decoded.length == 0) return decodedList;
-        decodedList = new Machine[](decoded.length);
-        for (uint256 i = 0; i < decoded.length; i++) {
-            decodedList[i] = decodeMachine(decoded[i]);
-        }
-    }
-
     /// @dev Encode a CBOR encoded create bucket params.
     /// @param params The create bucket params.
     /// @return encoded The CBOR encoded create bucket params.
@@ -131,6 +131,21 @@ library LibBucket {
         encoded[1] = kindToString(params.kind).encodeCborString();
         encoded[2] = writeAccessToString(params.writeAccess).encodeCborString();
         encoded[3] = params.metadata.encodeCborKeyValueMap();
+        return encoded.encodeCborArray();
+    }
+
+    /// @dev Encode a CBOR encoded add params.
+    /// @param params The add params.
+    /// @return encoded The CBOR encoded add params.
+    function encodeAddParams(AddParams memory params) internal pure returns (bytes memory) {
+        bytes[] memory encoded = new bytes[](7);
+        encoded[0] = params.source.encodeCborBlobHashOrNodeId();
+        encoded[1] = params.key.encodeCborBytes();
+        encoded[2] = params.blobHash.encodeCborBlobHashOrNodeId();
+        encoded[3] = params.size.encodeCborUint64();
+        encoded[4] = params.ttl == 0 ? LibWasm.encodeCborNull() : params.ttl.encodeCborUint64();
+        encoded[5] = params.metadata.encodeCborKeyValueMap();
+        encoded[6] = params.overwrite.encodeCborBool();
         return encoded.encodeCborArray();
     }
 
@@ -189,35 +204,6 @@ library LibBucket {
         }
     }
 
-    /// @dev Query the bucket.
-    /// @param bucket The bucket.
-    /// @param prefix The prefix.
-    /// @param delimiter The delimiter.
-    /// @param offset The offset.
-    /// @param limit The limit.
-    /// @return The CBOR encoded query data.
-    function query(string memory bucket, string memory prefix, string memory delimiter, uint64 offset, uint64 limit)
-        external
-        returns (Query memory)
-    {
-        bytes memory bucketAddr = bucket.encodeCborActorAddress();
-        bytes memory params = encodeQueryParams(prefix, delimiter, offset, limit);
-        bytes memory data = LibWasm.readFromWasmActorByAddress(bucketAddr, METHOD_LIST_OBJECTS, params);
-        return decodeQuery(data);
-    }
-
-    /// @dev List the metadata of the bucket.
-    /// @param owner The owner of the buckets.
-    /// @return The CBOR encoded metadata data.
-    function list(address owner) external view returns (Machine[] memory) {
-        bytes memory addrEncoded = owner.encodeCborAddress();
-        bytes[] memory encoded = new bytes[](1);
-        encoded[0] = addrEncoded;
-        bytes memory params = encoded.encodeCborArray();
-        bytes memory data = LibWasm.readFromWasmActor(ADM_ACTOR_ID, METHOD_LIST_METADATA, params);
-        return decodeList(data);
-    }
-
     /// @dev Create a bucket.
     /// @param owner The owner.
     /// @param metadata The metadata.
@@ -232,45 +218,61 @@ library LibBucket {
         LibWasm.writeToWasmActor(ADM_ACTOR_ID, METHOD_CREATE_EXTERNAL, params);
     }
 
-    /// @dev Encode a CBOR encoded add params.
-    /// @param params The add params.
-    /// @return encoded The CBOR encoded add params.
-    function encodeAddParams(AddParams memory params) internal pure returns (bytes memory) {
-        bytes[] memory encoded = new bytes[](7);
-        encoded[0] = params.source.encodeCborBlobHashOrNodeId();
-        encoded[1] = params.key.encodeCborBytes();
-        encoded[2] = params.blobHash.encodeCborBlobHashOrNodeId();
-        encoded[3] = params.size.encodeCborUint64();
-        encoded[4] = params.ttl == 0 ? LibWasm.encodeCborNull() : params.ttl.encodeCborUint64();
-        encoded[5] = params.metadata.encodeCborKeyValueMap();
-        encoded[6] = params.overwrite.encodeCborBool();
-        return encoded.encodeCborArray();
+    /// @dev List all buckets owned by an address.
+    /// @param owner The owner of the buckets.
+    /// @return The list of buckets.
+    function list(address owner) external view returns (Machine[] memory) {
+        bytes memory addrEncoded = owner.encodeCborAddress();
+        bytes[] memory encoded = new bytes[](1);
+        encoded[0] = addrEncoded;
+        bytes memory params = encoded.encodeCborArray();
+        bytes memory data = LibWasm.readFromWasmActor(ADM_ACTOR_ID, METHOD_LIST_METADATA, params);
+        return decodeList(data);
     }
 
     /// @dev Add an object to the bucket.
     /// @param bucket The bucket.
-    /// @param addParams The {AddParams} params.
-    /// @return The CBOR encoded object data.
-    function add(string memory bucket, AddParams memory addParams) public returns (bytes memory) {
+    /// @param addParams The add object params. See {AddParams} for more details.
+    function add(string memory bucket, AddParams memory addParams) external {
         bytes memory bucketAddr = bucket.encodeCborActorAddress();
         bytes memory params = encodeAddParams(addParams);
-        bytes memory data = LibWasm.writeToWasmActorByAddress(bucketAddr, METHOD_ADD_OBJECT, params);
-        return data;
+        LibWasm.writeToWasmActorByAddress(bucketAddr, METHOD_ADD_OBJECT, params);
     }
 
-    // function get(string memory bucket, string memory key) public returns (bytes memory) {
-    //     bytes[] memory encoded = new bytes[](4);
-    //     bytes memory prefixEncoded = "".encodeCborBytes();
-    //     bytes memory delimiterEncoded = "/".encodeCborBytes();
-    //     bytes memory offsetEncoded = 0.encodeCborUint64();
-    //     bytes memory limitEncoded = 0.encodeCborUint64();
-    //     encoded[0] = prefixEncoded;
-    //     encoded[1] = delimiterEncoded;
-    //     encoded[2] = offsetEncoded;
-    //     encoded[3] = limitEncoded;
-    //     bytes memory bucketAddr = bucket.encodeCborActorAddress();
-    //     bytes memory params = LibWasm.encodeCborArray(encoded);
-    //     bytes memory data = LibWasm.readFromWasmActorByAddress(bucketAddr, METHOD_LIST_OBJECTS, params);
-    //     return data;
-    // }
+    /// @dev Delete an object from the bucket.
+    /// @param bucket The bucket.
+    /// @param key The object key.
+    function remove(string memory bucket, string memory key) external {
+        bytes memory bucketAddr = bucket.encodeCborActorAddress();
+        bytes memory params = key.encodeCborBytes();
+        LibWasm.writeToWasmActorByAddress(bucketAddr, METHOD_DELETE_OBJECT, params);
+    }
+
+    /// @dev Get an object from the bucket.
+    /// @param bucket The bucket.
+    /// @param key The object key.
+    /// @return Object's value. See {Value} for more details.
+    function get(string memory bucket, string memory key) external returns (Value memory) {
+        bytes memory bucketAddr = bucket.encodeCborActorAddress();
+        bytes memory params = key.encodeCborBytes();
+        bytes memory data = LibWasm.readFromWasmActorByAddress(bucketAddr, METHOD_GET_OBJECT, params);
+        return decodeValue(data);
+    }
+
+    /// @dev Query the bucket.
+    /// @param bucket The bucket.
+    /// @param prefix The prefix.
+    /// @param delimiter The delimiter.
+    /// @param offset The offset.
+    /// @param limit The limit.
+    /// @return All objects matching the query.
+    function query(string memory bucket, string memory prefix, string memory delimiter, uint64 offset, uint64 limit)
+        external
+        returns (Query memory)
+    {
+        bytes memory bucketAddr = bucket.encodeCborActorAddress();
+        bytes memory params = encodeQueryParams(prefix, delimiter, offset, limit);
+        bytes memory data = LibWasm.readFromWasmActorByAddress(bucketAddr, METHOD_LIST_OBJECTS, params);
+        return decodeQuery(data);
+    }
 }

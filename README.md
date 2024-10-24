@@ -640,8 +640,16 @@ BUCKETS=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/BucketManager.s.sol \
 
 The following methods are available on the credit contract, shown with their function signatures.
 
+- `create()`: Create a bucket for the sender.
+- `create(address)`: Create a bucket for the specified address.
+- `create(address,(string,string)[])`: Create a bucket for the specified address with metadata.
 - `list()`: List all buckets for the sender.
 - `list(address)`: List all buckets for the specified address.
+- `add(string,(string,string,string,uint64,uint64,(string,string)[],bool))`: Add an object to a
+  bucket (first value) and associated object upload parameters (second value) as the `AddParams`
+  struct, described in more detail below.
+- `remove(string,string)`: Remove an object from a bucket.
+- `get(string,string)`: Get an object from a bucket.
 - `query(string)`: Query the bucket (`t2...` string address) with no prefix (defaults to `/`
   delimiter and the default offset and limit in the underlying WASM layer).
 - `query(string,string)`: Query the bucket with a prefix (e.g., `<prefix>/` string value), but no
@@ -651,12 +659,6 @@ The following methods are available on the credit contract, shown with their fun
 - `query(string,string,string,uint64)`: Query the bucket with a prefix and delimiter, but no limit.
 - `query(string,string,string,uint64,uint64)`: Query the bucket with a prefix, delimiter, offset,
   and limit.
-- `create()`: Create a bucket for the sender.
-- `create(address)`: Create a bucket for the specified address.
-- `create(address,(string,string)[])`: Create a bucket for the specified address with metadata.
-- `add(string,(string,string,string,uint64,uint64,(string,string)[],bool))`: Add an object to a
-  bucket (first value) and associated object upload parameters (second value) as the `AddParams`
-  struct, described in more detail below.
 
 #### Examples
 
@@ -678,6 +680,28 @@ The account you use to create buckets should have the following:
   command.
 
 Creating a bucket will cost native HOKU tokens, and writing to it will cost credit.
+
+##### Create a bucket
+
+To create a bucket, you can use the following command:
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "create(address)" $EVM_ADDRESS --private-key $PRIVATE_KEY
+```
+
+This will execute an onchain transaction to create a bucket for the provided address. Alternatively,
+you can create a bucket for the sender with the following command:
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "create()" --private-key $PRIVATE_KEY
+```
+
+To create a bucket with metadata, you can use the following command, where each metadata value is a
+`KeyValue` (a pair of strings) within an array—something like `[("alias","foo")]`:
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "create(address,(string,string)[])" $EVM_ADDRESS '[("alias","foo")]' --private-key $PRIVATE_KEY
+```
 
 ##### List buckets
 
@@ -711,6 +735,98 @@ struct Kind {
 struct KeyValue {
     string key; // "foo"
     string value; // "bar"
+}
+```
+
+##### Add an object
+
+Adding an object is a bit more involved. You need to stage data offchain to a `source` bucket
+storage node ID address, which will return the hashed value (`blobHash`) of the staged data and its
+corresponding `size` in bytes. You then pass all of these as parameters when you add an object to
+the bucket.
+
+In the example below, we've already staged this data offchain and are using the following:
+
+- `source`: The node ID address (e.g., `4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a`).
+- `blobHash`: The hash of the staged data (e.g.,
+  `rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq` is the base32 encoded blake3 hashed value
+  of our file contents, which contains the string `hello`).
+- `size`: The size of the data in bytes (e.g., `6`, which is the number of bytes in the `hello`
+  string).
+
+We also include custom parameters for the bucket key, metadata, TTL, and overwrite flag:
+
+- `key`: The key to assign to the object in the bucket (`hello/world`).
+- `metadata`: The metadata to assign to the object in the bucket (`[("foo","bar")]`).
+- `overwrite`: The overwrite flag to assign to the object in the bucket (`false`).
+
+This all gets passed as a single `AddParams` struct to the `add` method:
+
+```solidity
+struct AddParams {
+    string source; // 4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a
+    string key; // hello/world
+    string blobHash; // rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq
+    uint64 size; // 6
+    uint64 ttl; // 0 (which is interpreted as null)
+    KeyValue[] metadata; // [("foo","bar")]
+    bool overwrite; // false
+}
+```
+
+We then pass this as a single parameter to the `add` method:
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "add(string,(string,string,string,uint64,uint64,(string,string)[],bool))" $BUCKET_ADDR '("4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a","hello/world","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq",6,0,[("foo","bar")],false)' --private-key $PRIVATE_KEY
+```
+
+If you're wondering where to get the `source` storage bucket's node ID, you can find it with a
+`curl` request. On localnet, this looks like the following:
+
+```sh
+curl http://localhost:8001/v1/node | jq '.node_id'
+```
+
+Or on testnet, you'd replace the URL with public bucket API endpoint
+`https://object-api.n1.hoku.sh`.
+
+##### Delete an object
+
+Similar to [getting an object](#get-an-object), you can delete an object with the following command,
+specifying the bucket and key for the mutating transaction:
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "remove(string,string)" $BUCKET_ADDR "hello/world" --private-key $PRIVATE_KEY
+```
+
+##### Get an object
+
+Getting a single object is similar to the response of `query`, except only a single object is
+returned. Thus, the response simply includes a single value.
+
+```sh
+cast abi-decode "get(string,string)((string,uint64,uint64,(string,string)[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "get(string,string)" $BUCKET_ADDR "hello/world")
+```
+
+This will the following response:
+
+```sh
+("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", 6, 4050, [("content-type", "application/octet-stream")])
+```
+
+Which maps to the `Value` struct:
+
+```solidity
+struct Value {
+    string hash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
+    uint64 size; // 6
+    uint64 expiry; // 403769
+    KeyValue[] metadata; // See `KeyValue` struct below
+}
+
+struct KeyValue {
+    string key; // "content-type"
+    string value; // "application/octet-stream"
 }
 ```
 
@@ -786,94 +902,4 @@ struct KeyValue {
     string key; // "foo"
     string value; // "bar"
 }
-```
-
-##### Create a bucket
-
-To create a bucket, you can use the following command:
-
-```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "create(address)" $EVM_ADDRESS --private-key $PRIVATE_KEY
-```
-
-This will execute an onchain transaction to create a bucket for the provided address. Alternatively,
-you can create a bucket for the sender with the following command:
-
-```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "create()" --private-key $PRIVATE_KEY
-```
-
-To create a bucket with metadata, you can use the following command, where each metadata value is a
-`KeyValue` (a pair of strings) within an array—something like `[("alias","foo")]`:
-
-```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "create(address,(string,string)[])" $EVM_ADDRESS '[("alias","foo")]' --private-key $PRIVATE_KEY
-```
-
-##### Add an object
-
-Adding an object is a bit more involved. You need to stage data offchain to a `source` bucket
-storage node ID address, which will return the hashed value (`blobHash`) of the staged data and its
-corresponding `size` in bytes. You then pass all of these as parameters when you add an object to
-the bucket.
-
-In the example below, we've already staged this data offchain and are using the following:
-
-- `source`: The node ID address (e.g., `4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a`).
-- `blobHash`: The hash of the staged data (e.g.,
-  `rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq` is the base32 encoded blake3 hashed value
-  of our file contents, which contains the string `hello`).
-- `size`: The size of the data in bytes (e.g., `6`, which is the number of bytes in the `hello`
-  string).
-
-We also include custom parameters for the bucket key, metadata, TTL, and overwrite flag:
-
-- `key`: The key to assign to the object in the bucket (`hello/world`).
-- `metadata`: The metadata to assign to the object in the bucket (`[("foo","bar")]`).
-- `overwrite`: The overwrite flag to assign to the object in the bucket (`false`).
-
-This all gets passed as a single `AddParams` struct to the `add` method:
-
-```solidity
-struct AddParams {
-    string source; // 4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a
-    string key; // hello/world
-    string blobHash; // rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq
-    uint64 size; // 6
-    uint64 ttl; // 0 (which is interpreted as null)
-    KeyValue[] metadata; // [("foo","bar")]
-    bool overwrite; // false
-}
-```
-
-We then pass this as a single parameter to the `add` method:
-
-```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "add(string,(string,string,string,uint64,uint64,(string,string)[],bool))" $BUCKET_ADDR '("4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a","hello/world","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq",6,0,[("foo","bar")],false)' --private-key $PRIVATE_KEY
-```
-
-If you're wondering where to get the `source` storage bucket's node ID, you can find it with a
-`curl` request. On localnet, this looks like the following:
-
-```sh
-curl http://localhost:8001/v1/node | jq '.node_id'
-```
-
-Or on testnet, you'd replace the URL with public bucket API endpoint
-`https://object-api.n1.hoku.sh`.
-
-##### Get an object
-
-TODO
-
-```sh
-
-```
-
-##### Delete an object
-
-TODO
-
-```sh
-
 ```

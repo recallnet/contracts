@@ -17,6 +17,10 @@ import {CBOR} from "./solidity-cbor/CBOREncoding.sol";
 
 /// @title WASM Adapter Library
 /// @dev Utility functions for interacting with WASM actors and encoding/decoding CBOR.
+/// All Wasm parameters and return types are encoded/decoded using CBOR. The following resources are useful if working
+/// on new contracts and encoding/decoding data from onchain calls:
+/// - CBOR spec: https://datatracker.ietf.org/doc/html/rfc8949
+/// - CBOR inspector: https://cbor.me/
 library LibWasm {
     uint64 internal constant EMPTY_CODEC = Misc.NONE_CODEC;
     uint64 internal constant CBOR_CODEC = Misc.CBOR_CODEC;

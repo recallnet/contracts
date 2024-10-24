@@ -9,6 +9,53 @@ import {LibWasm} from "./util/LibWasm.sol";
 /// @title Bucket Manager Contract
 /// @dev Implementation of the Hoku Bucket actor EVM interface. See {IBucketManager} for details.
 contract BucketManager is IBucketManager {
+    /// @dev See {IBucketManager-create}.
+    function create() external {
+        KeyValue[] memory metadata = new KeyValue[](0);
+        LibBucket.create(msg.sender, metadata);
+        emit BucketCreated(msg.sender);
+    }
+
+    /// @dev See {IBucketManager-create}.
+    function create(address owner) external {
+        KeyValue[] memory metadata = new KeyValue[](0);
+        LibBucket.create(owner, metadata);
+        emit BucketCreated(owner);
+    }
+
+    /// @dev See {IBucketManager-create}.
+    function create(address owner, KeyValue[] memory metadata) external {
+        LibBucket.create(owner, metadata);
+        emit BucketCreated(owner);
+    }
+
+    /// @dev See {IBucketManager-list}.
+    function list() external view returns (Machine[] memory) {
+        return LibBucket.list(msg.sender);
+    }
+
+    /// @dev See {IBucketManager-list}.
+    function list(address owner) external view returns (Machine[] memory) {
+        return LibBucket.list(owner);
+    }
+
+    /// @dev See {IBucketManager-add}.
+    function add(string memory bucket, AddParams memory addParams) external {
+        LibBucket.add(bucket, addParams);
+        emit ObjectAdded(msg.sender, bucket, addParams.key);
+    }
+
+    /// @dev See {IBucketManager-remove}.
+    function remove(string memory bucket, string memory key) external {
+        LibBucket.remove(bucket, key);
+        emit ObjectRemoved(msg.sender, bucket, key);
+    }
+
+    /// @dev See {IBucketManager-get}.
+    function get(string memory bucket, string memory key) external returns (Value memory) {
+        return LibBucket.get(bucket, key);
+    }
+
     /// @dev See {IBucketManager-query}.
     function query(string memory bucket) external returns (Query memory) {
         return LibBucket.query(bucket, "", "/", 0, 0);
@@ -41,41 +88,5 @@ contract BucketManager is IBucketManager {
         returns (Query memory)
     {
         return LibBucket.query(bucket, prefix, delimiter, offset, limit);
-    }
-
-    /// @dev See {IBucketManager-list}.
-    function list() external view returns (Machine[] memory) {
-        return LibBucket.list(msg.sender);
-    }
-
-    /// @dev See {IBucketManager-list}.
-    function list(address owner) external view returns (Machine[] memory) {
-        return LibBucket.list(owner);
-    }
-
-    /// @dev See {IBucketManager-create}.
-    function create() external {
-        KeyValue[] memory metadata = new KeyValue[](0);
-        LibBucket.create(msg.sender, metadata);
-        emit BucketCreated(msg.sender);
-    }
-
-    /// @dev See {IBucketManager-create}.
-    function create(address owner) external {
-        KeyValue[] memory metadata = new KeyValue[](0);
-        LibBucket.create(owner, metadata);
-        emit BucketCreated(owner);
-    }
-
-    /// @dev See {IBucketManager-create}.
-    function create(address owner, KeyValue[] memory metadata) external {
-        LibBucket.create(owner, metadata);
-        emit BucketCreated(owner);
-    }
-
-    /// @dev See {IBucketManager-add}.
-    function add(string memory bucket, AddParams memory addParams) external {
-        LibBucket.add(bucket, addParams);
-        emit ObjectAdded(msg.sender, addParams.key);
     }
 }

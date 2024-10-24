@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
-import {Kind, Machine, Query} from "../src/types/BucketTypes.sol";
+import {Kind, Machine, Query, Value} from "../src/types/BucketTypes.sol";
 import {AddParams, KeyValue, LibBucket} from "../src/util/LibBucket.sol";
 
 contract LibBucketTest is Test {
@@ -30,7 +30,7 @@ contract LibBucketTest is Test {
             hex"8281828b18681865186c186c186f182f1877186f1872186c1864849820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a1899061910a4a263666f6f636261726c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d80"
         );
         assertEq(query.objects[0].key, "hello/world");
-        assertEq(query.objects[0].value.hash, "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq");
+        assertEq(query.objects[0].value.blobHash, "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq");
         assertEq(query.objects[0].value.size, 6);
         assertEq(query.objects[0].value.expiry, 4260);
         assertEq(query.objects[0].value.metadata[0].key, "foo");
@@ -44,16 +44,25 @@ contract LibBucketTest is Test {
             hex"8282828b18681865186c186c186f182f1877186f1872186c1864849820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a189906191379a16c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d828a18681865186c186c186f182f187418651873187484982018b618e1100c185318b918c518f218881878185e18811854187e183b18da18a60e186c182d182518f218b8185418ad184c186518bc186a183118af18b30c191536a16c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d818c18681865186c186c186f182f1877186f1872186c1864182f"
         );
         assertEq(query.objects[0].key, "hello/world");
-        assertEq(query.objects[0].value.hash, "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq");
+        assertEq(query.objects[0].value.blobHash, "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq");
         assertEq(query.objects[0].value.size, 6);
         assertEq(query.objects[0].value.expiry, 4985);
         assertEq(query.objects[0].value.metadata.length, 1); // Always has `content-type` metadata
         assertEq(query.objects[1].key, "hello/test");
-        assertEq(query.objects[1].value.hash, "w3qradctxhc7fcdyl2avi7r33kta43bnexzlqvfnjrs3y2rrv6zq");
+        assertEq(query.objects[1].value.blobHash, "w3qradctxhc7fcdyl2avi7r33kta43bnexzlqvfnjrs3y2rrv6zq");
         assertEq(query.objects[1].value.size, 12);
         assertEq(query.objects[1].value.expiry, 5430);
         assertEq(query.objects[1].value.metadata.length, 1);
         assertEq(query.commonPrefixes[0], "hello/world/");
+
+        // Deleted 1 object, but another object that shares the same key still "exists" with empty data
+        query = LibBucket.decodeQuery(hex"8281828b18681865186c186c186f182f1877186f1872186c1864f680");
+        assertEq(query.objects.length, 1);
+        assertEq(query.objects[0].key, "hello/world");
+        assertEq(query.objects[0].value.blobHash, "");
+        assertEq(query.objects[0].value.size, 0);
+        assertEq(query.objects[0].value.expiry, 0);
+        assertEq(query.objects[0].value.metadata.length, 0);
     }
 
     function testDecodeList() public view {
@@ -83,6 +92,17 @@ contract LibBucketTest is Test {
         assertEq(machines[2].addr, "t2o4gsdesxam4qui3pnd4e54ouglffoqwecfnrdzq");
         assertEq(machines[2].metadata[0].key, "foo");
         assertEq(machines[2].metadata[0].value, "bar");
+    }
+
+    function testDecodeValue() public view {
+        Value memory value = LibBucket.decodeValue(
+            hex"849820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a189906191e24a16c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d"
+        );
+        assertEq(value.blobHash, "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq");
+        assertEq(value.size, 6);
+        assertEq(value.expiry, 7716);
+        assertEq(value.metadata[0].key, "content-type");
+        assertEq(value.metadata[0].value, "application/octet-stream");
     }
 
     function testEncodeAddParams() public pure {
