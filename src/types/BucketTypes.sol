@@ -64,3 +64,14 @@ struct Machine {
     /// User-defined metadata.
     KeyValue[] metadata;
 }
+
+/// @dev Parameters for adding an object to a bucket.
+struct AddParams {
+    string source;
+    string key;
+    string blobHash;
+    uint64 size;
+    uint64 ttl;
+    KeyValue[] metadata;
+    bool overwrite;
+}

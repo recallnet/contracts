@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {IBucketManager} from "./interfaces/IBucketManager.sol";
-import {CreateBucketParams, KeyValue, Kind, Machine, Object, Query, Value} from "./types/BucketTypes.sol";
+import {AddParams, CreateBucketParams, KeyValue, Kind, Machine, Object, Query, Value} from "./types/BucketTypes.sol";
 import {LibBucket} from "./util/LibBucket.sol";
 import {LibWasm} from "./util/LibWasm.sol";
 
@@ -71,5 +71,11 @@ contract BucketManager is IBucketManager {
     function create(address owner, KeyValue[] memory metadata) external {
         LibBucket.create(owner, metadata);
         emit BucketCreated(owner);
+    }
+
+    /// @dev See {IBucketManager-add}.
+    function add(string memory bucket, AddParams memory addParams) external {
+        LibBucket.add(bucket, addParams);
+        emit ObjectAdded(msg.sender, addParams.key);
     }
 }

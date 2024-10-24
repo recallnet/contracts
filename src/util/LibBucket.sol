@@ -2,7 +2,15 @@
 pragma solidity ^0.8.26;
 
 import {
-    CreateBucketParams, KeyValue, Kind, Machine, Object, Query, Value, WriteAccess
+    AddParams,
+    CreateBucketParams,
+    KeyValue,
+    Kind,
+    Machine,
+    Object,
+    Query,
+    Value,
+    WriteAccess
 } from "../types/BucketTypes.sol";
 import {InvalidValue, LibWasm} from "./LibWasm.sol";
 
@@ -223,4 +231,46 @@ library LibBucket {
         bytes memory params = encodeCreateBucketParams(createParams);
         LibWasm.writeToWasmActor(ADM_ACTOR_ID, METHOD_CREATE_EXTERNAL, params);
     }
+
+    /// @dev Encode a CBOR encoded add params.
+    /// @param params The add params.
+    /// @return encoded The CBOR encoded add params.
+    function encodeAddParams(AddParams memory params) internal pure returns (bytes memory) {
+        bytes[] memory encoded = new bytes[](7);
+        encoded[0] = params.source.encodeCborBlobHashOrNodeId();
+        encoded[1] = params.key.encodeCborBytes();
+        encoded[2] = params.blobHash.encodeCborBlobHashOrNodeId();
+        encoded[3] = params.size.encodeCborUint64();
+        encoded[4] = params.ttl == 0 ? LibWasm.encodeCborNull() : params.ttl.encodeCborUint64();
+        encoded[5] = params.metadata.encodeCborKeyValueMap();
+        encoded[6] = params.overwrite.encodeCborBool();
+        return encoded.encodeCborArray();
+    }
+
+    /// @dev Add an object to the bucket.
+    /// @param bucket The bucket.
+    /// @param addParams The {AddParams} params.
+    /// @return The CBOR encoded object data.
+    function add(string memory bucket, AddParams memory addParams) public returns (bytes memory) {
+        bytes memory bucketAddr = bucket.encodeCborActorAddress();
+        bytes memory params = encodeAddParams(addParams);
+        bytes memory data = LibWasm.writeToWasmActorByAddress(bucketAddr, METHOD_ADD_OBJECT, params);
+        return data;
+    }
+
+    // function get(string memory bucket, string memory key) public returns (bytes memory) {
+    //     bytes[] memory encoded = new bytes[](4);
+    //     bytes memory prefixEncoded = "".encodeCborBytes();
+    //     bytes memory delimiterEncoded = "/".encodeCborBytes();
+    //     bytes memory offsetEncoded = 0.encodeCborUint64();
+    //     bytes memory limitEncoded = 0.encodeCborUint64();
+    //     encoded[0] = prefixEncoded;
+    //     encoded[1] = delimiterEncoded;
+    //     encoded[2] = offsetEncoded;
+    //     encoded[3] = limitEncoded;
+    //     bytes memory bucketAddr = bucket.encodeCborActorAddress();
+    //     bytes memory params = LibWasm.encodeCborArray(encoded);
+    //     bytes memory data = LibWasm.readFromWasmActorByAddress(bucketAddr, METHOD_LIST_OBJECTS, params);
+    //     return data;
+    // }
 }

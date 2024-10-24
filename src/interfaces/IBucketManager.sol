@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {CreateBucketParams, KeyValue, Kind, Machine, Query, WriteAccess} from "../types/BucketTypes.sol";
+import {AddParams, CreateBucketParams, KeyValue, Kind, Machine, Query, WriteAccess} from "../types/BucketTypes.sol";
 
 /// @dev Hoku Bucket actor EVM interface for managing objects, and querying object or storage stats.
 /// See Rust implementation for details:
@@ -10,6 +10,9 @@ interface IBucketManager {
     /// @dev Emitted when a bucket is created.
     // TODO: It'd be nice to emit the bucket t2 address, but decoding the CBOR is too expensive.
     event BucketCreated(address indexed owner);
+
+    /// @dev Emitted when an object is added to a bucket.
+    event ObjectAdded(address indexed owner, string indexed key);
 
     /// @dev Query the bucket.
     /// @param bucket The bucket.
@@ -72,4 +75,9 @@ interface IBucketManager {
     /// @param owner The owner.
     /// @param metadata The metadata.
     function create(address owner, KeyValue[] memory metadata) external;
+
+    /// @dev Add an object to a bucket.
+    /// @param bucket The bucket.
+    /// @param addParams The add parameters.
+    function add(string memory bucket, AddParams memory addParams) external;
 }
