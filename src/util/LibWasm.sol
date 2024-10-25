@@ -17,6 +17,10 @@ import {CBOR} from "./solidity-cbor/CBOREncoding.sol";
 
 /// @title WASM Adapter Library
 /// @dev Utility functions for interacting with WASM actors and encoding/decoding CBOR.
+/// All Wasm parameters and return types are encoded/decoded using CBOR. The following resources are useful if working
+/// on new contracts and encoding/decoding data from onchain calls:
+/// - CBOR spec: https://datatracker.ietf.org/doc/html/rfc8949
+/// - CBOR inspector: https://cbor.me/
 library LibWasm {
     uint64 internal constant EMPTY_CODEC = Misc.NONE_CODEC;
     uint64 internal constant CBOR_CODEC = Misc.CBOR_CODEC;
@@ -48,7 +52,7 @@ library LibWasm {
     /// @dev Decode a CBOR encoded fixed array/slice to bytes (e.g., a serialized Rust slice `[u8; N]`).
     /// @param data The encoded CBOR fixed array (e.g., `0x9820188e184c...` is a 32 byte array).
     /// @return decoded The decoded CBOR fixed array. Returns empty bytes[] if the input is null.
-    function decodeBytesSliceToBytes(bytes memory data) internal pure returns (bytes memory) {
+    function decodeCborFixedArrayToBytes(bytes memory data) internal pure returns (bytes memory) {
         if (data[0] != 0x98) revert InvalidValue("Invalid fixed array indicator");
         uint8 length = uint8(data[1]);
         bytes memory result = new bytes(length);
@@ -248,7 +252,7 @@ library LibWasm {
     /// @param value The encoded CBOR blob hash (e.g,. `0x9820188e184c...`)
     /// @return result The decoded blob hash as base32 encoded bytes.
     function decodeBlobHash(bytes memory value) internal pure returns (bytes memory) {
-        bytes memory decoded = decodeBytesSliceToBytes(value);
+        bytes memory decoded = decodeCborFixedArrayToBytes(value);
         return Base32.encode(decoded);
     }
 
@@ -312,6 +316,13 @@ library LibWasm {
         CBOR.CBORBuffer memory buf = CBOR.create(1 + capacity);
         CBOR.writeString(buf, str);
         return CBOR.data(buf);
+    }
+
+    /// @dev Prepare boolean parameter for a method call by serializing it.
+    /// @param value The boolean value to serialize.
+    /// @return encoded The serialized boolean as CBOR bytes.
+    function encodeCborBool(bool value) internal pure returns (bytes memory) {
+        return value ? bytes(hex"f5") : bytes(hex"f4"); // `0xf5` is true, `0xf4` is false
     }
 
     /// @dev Prepare address parameter for a method call by serializing it.
@@ -426,6 +437,43 @@ library LibWasm {
         return CBOR.data(buf);
     }
 
+    /// @dev Encode a bytes array to a CBOR encoded fixed array/slice (e.g., a serialized Rust slice `[u8; N]`).
+    /// @param value The bytes array to encode.
+    /// @return encoded The CBOR encoded fixed array.
+    function encodeCborFixedArray(bytes memory value) internal pure returns (bytes memory) {
+        uint8 length = uint8(value.length);
+        bytes memory result = new bytes(2 + length * 2); // Max possible length
+        result[0] = 0x98; // Fixed array indicator
+        result[1] = bytes1(length); // Length indicator
+
+        uint256 resultIndex = 2;
+        for (uint8 i = 0; i < length; i++) {
+            uint8 val = uint8(value[i]);
+            if (val <= 0x17) {
+                result[resultIndex] = bytes1(val);
+                resultIndex++;
+            } else {
+                result[resultIndex] = 0x18;
+                result[resultIndex + 1] = bytes1(val);
+                resultIndex += 2;
+            }
+        }
+        // Trim any unused bytes
+        assembly {
+            mstore(result, resultIndex)
+        }
+
+        return result;
+    }
+
+    /// @dev Encode a blob hash or Iroh node ID to a CBOR encoded value (a Rust base32 encoded value `pub [u8; 32]`).
+    /// @param value The blob hash or Iroh node ID to encode.
+    /// @return encoded The CBOR encoded blob hash or node ID.
+    function encodeCborBlobHashOrNodeId(string memory value) internal pure returns (bytes memory) {
+        bytes memory decoded = Base32.decode(bytes(value));
+        return encodeCborFixedArray(decoded);
+    }
+
     /// @dev Read from a wasm actor with empty params.
     /// @param actorId The actor ID.
     /// @param methodNum The method number.
@@ -490,6 +538,22 @@ library LibWasm {
             value,
             false // static call
         );
+
+        if (exit != 0) revert ActorError(exit);
+        return data;
+    }
+
+    /// @dev Write to a Wasm actor (by its `t2` address) with encoded params.
+    /// @param addr The actor address (e.g, `t2...`).
+    /// @param methodNum The method number.
+    /// @param params The parameters.
+    /// @return data The data returned from the actor.
+    function writeToWasmActorByAddress(bytes memory addr, uint64 methodNum, bytes memory params)
+        internal
+        returns (bytes memory)
+    {
+        if (params.length == 0) revert InvalidValue("Params must be non-empty");
+        (int256 exit, bytes memory data) = Actor.callByAddress(addr, methodNum, CBOR_CODEC, params, 0, false);
 
         if (exit != 0) revert ActorError(exit);
         return data;

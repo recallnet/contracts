@@ -241,4 +241,37 @@ contract LibWasmTest is Test {
         bytes memory result = LibWasm.encodeCborKeyValueMap(params);
         assertEq(result, hex"a165616c69617363666f6f");
     }
+
+    function testEncodeCborFixedArray() public pure {
+        bytes memory data = hex"bea674beb6e45bcc488e2fde0f7981b5460355eeec55091927868185325599ef";
+        bytes memory result = LibWasm.encodeCborFixedArray(data);
+        assertEq(
+            result,
+            hex"982018be18a6187418be18b618e4185b18cc1848188e182f18de0f1879188118b5184603185518ee18ec1855091819182718861881188518321855189918ef"
+        );
+    }
+
+    function testEncodeCborIrohNodeId() public pure {
+        string memory nodeId = "4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a";
+        bytes memory result = LibWasm.encodeCborBlobHashOrNodeId(nodeId);
+        assertEq(
+            result,
+            hex"982018e518af18a70818d918c6189f18cd1018d6187f184518641861182718b6187318eb184f1884185d18ad1818189918d4184d18fe0118e318ae18bb183e"
+        );
+    }
+
+    function testEncodeCborBlobHash() public pure {
+        string memory blobHash = "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq";
+        bytes memory result = LibWasm.encodeCborBlobHashOrNodeId(blobHash);
+        assertEq(
+            result,
+            hex"9820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a1899"
+        );
+    }
+
+    function testEncodeStringToBytes() public pure {
+        string memory str = "hello/world";
+        bytes memory result = LibWasm.encodeCborBytes(str);
+        assertEq(result, hex"4b68656c6c6f2f776f726c64");
+    }
 }

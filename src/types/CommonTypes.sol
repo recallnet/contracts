@@ -14,6 +14,8 @@ enum Environment {
 }
 
 /// @dev A key-value pair.
+/// @param key (string): The key.
+/// @param value (string): The value.
 struct KeyValue {
     string key;
     string value;
