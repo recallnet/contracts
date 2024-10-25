@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
 
 import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
-import {LibWasm} from "../src/util/LibWasm.sol";
+import {Base32} from "../src/util/Base32.sol";
+import {InvalidValue, KeyValue, LibWasm} from "../src/util/LibWasm.sol";
 
 contract LibWasmTest is Test {
     function testDecodeCborArray() public view {
@@ -128,34 +129,20 @@ contract LibWasmTest is Test {
         assertEq(array[2], hex"820080");
     }
 
-    function testInvalidInitialArray() public view {
-        bool hasError = false;
-        try this.externalDecodeCborBigIntToUint256(hex"810080") {}
-        catch Error(string memory reason) {
-            hasError = true;
-            assertEq(reason, "Must be array of 2 elements");
-        }
-        assertTrue(hasError, "Expected function to revert");
-    }
+    function testInvalidArrayLengthOrSign() public {
+        // Invalid bigint value (zero value will be 0x820080, so 0x810080 is invalid)
+        bytes memory expectedError = abi.encodeWithSelector(InvalidValue.selector, "Invalid array length or sign value");
+        vm.expectRevert(expectedError);
+        this.externalDecodeCborBigIntToUint256(hex"810080");
 
-    function testInvalidSign() public view {
-        bool hasError = false;
-        try this.externalDecodeCborBigIntToUint256(hex"820280") {}
-        catch Error(string memory reason) {
-            hasError = true;
-            assertEq(reason, "Invalid sign value");
-        }
-        assertTrue(hasError, "Expected function to revert");
-    }
+        // Invalid sign
+        vm.expectRevert(expectedError);
+        this.externalDecodeCborBigIntToUint256(hex"820280");
 
-    function testInvalidInnerArrayLength() public view {
-        bool hasError = false;
-        try this.externalDecodeCborBigIntToUint256(hex"820189") {}
-        catch Error(string memory reason) {
-            hasError = true;
-            assertEq(reason, "Invalid array length");
-        }
-        assertTrue(hasError, "Expected function to revert");
+        // Invalid bigint value (array length of 9 exceeds max of 8)
+        expectedError = abi.encodeWithSelector(InvalidValue.selector, "Invalid bigint value");
+        vm.expectRevert(expectedError);
+        this.externalDecodeCborBigIntToUint256(hex"820189");
     }
 
     function testEncodeUint256Zero() public pure {
@@ -207,5 +194,84 @@ contract LibWasmTest is Test {
         bytes memory addr = hex"040a15d34aaf54267db7d7c367839aaf71a00a2c6a65";
         address result = LibWasm.decodeCborAddress(addr);
         assertEq(result, 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
+    }
+
+    function testEncodeCborActorAddress() public pure {
+        string memory addr = "t2o4gsdesxam4qui3pnd4e54ouglffoqwecfnrdzq";
+        bytes memory result = LibWasm.encodeCborActorAddress(addr);
+        assertEq(result, hex"02770d21925703390a236f68f84ef1d432ca5742c4");
+        addr = "t2i4roxxdp6hgryxqbwfee6t7uzrkr6lyz257le7a";
+        result = LibWasm.encodeCborActorAddress(addr);
+        assertEq(result, hex"024722ebdc6ff1cd1c5e01b1484f4ff4cc551f2f19");
+    }
+
+    function testDecodeCborActorAddress() public pure {
+        bytes memory addr = hex"02770d21925703390a236f68f84ef1d432ca5742c4";
+        string memory result = LibWasm.decodeCborActorAddress(addr);
+        assertEq(result, "t2o4gsdesxam4qui3pnd4e54ouglffoqwecfnrdzq");
+    }
+
+    function testDecodeCborString() public view {
+        bytes memory data = hex"6b4f626a65637453746f726555";
+        bytes memory result = LibWasm.decodeStringToBytes(data);
+        assertEq(string(result), "ObjectStore");
+    }
+
+    function testDecodeCborBytesToString() public pure {
+        bytes memory data = hex"8618681865186c186c186f182f";
+        bytes memory result = LibWasm.decodeCborBytesArrayToBytes(data);
+        assertEq(string(result), "hello/");
+    }
+
+    function testDecodeBase32() public pure {
+        string memory data = "o4gsdesxam4qui3pnd4e54ouglffoqwecfnrdzq";
+        bytes memory result = Base32.decode(bytes(data));
+        assertEq(result, hex"770d21925703390a236f68f84ef1d432ca5742c4115b11e6");
+    }
+
+    function testEncodeBase32() public pure {
+        bytes memory data = hex"770d21925703390a236f68f84ef1d432ca5742c4115b11e6";
+        bytes memory result = Base32.encode(data);
+        assertEq(string(result), "o4gsdesxam4qui3pnd4e54ouglffoqwecfnrdzq");
+    }
+
+    function testEncodeCborKeyValueMap() public pure {
+        KeyValue[] memory params = new KeyValue[](1);
+        params[0] = KeyValue("alias", "foo");
+        bytes memory result = LibWasm.encodeCborKeyValueMap(params);
+        assertEq(result, hex"a165616c69617363666f6f");
+    }
+
+    function testEncodeCborFixedArray() public pure {
+        bytes memory data = hex"bea674beb6e45bcc488e2fde0f7981b5460355eeec55091927868185325599ef";
+        bytes memory result = LibWasm.encodeCborFixedArray(data);
+        assertEq(
+            result,
+            hex"982018be18a6187418be18b618e4185b18cc1848188e182f18de0f1879188118b5184603185518ee18ec1855091819182718861881188518321855189918ef"
+        );
+    }
+
+    function testEncodeCborIrohNodeId() public pure {
+        string memory nodeId = "4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a";
+        bytes memory result = LibWasm.encodeCborBlobHashOrNodeId(nodeId);
+        assertEq(
+            result,
+            hex"982018e518af18a70818d918c6189f18cd1018d6187f184518641861182718b6187318eb184f1884185d18ad1818189918d4184d18fe0118e318ae18bb183e"
+        );
+    }
+
+    function testEncodeCborBlobHash() public pure {
+        string memory blobHash = "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq";
+        bytes memory result = LibWasm.encodeCborBlobHashOrNodeId(blobHash);
+        assertEq(
+            result,
+            hex"9820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a1899"
+        );
+    }
+
+    function testEncodeStringToBytes() public pure {
+        string memory str = "hello/world";
+        bytes memory result = LibWasm.encodeCborBytes(str);
+        assertEq(result, hex"4b68656c6c6f2f776f726c64");
     }
 }

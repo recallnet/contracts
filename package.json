@@ -1,14 +1,21 @@
 {
   "name": "contracts",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.0",
+  "description": "Hoku core contracts",
   "main": "index.js",
   "scripts": {
-    "test": "forge test"
+    "test": "forge test",
+    "build": "forge build",
+    "fmt": "forge fmt --check",
+    "fmt:fix": "forge fmt",
+    "lint": "solhint 'src/**/*.sol'",
+    "lint:fix": "solhint 'src/**/*.sol' --fix",
+    "format": "pnpm run fmt:fix && pnpm run lint:fix",
+    "clean": "forge clean"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT OR Apache-2.0",
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.1.2",
     "hardhat": "^2.22.13",

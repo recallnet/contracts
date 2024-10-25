@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
 
+import {InvalidValue} from "./components/CBORErrors.sol";
 import {Buffer} from "@ensdomains/buffer/contracts/Buffer.sol";
 
 /// @title CBOR Encoding Library
@@ -53,7 +54,9 @@ library CBOR {
     /// @param buf The CBORBuffer to extract data from
     /// @return The encoded CBOR data as bytes
     function data(CBORBuffer memory buf) internal pure returns (bytes memory) {
-        require(buf.depth == 0, "Invalid CBOR");
+        if (buf.depth != 0) {
+            revert InvalidValue("Invalid CBOR");
+        }
         return buf.buf.buf;
     }
 

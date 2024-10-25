@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
 
 import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
@@ -58,7 +58,7 @@ contract LibCreditTest is Test {
         assertEq(approvals[0].approval[1].approval.committed, 0);
     }
 
-    function testEncodeApproveCreditParams() public view {
+    function testEncodeApproveCreditParams() public pure {
         address from = 0x90F79bf6EB2c4f870365E785982E1f101E93b906;
         address receiver = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
         address requiredCaller = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
@@ -71,7 +71,7 @@ contract LibCreditTest is Test {
         );
     }
 
-    function testEncodeRevokeCreditParams() public view {
+    function testEncodeRevokeCreditParams() public pure {
         address from = 0x90F79bf6EB2c4f870365E785982E1f101E93b906;
         address receiver = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
         address requiredCaller = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;

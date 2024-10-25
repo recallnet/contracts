@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
 
 import {
     Account,
@@ -12,18 +12,20 @@ import {
     SubnetStats,
     Usage
 } from "../types/CreditTypes.sol";
-import {LibWasm} from "./LibWasm.sol";
+import {InvalidValue, LibWasm} from "./LibWasm.sol";
 
+/// @title Credit Library
+/// @dev Utility functions for interacting with the Hoku Credit actor.
 library LibCredit {
     using LibWasm for *;
 
     // Constants for the actor and method IDs of the Hoku Blobs actor
-    uint64 constant ACTOR_ID = 49;
-    uint64 constant METHOD_APPROVE_CREDIT = 2276438360;
-    uint64 constant METHOD_BUY_CREDIT = 1035900737;
-    uint64 constant METHOD_GET_ACCOUNT = 3435393067;
-    uint64 constant METHOD_GET_STATS = 188400153;
-    uint64 constant METHOD_REVOKE_CREDIT = 37550845;
+    uint64 internal constant ACTOR_ID = 49;
+    uint64 internal constant METHOD_APPROVE_CREDIT = 2276438360;
+    uint64 internal constant METHOD_BUY_CREDIT = 1035900737;
+    uint64 internal constant METHOD_GET_ACCOUNT = 3435393067;
+    uint64 internal constant METHOD_GET_STATS = 188400153;
+    uint64 internal constant METHOD_REVOKE_CREDIT = 37550845;
 
     /// @dev Helper function to decode the subnet stats from CBOR to solidity.
     /// @param data The encoded CBOR array of stats.
@@ -230,7 +232,7 @@ library LibCredit {
     /// @param recipient The address of the account.
     /// @return data The balance of the account after buying credits.
     function buyCredit(address recipient) external returns (bytes memory data) {
-        require(msg.value > 0, "Amount must be greater than zero");
+        if (msg.value == 0) revert InvalidValue("Amount must be greater than zero");
         bytes memory params = recipient.encodeCborAddress();
         return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_BUY_CREDIT, params);
     }

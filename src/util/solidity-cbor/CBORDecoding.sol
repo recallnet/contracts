@@ -1,8 +1,9 @@
-//SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
 
 import {CBORByteUtils as ByteUtils} from "./components/CBORByteUtils.sol";
 import {CBORDataStructures as DataStructures} from "./components/CBORDataStructures.sol";
+import {InvalidValue} from "./components/CBORErrors.sol";
 import {CBORPrimitives as Primitives} from "./components/CBORPrimitives.sol";
 import {CBORSpec as Spec} from "./components/CBORSpec.sol";
 import {CBORUtilities as Utils} from "./components/CBORUtilities.sol";
@@ -29,7 +30,7 @@ library CBORDecoding {
         uint256 cursor = 0;
         // Type check
         (Spec.MajorType majorType, uint8 shortCount) = Utils.parseFieldEncoding(encoding[cursor]);
-        require(majorType == Spec.MajorType.Map, "Object is not a mapping!");
+        if (majorType != Spec.MajorType.Map) revert InvalidValue("Object is not a mapping");
 
         // Decode and return
         decodedData = DataStructures.expandMapping(encoding, cursor, shortCount);
@@ -53,7 +54,7 @@ library CBORDecoding {
         uint256 cursor = 0;
         // Type check
         (Spec.MajorType majorType, uint8 shortCount) = Utils.parseFieldEncoding(encoding[cursor]);
-        require(majorType == Spec.MajorType.Array, "Object is not an array!");
+        if (majorType != Spec.MajorType.Array) revert InvalidValue("Object is not an array");
 
         // Decode and return
         decodedData = DataStructures.expandArray(encoding, cursor, shortCount);
@@ -78,7 +79,9 @@ library CBORDecoding {
         // See what our field looks like
         (Spec.MajorType majorType, uint8 shortCount, uint256 start, uint256 end, /*next*/ ) =
             Utils.parseField(encoding, cursor);
-        require(majorType != Spec.MajorType.Array && majorType != Spec.MajorType.Map, "Encoding is not a primitive!");
+        if (majorType == Spec.MajorType.Array && majorType == Spec.MajorType.Map) {
+            revert InvalidValue("Encoding is not a primitive");
+        }
 
         // Save our data
         decodedData = Utils.extractValue(encoding, majorType, shortCount, start, end);
@@ -110,7 +113,7 @@ library CBORDecoding {
         {
             // Ensure we start with a mapping
             (Spec.MajorType majorType, uint8 shortCount) = Utils.parseFieldEncoding(encoding[0]);
-            require(majorType == Spec.MajorType.Map, "Object is not a mapping!");
+            if (majorType != Spec.MajorType.Map) revert InvalidValue("Object is not a mapping");
 
             // Figure out where cursor should start.
             if (shortCount == 31) {
@@ -143,7 +146,7 @@ library CBORDecoding {
             if (keccak256(currentItem) == searchKeyHash) keyFound = true;
         }
         // If the key doesn't exist, revert
-        revert("Key not found!");
+        revert InvalidValue("Key not found");
     }
 
     /**
@@ -167,7 +170,7 @@ library CBORDecoding {
         {
             // Ensure we start with a mapping
             (Spec.MajorType majorType, uint8 shortCount) = Utils.parseFieldEncoding(encoding[0]);
-            require(majorType == Spec.MajorType.Array, "Object is not an array!");
+            if (majorType != Spec.MajorType.Array) revert InvalidValue("Object is not an array");
 
             // Figure out where cursor should start.
             if (shortCount == 31) {
@@ -194,7 +197,7 @@ library CBORDecoding {
             cursor = next;
         }
         // If the key doesn't exist, revert
-        revert("Item not found!");
+        revert InvalidValue("Item not found");
     }
 
     /**
@@ -210,7 +213,7 @@ library CBORDecoding {
         {
             // Ensure we start with a mapping
             (Spec.MajorType majorType, uint8 shortCount) = Utils.parseFieldEncoding(encoding[0]);
-            require(majorType == Spec.MajorType.Array, "Object is not an array!");
+            if (majorType != Spec.MajorType.Array) revert InvalidValue("Object is not an array");
 
             // Figure out where cursor should start.
             if (shortCount == 31) {
@@ -239,6 +242,6 @@ library CBORDecoding {
             cursor = next;
         }
         // If the index doesn't exist in list, revert
-        revert("Index provided larger than list!");
+        revert InvalidValue("Index provided larger than list");
     }
 }

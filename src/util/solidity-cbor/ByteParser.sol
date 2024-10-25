@@ -1,5 +1,7 @@
-//SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: MIT OR Apache-2.0
+pragma solidity ^0.8.26;
+
+import {InvalidValue} from "./components/CBORErrors.sol";
 
 /// @dev Helpful byte utility functions.
 /// Returns decoded CBOR values as their proper types.
@@ -10,7 +12,9 @@ library ByteParser {
     /// @param data dynamic bytes array
     /// @return value calculated uint64 value
     function bytesToUint64(bytes memory data) public pure returns (uint64 value) {
-        require(value <= MAX_UINT64, "Number too large! Use `bytesToBigNumber` instead!");
+        if (value > MAX_UINT64) {
+            revert InvalidValue("Number too large, use bytesToBigNumber");
+        }
         value = uint64(bytesToBigNumber(data));
     }
 
@@ -32,7 +36,9 @@ library ByteParser {
     /// @param data dynamic bytes array
     /// @return value calculated uint256 value
     function bytesToBigNumber(bytes memory data) public pure returns (uint256 value) {
-        require(data.length <= 64, "Value too large!");
+        if (data.length > 64) {
+            revert InvalidValue("Value too large");
+        }
         for (uint256 i = 0; i < data.length; i++) {
             value += uint8(data[i]) * uint256(2 ** (8 * (data.length - (i + 1))));
         }
@@ -42,14 +48,16 @@ library ByteParser {
     /// @param data dynamic bytes array
     /// @return value calculated bool value
     function bytesToBool(bytes memory data) public pure returns (bool value) {
-        require(data.length == 1, "Data is not a boolean!");
+        if (data.length != 1) {
+            revert InvalidValue("Data is not a boolean");
+        }
         uint8 boolean = uint8(data[0]);
         if (boolean == 1) {
             value = true;
         } else if (boolean == 0) {
             value = false;
         } else {
-            revert("Improper boolean!");
+            revert InvalidValue("Improper boolean");
         }
     }
 

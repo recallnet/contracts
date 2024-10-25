@@ -5,6 +5,28 @@
 
 > Hoku core Solidity contracts and libraries
 
+## Table of Contents
+
+- [Background](#background)
+  - [Deployments](#deployments)
+- [Usage](#usage)
+  - [Setup](#setup)
+  - [Deploying contracts](#deploying-contracts)
+    - [Localnet](#localnet)
+    - [Testnet](#testnet)
+    - [Devnet](#devnet)
+    - [Mainnet](#mainnet)
+- [Development](#development)
+- [Scripts](#scripts)
+  - [Examples usage](#examples-usage)
+  - [Credit contract](#credit-contract)
+    - [Methods](#methods)
+    - [Examples](#examples)
+  - [Buckets contract](#buckets-contract)
+    - [Methods](#methods-1)
+    - [Examples](#examples-1)
+    - [Query objects](#query-objects)
+
 ## Background
 
 This project is built with [Foundry](https://book.getfoundry.sh/) and contains the core contracts
@@ -14,24 +36,32 @@ for Hoku. It includes the following:
 - `Faucet.sol`: The accompanying onchain faucet (rate limiter) contract for dripping testnet funds.
 - `Credit.sol`: Manage subnet credit, including credit purchases, approvals/rejections, and related
   read-only operations (uses the `LibCredit` and `LibWasm` libraries).
+- `BucketManager.sol`: Manage buckets, including creating buckets, listing buckets, querying
+  objects, and other object-related operations (uses the `LibBucket` and `LibWasm` libraries).
+- `ValidatorGater.sol`: A contract for managing validator access.
 - `interfaces/ICredit.sol`: The interface for the credit contract.
 - `types/`: Various method parameters and return types for core contracts.
 - `utils/LibCredit.sol`: A library for interacting with credits, wrapped by the `Credit` contract.
+- `utils/LibBucket.sol`: A library for interacting with buckets, wrapped by the `BucketManager`
+  contract.
 - `utils/LibWasm.sol`: A library for facilitating proxy calls to WASM contracts from Solidity.
 - `utils/solidity-cbor`: Libraries for encoding and decoding CBOR data, used in proxy WASM calls
   (forked from [this repo](https://github.com/smartcontractkit/solidity-cborutils)).
+- `utils/Base32.sol`: Utilities for encoding and decoding base32.
+- `utils/Blake2b.sol`: Utilities for Blake2b hashing (used for WASM `t2` addresses).
 
 ### Deployments
 
 The following contracts are deployed in the testnet environment (Filecoin Calibration or the Hoku
 subnet):
 
-| Contract     | Chain       | Address                                      |
-| ------------ | ----------- | -------------------------------------------- |
-| Hoku (ERC20) | Calibration | `0x8e3Fd2b47e564E7D636Fa80082f286eD038BE54b` |
-| Faucet       | Subnet      | `0xA089Efd61db801B27077257b9EB4E95C3b8aD90F` |
-| Credit       | Subnet      | `0x8c2e3e8ba0d6084786d60A6600e832E8df84846C` |
-| LibCredit    | Subnet      | `0xfF73c2705B8b77a832c7ec33864B8BEF201002E1` |
+| Contract      | Chain       | Address                                      |
+| ------------- | ----------- | -------------------------------------------- |
+| Hoku (ERC20)  | Calibration | `0x8e3Fd2b47e564E7D636Fa80082f286eD038BE54b` |
+| Faucet        | Subnet      | `0x10bc34a0C11E5e51774833603955CB7Ec3c79AC6` |
+| Credit        | Subnet      | `0x8c2e3e8ba0d6084786d60A6600e832E8df84846C` |
+| BucketManager | Subnet      | `0x4c74c78B3698cA00473f12eF517D21C65461305F` |
+| LibCredit     | Subnet      | `0xfF73c2705B8b77a832c7ec33864B8BEF201002E1` |
 
 To get testnet tokens, visit: [https://faucet.hoku.sh](https://faucet.hoku.sh). Also, you can check
 out the `foundry.toml` file to see the RPC URLs for each network (described in more detail below).
@@ -52,71 +82,27 @@ Install the dependencies and build the contracts, which will output the ABIs to 
 directory:
 
 ```shell
+pnpm install
 forge install
 forge build
 ```
 
-## Clean
+Also, you can clean the build artifacts with:
+
 ```shell
-forge clean
+pnpm clean
 ```
-
-## Deploy
-
-To deploy the contract you need the following:
-- Select an environment prefix: `l` = Local, `t` = Testnet, "" = Mainnet
-- The address of the Axelar Interchain Token Service on chain you are deploying to
-- A private key with funds on the target chain
-- An rpc endpoint for the target chain
-
-### Local
-Start a local network using anvil,
-```shell
-anvil
-```
-Anvil will output an address and private key, copy one of the private keys for the step below.
-
-Deploy the contract, in this case we just use the zero-address for the Axelar Interchain Token Service.
-```shell
-forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' local --broadcast -vv --rpc-url http://localhost:8545 --private-key <0x...>
-```
-
-### Testnet
-```shell
-forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' testnet --broadcast -vv --rpc-url <...>  --private-key <0x...>
-```
-
-### Ethereum Mainnet
-```shell
-forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' ethereum --broadcast -vv --rpc-url https://eth.merkle.io --private-key <0x...>
-```
-
-### Filecoin mainnet
-RPC copied from https://docs.filecoin.io/networks/mainnet/rpcs
-```shell
-forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' filecoin --broadcast -vv -g 100000 --rpc-url https://api.node.glif.io/rpc/v1 --private-key <0x...>
-```
-The `-g` flag is a multiplier on the estimated gas price. In this case 100000 is 1000x the estimated gas price. Unclear why filecoin requires such a large multiplier.
-
-## Deployments
-
-|chain | address|
-| -----| ------|
-|calibration |0xEa944dEf4fd96A70f0B53D98E6945f643491B960|
-|base sepolia|0xd02Bc370Ac6D40B57B8D64578c85132dF59f0109|
-
-
-## [Faucet](https://github.com/hokunet/faucet) Usage
-
-To get 5e18 tokens on a given address:
 
 ### Deploying contracts
 
 The scripts for deploying contracts are in `script/` directory:
 
-- `Credit.s.sol`: Deploy the credit contract.
 - `Hoku.s.sol`: Deploy the Hoku ERC20 contract.
 - `Faucet.s.sol`: Deploy the faucet contract.
+- `ValidatorGater.s.sol`: Deploy the validator gater contract.
+- `Credit.s.sol`: Deploy the credit contract.
+- `BucketManager.s.sol`: Deploy the Bucket Manager contract.
+- `Bridge.s.sol`: Deploy the bridge contract—relevant for the Hoku ERC20 on live chains.
 
 > [!NOTE] If you're deploying _to_ the Hoku subnet or Filecoin Calibration, you'll need to
 > (significantly) bump the gas estimation multiplier by adding a `-g 100000` flag to the
@@ -145,19 +131,32 @@ environment:
 - `1`: Testnet
 - `2`: Mainnet (note: mainnet is not available yet)
 
-Lastly, all scripts use the `--sig` flag with `run(uint8)` (or `run(uint8,uint256)` for the faucet)
-to execute deployment with the given argument above, and the `--broadcast` flag actually sends the
+Most scripts use the `--sig` flag with `run(uint8)` (or `run(uint8,uint256)` for the faucet) to
+execute deployment with the given argument above, and the `--broadcast` flag actually sends the
 transaction to the network. Recall that you **must** set `-g 100000` to ensure the gas estimate is
 sufficiently high.
 
+Lastly, if you're deploying the Hoku ERC20, the environment will dictate different token symbols:
+
+- Local: prefixes `HOKU` with `l`
+- Testnet: prefixes `HOKU` with `t`
+- Mainnet: uses `HOKU`
+
+Mainnet deployments require the address of the Axelar Interchain Token Service on chain you are
+deploying to, which is handled in the ERC20's `DeployScript` logic.
+
 #### Localnet
 
-Deploy the Hoku ERC20 contract to the localnet parent chain. Note the `-g` flag is not used here
-since the gas estimate is sufficiently low on Anvil.
+##### Hoku ERC20
+
+Deploy the Hoku ERC20 contract to the localnet parent chain (i.e., `http://localhost:8545`). Note
+the `-g` flag is not used here since the gas estimate is sufficiently low on Anvil.
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url localnet_parent --broadcast -vv
+PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript local --sig 'run(string)' --rpc-url localnet_parent --broadcast -vv
 ```
+
+##### Faucet
 
 Deploy the Faucet contract to the localnet subnet. The second argument is the initial supply of Hoku
 tokens, owned by the deployer's account which will be transferred to the faucet contract (e.g., 5000
@@ -167,22 +166,36 @@ with 10\*\*18 decimal units).
 PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript 0 5000000000000000000000 --sig 'run(uint8,uint256)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
 ```
 
+##### Credit
+
 Deploy the Credit contract to the localnet subnet:
 
 ```shell
 PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
 ```
 
+##### Buckets
+
+Deploy the Bucket Manager contract to the localnet subnet:
+
+```shell
+PRIVATE_KEY=<0x...> forge script script/BucketManager.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
+```
+
 #### Testnet
+
+##### Hoku ERC20
 
 Deploy the Hoku ERC20 contract to the testnet parent chain. Note the `-g` flag _is_ used here (this
 differs from the localnet setup above since we're deploying to Filecoin Calibration);
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url testnet_parent --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript testnet --sig 'run(string)' --rpc-url testnet_parent --broadcast -g 100000 -vv
 ```
 
-Deploy the Faucet contract to the testnet subnet.The second argument is the initial supply of Hoku
+##### Faucet
+
+Deploy the Faucet contract to the testnet subnet. The second argument is the initial supply of Hoku
 tokens, owned by the deployer's account which will be transferred to the faucet contract (e.g., 5000
 with 10\*\*18 decimal units).
 
@@ -190,22 +203,88 @@ with 10\*\*18 decimal units).
 PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript 1 5000000000000000000000 --sig 'run(uint8,uint256)'--rpc-url testnet_subnet --broadcast -g 100000 -vv
 ```
 
+##### Credit
+
 Deploy the Credit contract to the testnet subnet:
 
 ```shell
 PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url testnet_subnet --broadcast -g 100000 -vv
 ```
 
+##### Buckets
+
+Deploy the Bucket Manager contract to the testnet subnet:
+
+```shell
+PRIVATE_KEY=<0x...> forge script script/BucketManager.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url testnet_subnet --broadcast -g 100000 -vv
+```
+
 #### Devnet
 
-The devnet does not have the concept of a "parent" chain, so all RPCs would use `--rpc-url devnet`.
+The devnet does not have the concept of a "parent" chain, so all RPCs would use `--rpc-url devnet`
+and follow the same pattern as the deployments above.
+
+If you're trying to simply deploy to an Anvil node (i.e., `http://localhost:8545`), you can use the
+same pattern, or just explicitly set the RPC URL:
+
+```shell
+PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript local --sig 'run(string)' --rpc-url http://localhost:8545 --broadcast -vv
+```
 
 #### Mainnet
 
 Mainnet is not yet available. The RPC URLs (`mainnet_parent` and `mainnet_subnet`) are placeholders,
 pointing to the same environment as the testnet.
 
+##### Hoku ERC20
+
+However, if you'd like to deploy the HOKU ERC20 contract to mainnet Ethereum or Filecoin, you can
+use the following. Note these will enable behavior for the Axelar Interchain Token Service.
+
+Deploy to Ethereum:
+
+```shell
+PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' ethereum --broadcast -vv --rpc-url https://eth.merkle.io
+```
+
+And for Filecoin:
+
+```shell
+PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' filecoin --broadcast -vv -g 100000 --rpc-url https://api.node.glif.io/rpc/v1
+```
+
 ## Development
+
+## Scripts
+
+Deployment scripts are described above. Additional `pnpm` scripts are available in `package.json`:
+
+- `format`: Run `forge fmt` to format the code.
+- `lint`: Run `forge fmt` and `solhint` to check for linting errors.
+- `test`: Run `forge test` to run the tests.
+- `clean`: Run `forge clean` to clean the build artifacts.
+
+### Examples usage
+
+Below are examples for interacting with various contracts. We'll set a few environment variables to
+demonstrate usage patterns, all of which will assume you've first defined the following. We'll first
+set the `PRIVATE_KEY` to the hex-encoded private key (same as with the deployment scripts above),
+and an arbitrary `EVM_ADDRESS` that is the public key of this private key.
+
+```sh
+export PRIVATE_KEY=0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6
+export EVM_ADDRESS=0x90f79bf6eb2c4f870365e785982e1f101e93b906
+```
+
+The `--rpc-url` flag can use the same RPC URLs as the deployments scripts, as defined in
+`foundry.toml`. For simplicity sake, we'll define an environment variable `EVM_RPC_URL` set to one
+of these RPC URLs so these examples can be run as-is:
+
+```sh
+export EVM_RPC_URL=testnet_subnet
+```
+
+The subsequent sections will define other environment variables as needed.
 
 ### Credit contract
 
@@ -266,28 +345,12 @@ null values when encoded in WASM calls.
 
 #### Examples
 
-We'll set a few environment variables to demonstrate the examples below. We'll first set the
-`PRIVATE_KEY` to the hex-encoded private key (same as with the deployment scripts above), and an
-arbitrary `EVM_ADDRESS` that is the public key of this private key.
+Make sure you've already set the `PRIVATE_KEY`, `EVM_ADDRESS`, and `EVM_RPC_URL` environment
+variables. Then, define a `CREDIT` environment variable, which points to the credit contract
+deployment address. For example:
 
 ```sh
-export PRIVATE_KEY=0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6
-export EVM_ADDRESS=0x90f79bf6eb2c4f870365e785982e1f101e93b906
-```
-
-The `--rpc-url` flag can use the same RPC URLs as the deployments scripts, as defined in
-`foundry.toml`. For simplicity sake, we'll define an environment variable `EVM_RPC_URL` set to one
-of these RPC URLs so these examples can be run as-is:
-
-```sh
-export EVM_RPC_URL=testnet_subnet
-```
-
-We'll define a `CREDIT` environment variable, which points to the credit contract deployment
-address. For example:
-
-```sh
-export CREDIT=0x138E3aFeb7dC8944d464326cb2ff2b429cdA808b
+export CREDIT=0x8c2e3e8ba0d6084786d60A6600e832E8df84846C
 ```
 
 And lastly, we'll define a `RECEIVER_ADDR` environment variable, which points to the receiver
@@ -484,7 +547,7 @@ You can buy credit for your address with the following command, which will buy c
 1 native subnet token (via `msg.value`) for the `msg.sender`:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $CREDIT "buyCredit()" $EVM_ADDRESS --value 1ether --private-key $PRIVATE_KEY
+cast send --rpc-url $EVM_RPC_URL $CREDIT "buyCredit()" --value 1ether --private-key $PRIVATE_KEY
 ```
 
 Or, you can buy credit for a specific EVM address with the following command:
@@ -525,8 +588,8 @@ This would restrict the `receiver` to only be able to use the approved `from` ad
 
 > [!NOTE] The `requiredCaller` can, in theory, be an EVM or WASM contract address. However, the
 > logic assumes only an EVM address is provided. Namely, it is _generally_ possible to restrict the
-> `requiredCaller` to a specific WASM contract (e.g., object store with `t2...` prefix), but the
-> current Solidity implementation does not account for this and only assumes an EVM address.
+> `requiredCaller` to a specific WASM contract (e.g., bucket with `t2...` prefix), but the current
+> Solidity implementation does not account for this and only assumes an EVM address.
 
 Lastly, if we want to include all of the optional fields, we can use the following command:
 
@@ -557,3 +620,297 @@ cast send --rpc-url $EVM_RPC_URL $CREDIT "revokeCredit(address,address,address)"
 
 This would revoke the `receiver`'s ability to use the `from` address at the `requiredCaller`
 address.
+
+### Buckets contract
+
+You can interact with the existing buckets contract on the testnet via the address above. If you're
+working on `localnet`, you'll have to deploy this yourself. Here's a quick one-liner to do so—also
+setting the `BUCKETS` environment variable to the deployed address:
+
+```
+BUCKETS=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/BucketManager.s.sol \
+--tc DeployScript 0 \
+--sig 'run(uint8)' \
+--rpc-url localnet_subnet \
+--broadcast -g 100000 \
+| grep "0: contract Bucket" | awk '{print $NF}')
+```
+
+#### Methods
+
+The following methods are available on the credit contract, shown with their function signatures.
+
+- `create()`: Create a bucket for the sender.
+- `create(address)`: Create a bucket for the specified address.
+- `create(address,(string,string)[])`: Create a bucket for the specified address with metadata.
+- `list()`: List all buckets for the sender.
+- `list(address)`: List all buckets for the specified address.
+- `add(string,string,string,string,uint64)`: Add an object to a bucket and associated object upload
+  parameters. The first value is the bucket address, the subsequent values are all of the "required"
+  values in `AddParams` (`source` node ID, `key`, `blobHash`, and `size`).
+- `add(string,(string,string,string,uint64,uint64,(string,string)[],bool))`: Add an object to a
+  bucket (first value) and associated object upload parameters (second value) as the `AddParams`
+  struct, described in more detail below.
+- `remove(string,string)`: Remove an object from a bucket.
+- `get(string,string)`: Get an object from a bucket.
+- `query(string)`: Query the bucket (`t2...` string address) with no prefix (defaults to `/`
+  delimiter and the default offset and limit in the underlying WASM layer).
+- `query(string,string)`: Query the bucket with a prefix (e.g., `<prefix>/` string value), but no
+  delimiter, offset, or limit.
+- `query(string,string,string)`: Query the bucket with a custom delimiter (e.g., something besides
+  the default `/` delimeter value), but default offset and limit.
+- `query(string,string,string,uint64)`: Query the bucket with a prefix and delimiter, but no limit.
+- `query(string,string,string,uint64,uint64)`: Query the bucket with a prefix, delimiter, offset,
+  and limit.
+
+#### Examples
+
+Make sure you've already set the `PRIVATE_KEY`, `EVM_ADDRESS`, and `EVM_RPC_URL` environment
+variables. Then, define a `BUCKETS` environment variable, which points to the bucket contract
+deployment address. For example:
+
+```sh
+export BUCKETS=0x4c74c78B3698cA00473f12eF517D21C65461305F
+```
+
+The account you use to create buckets should have the following:
+
+- A HOKU token balance in the subnet (e.g., from the faucet at:
+  [https://faucet.hoku.sh](https://faucet.hoku.sh)). You can verify this with the
+  [Hoku CLI](https://github.com/hokunet/rust-hoku): `hoku account info`
+- A credit balance in the subnet. You can verify this with `hoku credit balance`. If you don't have
+  credits, you can buy them with the Credits contract above, or run the `hoku credit buy <amount>`
+  command.
+
+Creating a bucket will cost native HOKU tokens, and writing to it will cost credit.
+
+##### Create a bucket
+
+To create a bucket, you can use the following command:
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "create(address)" $EVM_ADDRESS --private-key $PRIVATE_KEY
+```
+
+This will execute an onchain transaction to create a bucket for the provided address. Alternatively,
+you can create a bucket for the sender with the following command:
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "create()" --private-key $PRIVATE_KEY
+```
+
+To create a bucket with metadata, you can use the following command, where each metadata value is a
+`KeyValue` (a pair of strings) within an array—something like `[("alias","foo")]`:
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "create(address,(string,string)[])" $EVM_ADDRESS '[("alias","foo")]' --private-key $PRIVATE_KEY
+```
+
+##### List buckets
+
+You can list buckets for a specific address with the following command. Note you can use the
+overloaded `list()` to list buckets for the sender.
+
+```sh
+cast abi-decode "list(address)((uint8,string,(string,string)[])[])" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "list(address)" $EVM_ADDRESS)
+```
+
+This will return the following output:
+
+```
+(0, "t2pdadfrian5jrvtk2sulbc7uuyt5cnxmfdmet3ri", [("foo", "bar")])
+```
+
+Which maps to an array of the `Machine` struct:
+
+```solidity
+struct Machine {
+    Kind kind; // See `Kind` struct below
+    string address; // t2pdadfrian5jrvtk2sulbc7uuyt5cnxmfdmet3ri
+    KeyValue[] metadata; // See `KeyValue` struct below
+}
+
+struct Kind {
+    Bucket, // 0 == `Bucket`
+    Timehub, // 1 == `Timehub`
+}
+
+struct KeyValue {
+    string key; // "foo"
+    string value; // "bar"
+}
+```
+
+##### Add an object
+
+Adding an object is a bit more involved. You need to stage data offchain to a `source` bucket
+storage node ID address, which will return the hashed value (`blobHash`) of the staged data and its
+corresponding `size` in bytes. You then pass all of these as parameters when you add an object to
+the bucket.
+
+In the example below, we've already staged this data offchain and are using the following:
+
+- `source`: The node ID address (e.g., `4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a`).
+- `blobHash`: The hash of the staged data (e.g.,
+  `rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq` is the base32 encoded blake3 hashed value
+  of our file contents, which contains the string `hello`).
+- `size`: The size of the data in bytes (e.g., `6`, which is the number of bytes in the `hello`
+  string).
+
+We also include custom parameters for the bucket key, metadata, TTL, and overwrite flag:
+
+- `key`: The key to assign to the object in the bucket (`hello/world`).
+- `metadata`: The metadata to assign to the object in the bucket (`[("foo","bar")]`).
+- `overwrite`: The overwrite flag to assign to the object in the bucket (`false`).
+
+This all gets passed as a single `AddParams` struct to the `add` method:
+
+```solidity
+struct AddParams {
+    string source; // 4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a
+    string key; // hello/world
+    string blobHash; // rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq
+    uint64 size; // 6
+    uint64 ttl; // 0 (which is interpreted as null)
+    KeyValue[] metadata; // [("foo","bar")]
+    bool overwrite; // false
+}
+```
+
+We then pass this as a single parameter to the `add` method:
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "add(string,(string,string,string,uint64,uint64,(string,string)[],bool))" $BUCKET_ADDR '("4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a","hello/world","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq",6,0,[("foo","bar")],false)' --private-key $PRIVATE_KEY
+```
+
+Alternatively, to use the overloaded `add` method that has default values for the `ttl`, `metadata`,
+and `overwrite`, you can do the following:
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "add(string,string,string,string,uint64)" $BUCKET_ADDR "4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a" "hello/world" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" 6 --private-key $PRIVATE_KEY
+```
+
+If you're wondering where to get the `source` storage bucket's node ID (the example's
+`4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a`), you can find it with a `curl` request. On
+localnet, this looks like the following:
+
+```sh
+curl http://localhost:8001/v1/node | jq '.node_id'
+```
+
+Or on testnet, you'd replace the URL with public bucket API endpoint
+`https://object-api.n1.hoku.sh`.
+
+##### Delete an object
+
+Similar to [getting an object](#get-an-object), you can delete an object with the following command,
+specifying the bucket and key for the mutating transaction:
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "remove(string,string)" $BUCKET_ADDR "hello/world" --private-key $PRIVATE_KEY
+```
+
+##### Get an object
+
+Getting a single object is similar to the response of `query`, except only a single object is
+returned. Thus, the response simply includes a single value.
+
+```sh
+cast abi-decode "get(string,string)((string,uint64,uint64,(string,string)[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "get(string,string)" $BUCKET_ADDR "hello/world")
+```
+
+This will the following response:
+
+```sh
+("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", 6, 4050, [("content-type", "application/octet-stream")])
+```
+
+Which maps to the `Value` struct:
+
+```solidity
+struct Value {
+    string hash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
+    uint64 size; // 6
+    uint64 expiry; // 403769
+    KeyValue[] metadata; // See `KeyValue` struct below
+}
+
+struct KeyValue {
+    string key; // "content-type"
+    string value; // "application/octet-stream"
+}
+```
+
+#### Query objects
+
+Given a bucket address, you can query the objects in the bucket with the following command. First,
+we'll simply query for all objects in the bucket with no prefix parameter, setting `BUCKET_ADDR` to
+an existing bucket:
+
+```sh
+export BUCKET_ADDR=t2pdadfrian5jrvtk2sulbc7uuyt5cnxmfdmet3ri
+```
+
+```sh
+cast abi-decode "query(string)(((string,(string,uint64,uint64,(string,string)[]))[],string[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "query(string)" $BUCKET_ADDR)
+```
+
+This will return the following `Query` output:
+
+```
+([], ["hello/"])
+```
+
+Where the first array is an empty set of objects, and the second array is the common prefixes in the
+bucket:
+
+```solidity
+struct Query {
+    Object[] objects; // Empty array if no objects
+    string[] commonPrefixes; // ["hello/"]
+}
+```
+
+In the next example, we'll set `PREFIX` to query objects with the prefix `hello/`:
+
+```sh
+export PREFIX="hello/"
+```
+
+Now, we can query for these objects with the following command:
+
+```sh
+cast abi-decode "query(string,string)(((string,(string,uint64,uint64,(string,string)[]))[],string[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "query(string,string)" $BUCKET_ADDR $PREFIX)
+```
+
+This will return the following `Query` output:
+
+```
+([("hello/world", ("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", 6, 403769 [4.037e5], [("foo", "bar")]))], [])
+```
+
+Which maps to the following structs:
+
+```solidity
+struct Query {
+    Object[] objects; // See `Object` struct below
+    string[] commonPrefixes; // Empty array if no common prefixes
+}
+
+struct Object {
+    string key; // "hello/world"
+    Value value; // See `Value` struct below
+}
+
+struct Value {
+    string hash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
+    uint64 size; // 6
+    uint64 expiry; // 403769
+    KeyValue[] metadata; // See `KeyValue` struct below
+}
+
+struct KeyValue {
+    string key; // "foo"
+    string value; // "bar"
+}
+```
