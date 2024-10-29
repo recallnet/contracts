@@ -648,8 +648,8 @@ The following methods are available on the credit contract, shown with their fun
 - `add(string,string,string,string,uint64)`: Add an object to a bucket and associated object upload
   parameters. The first value is the bucket address, the subsequent values are all of the "required"
   values in `AddParams` (`source` node ID, `key`, `blobHash`, and `size`).
-- `add(string,(string,string,string,uint64,uint64,(string,string)[],bool))`: Add an object to a
-  bucket (first value) and associated object upload parameters (second value) as the `AddParams`
+- `add(string,(string,string,string,string,uint64,uint64,(string,string)[],bool))`: Add an object to
+  a bucket (first value) and associated object upload parameters (second value) as the `AddParams`
   struct, described in more detail below.
 - `remove(string,string)`: Remove an object from a bucket.
 - `get(string,string)`: Get an object from a bucket.
@@ -743,17 +743,26 @@ struct KeyValue {
 
 ##### Add an object
 
-Adding an object is a bit more involved. You need to stage data offchain to a `source` bucket
-storage node ID address, which will return the hashed value (`blobHash`) of the staged data and its
+Given a bucket address, you can read or mutate the objects in the bucket. First, we'll simply add an
+object, setting `BUCKET_ADDR` to an existing bucket from the command above:
+
+```sh
+export BUCKET_ADDR=t2pdadfrian5jrvtk2sulbc7uuyt5cnxmfdmet3ri
+```
+
+Adding an object is a bit involved. You need to stage data offchain to a `source` bucket storage
+node ID address, which will return the hashed value (`blobHash`) of the staged data and its
 corresponding `size` in bytes. You then pass all of these as parameters when you add an object to
 the bucket.
 
 In the example below, we've already staged this data offchain and are using the following:
 
-- `source`: The node ID address (e.g., `4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a`).
+- `source`: The node ID address (e.g., `cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq`).
 - `blobHash`: The hash of the staged data (e.g.,
   `rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq` is the base32 encoded blake3 hashed value
   of our file contents, which contains the string `hello`).
+- `recoveryHash`: Blake3 hash of the metadata to use for object recovery (note: this is currently
+  hardcoded, so you can pass an empty string value here).
 - `size`: The size of the data in bytes (e.g., `6`, which is the number of bytes in the `hello`
   string).
 
@@ -767,9 +776,10 @@ This all gets passed as a single `AddParams` struct to the `add` method:
 
 ```solidity
 struct AddParams {
-    string source; // 4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a
+    string source; // cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq
     string key; // hello/world
     string blobHash; // rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq
+    string recoveryHash; // (note: this is currently hardcoded to an empty string)
     uint64 size; // 6
     uint64 ttl; // 0 (which is interpreted as null)
     KeyValue[] metadata; // [("foo","bar")]
@@ -780,18 +790,18 @@ struct AddParams {
 We then pass this as a single parameter to the `add` method:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "add(string,(string,string,string,uint64,uint64,(string,string)[],bool))" $BUCKET_ADDR '("4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a","hello/world","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq",6,0,[("foo","bar")],false)' --private-key $PRIVATE_KEY
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "add(string,(string,string,string,string,uint64,uint64,(string,string)[],bool))" $BUCKET_ADDR '("cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq","hello/world","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","",6,0,[("foo","bar")],false)' --private-key $PRIVATE_KEY
 ```
 
 Alternatively, to use the overloaded `add` method that has default values for the `ttl`, `metadata`,
 and `overwrite`, you can do the following:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "add(string,string,string,string,uint64)" $BUCKET_ADDR "4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a" "hello/world" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" 6 --private-key $PRIVATE_KEY
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "add(string,string,string,string,string,uint64)" $BUCKET_ADDR "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq" "hello/world" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" "" 6 --private-key $PRIVATE_KEY
 ```
 
 If you're wondering where to get the `source` storage bucket's node ID (the example's
-`4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a`), you can find it with a `curl` request. On
+`cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq`), you can find it with a `curl` request. On
 localnet, this looks like the following:
 
 ```sh
@@ -813,46 +823,42 @@ cast send --rpc-url $EVM_RPC_URL $BUCKETS "remove(string,string)" $BUCKET_ADDR "
 ##### Get an object
 
 Getting a single object is similar to the response of `query`, except only a single object is
-returned. Thus, the response simply includes a single value.
+returned. Thus, the response simply includes a single value. The `BUCKET_ADDR` is the same one from
+above.
 
 ```sh
-cast abi-decode "get(string,string)((string,uint64,uint64,(string,string)[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "get(string,string)" $BUCKET_ADDR "hello/world")
+cast abi-decode "get(string,string)((string,string,uint64,uint64,(string,string)[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "get(string,string)" $BUCKET_ADDR "hello/world")
 ```
 
 This will the following response:
 
 ```sh
-("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", 6, 4050, [("content-type", "application/octet-stream")])
+("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", 6, 103381 [1.033e5], [("foo","bar")])
 ```
 
 Which maps to the `Value` struct:
 
 ```solidity
 struct Value {
-    string hash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
+    string blobHash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
+    string recoveryHash; // "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq"
     uint64 size; // 6
-    uint64 expiry; // 403769
+    uint64 expiry; // 103381
     KeyValue[] metadata; // See `KeyValue` struct below
 }
 
 struct KeyValue {
-    string key; // "content-type"
-    string value; // "application/octet-stream"
+    string key; // "foo"
+    string value; // "bar"
 }
 ```
 
 #### Query objects
 
-Given a bucket address, you can query the objects in the bucket with the following command. First,
-we'll simply query for all objects in the bucket with no prefix parameter, setting `BUCKET_ADDR` to
-an existing bucket:
+We'll continue using the same `BUCKET_ADDR` from the previous examples.
 
 ```sh
-export BUCKET_ADDR=t2pdadfrian5jrvtk2sulbc7uuyt5cnxmfdmet3ri
-```
-
-```sh
-cast abi-decode "query(string)(((string,(string,uint64,uint64,(string,string)[]))[],string[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "query(string)" $BUCKET_ADDR)
+cast abi-decode "query(string)(((string,(string,string,uint64,uint64,(string,string)[]))[],string[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "query(string)" $BUCKET_ADDR)
 ```
 
 This will return the following `Query` output:
@@ -880,13 +886,13 @@ export PREFIX="hello/"
 Now, we can query for these objects with the following command:
 
 ```sh
-cast abi-decode "query(string,string)(((string,(string,uint64,uint64,(string,string)[]))[],string[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "query(string,string)" $BUCKET_ADDR $PREFIX)
+cast abi-decode "query(string,string)(((string,(string,string,uint64,uint64,(string,string)[]))[],string[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "query(string,string)" $BUCKET_ADDR $PREFIX)
 ```
 
 This will return the following `Query` output:
 
 ```
-([("hello/world", ("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", 6, 403769 [4.037e5], [("foo", "bar")]))], [])
+([("hello/world", ("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", 6, 103381 [1.033e5], [("foo", "bar")]))], [])
 ```
 
 Which maps to the following structs:
@@ -903,9 +909,10 @@ struct Object {
 }
 
 struct Value {
-    string hash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
+    string blobHash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
+    string recoveryHash; // "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq"
     uint64 size; // 6
-    uint64 expiry; // 403769
+    uint64 expiry; // 103381
     KeyValue[] metadata; // See `KeyValue` struct below
 }
 
