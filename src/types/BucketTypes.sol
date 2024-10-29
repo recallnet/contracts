@@ -49,11 +49,13 @@ struct Object {
 
 /// @dev The value of an object.
 /// @param blobHash (string): The object blake3 hash.
+/// @param recoveryHash (string): Blake3 hash of the metadata to use for object recovery.
 /// @param size (uint64): The object size.
 /// @param expiry (uint64): The expiry block.
 /// @param metadata (KeyValue[]): The user-defined object metadata (e.g., last modified timestamp, etc.).
 struct Value {
     string blobHash;
+    string recoveryHash;
     uint64 size;
     uint64 expiry;
     KeyValue[] metadata;
@@ -73,6 +75,7 @@ struct Machine {
 /// @param source (string): The source Iroh node ID used for ingestion.
 /// @param key (string): The object key.
 /// @param blobHash (string): The object blake3 hash.
+/// @param recoveryHash (string): Blake3 hash of the metadata to use for object recovery.
 /// @param size (uint64): The object size.
 /// @param ttl (uint64): The object time-to-live epochs.
 /// @param metadata (KeyValue[]): The object metadata.
@@ -81,6 +84,7 @@ struct AddParams {
     string source;
     string key;
     string blobHash;
+    string recoveryHash;
     uint64 size;
     uint64 ttl;
     KeyValue[] metadata;

@@ -104,9 +104,10 @@ library LibBucket {
         if (decoded.length == 0) return value;
         value = Value({
             blobHash: string(decoded[0].decodeBlobHash()),
-            size: decoded[1].decodeCborBytesToUint64(),
-            expiry: decoded[2].decodeCborBytesToUint64(),
-            metadata: decodeMetadata(decoded[3])
+            recoveryHash: string(decoded[1].decodeBlobHash()),
+            size: decoded[2].decodeCborBytesToUint64(),
+            expiry: decoded[3].decodeCborBytesToUint64(),
+            metadata: decodeMetadata(decoded[4])
         });
     }
 
@@ -138,14 +139,17 @@ library LibBucket {
     /// @param params The add params.
     /// @return encoded The CBOR encoded add params.
     function encodeAddParams(AddParams memory params) internal pure returns (bytes memory) {
-        bytes[] memory encoded = new bytes[](7);
+        bytes[] memory encoded = new bytes[](8);
         encoded[0] = params.source.encodeCborBlobHashOrNodeId();
         encoded[1] = params.key.encodeCborBytes();
         encoded[2] = params.blobHash.encodeCborBlobHashOrNodeId();
-        encoded[3] = params.size.encodeCborUint64();
-        encoded[4] = params.ttl == 0 ? LibWasm.encodeCborNull() : params.ttl.encodeCborUint64();
-        encoded[5] = params.metadata.encodeCborKeyValueMap();
-        encoded[6] = params.overwrite.encodeCborBool();
+        // TODO: this currently is hardcoded to a 32 byte array of all zeros, but should use the method above
+        // Once https://github.com/hokunet/ipc/issues/300 is merged, this'll need to change
+        encoded[3] = hex"0000000000000000000000000000000000000000000000000000000000000000".encodeCborFixedArray();
+        encoded[4] = params.size.encodeCborUint64();
+        encoded[5] = params.ttl == 0 ? LibWasm.encodeCborNull() : params.ttl.encodeCborUint64();
+        encoded[6] = params.metadata.encodeCborKeyValueMap();
+        encoded[7] = params.overwrite.encodeCborBool();
         return encoded.encodeCborArray();
     }
 

@@ -40,13 +40,19 @@ contract BucketManager is IBucketManager {
     }
 
     /// @dev See {IBucketManager-add}.
-    function add(string memory bucket, string memory source, string memory key, string memory blobHash, uint64 size)
-        external
-    {
+    function add(
+        string memory bucket,
+        string memory source,
+        string memory key,
+        string memory blobHash,
+        string memory recoveryHash,
+        uint64 size
+    ) external {
         AddParams memory addParams = AddParams({
             source: source,
             key: key,
             blobHash: blobHash,
+            recoveryHash: recoveryHash,
             size: size,
             ttl: 0, // No expiration
             metadata: new KeyValue[](0), // No metadata
