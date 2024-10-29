@@ -761,8 +761,8 @@ In the example below, we've already staged this data offchain and are using the 
 - `blobHash`: The hash of the staged data (e.g.,
   `rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq` is the base32 encoded blake3 hashed value
   of our file contents, which contains the string `hello`).
-- `recoveryHash`: The entangled recovery blake3 recovery hash (note: this is currently hardcoded, so
-  you can pass an empty string value here).
+- `recoveryHash`: Blake3 hash of the metadata to use for object recovery (note: this is currently
+  hardcoded, so you can pass an empty string value here).
 - `size`: The size of the data in bytes (e.g., `6`, which is the number of bytes in the `hello`
   string).
 
