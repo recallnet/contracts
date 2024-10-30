@@ -256,7 +256,7 @@ library LibBucket {
     /// @param bucket The bucket.
     /// @param key The object key.
     /// @return Object's value. See {Value} for more details.
-    function get(string memory bucket, string memory key) external returns (Value memory) {
+    function get(string memory bucket, string memory key) external view returns (Value memory) {
         bytes memory bucketAddr = bucket.encodeCborActorAddress();
         bytes memory params = key.encodeCborBytes();
         bytes memory data = LibWasm.readFromWasmActorByAddress(bucketAddr, METHOD_GET_OBJECT, params);
@@ -272,6 +272,7 @@ library LibBucket {
     /// @return All objects matching the query.
     function query(string memory bucket, string memory prefix, string memory delimiter, uint64 offset, uint64 limit)
         external
+        view
         returns (Query memory)
     {
         bytes memory bucketAddr = bucket.encodeCborActorAddress();

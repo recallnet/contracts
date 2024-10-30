@@ -512,10 +512,20 @@ library LibWasm {
     /// @return data The data returned from the actor.
     function readFromWasmActorByAddress(bytes memory addr, uint64 methodNum, bytes memory params)
         internal
+        view
         returns (bytes memory)
     {
         if (params.length == 0) revert InvalidValue("Params must be non-empty");
-        (int256 exit, bytes memory data) = Actor.callByAddress(addr, methodNum, CBOR_CODEC, params, 0, true);
+        // Note: `Actor.callByAddress` uses a delegate call, but since we're doing read-only operations, we need to
+        // use this workaround in order to mark it as a `view` function
+        function(bytes memory, uint256, uint64, bytes memory, uint256, bool) internal view returns (int256, bytes memory)
+            callFn;
+        function(bytes memory, uint256, uint64, bytes memory, uint256, bool) internal returns (int256, bytes memory)
+            helper = Actor.callByAddress;
+        assembly {
+            callFn := helper
+        }
+        (int256 exit, bytes memory data) = callFn(addr, methodNum, CBOR_CODEC, params, 0, true);
 
         if (exit != 0) revert ActorError(exit);
         return data;

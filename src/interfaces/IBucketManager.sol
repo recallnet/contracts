@@ -70,18 +70,18 @@ interface IBucketManager {
     /// @param bucket The bucket.
     /// @param key The key.
     /// @return value Object's value. See {Value} for more details.
-    function get(string memory bucket, string memory key) external returns (Value memory);
+    function get(string memory bucket, string memory key) external view returns (Value memory);
 
     /// @dev Query the bucket.
     /// @param bucket The bucket.
     /// @return The CBOR encoded query data.
-    function query(string memory bucket) external returns (Query memory);
+    function query(string memory bucket) external view returns (Query memory);
 
     /// @dev Query the bucket.
     /// @param bucket The bucket.
     /// @param prefix The prefix.
     /// @return The CBOR encoded query data.
-    function query(string memory bucket, string memory prefix) external returns (Query memory);
+    function query(string memory bucket, string memory prefix) external view returns (Query memory);
 
     /// @dev Query the bucket.
     /// @param bucket The bucket.
@@ -90,6 +90,7 @@ interface IBucketManager {
     /// @return The CBOR encoded query data.
     function query(string memory bucket, string memory prefix, string memory delimiter)
         external
+        view
         returns (Query memory);
 
     /// @dev Query the bucket.
@@ -100,6 +101,7 @@ interface IBucketManager {
     /// @return All objects matching the query.
     function query(string memory bucket, string memory prefix, string memory delimiter, uint64 offset)
         external
+        view
         returns (Query memory);
 
     /// @dev Query the bucket.
@@ -111,5 +113,6 @@ interface IBucketManager {
     /// @return All objects matching the query.
     function query(string memory bucket, string memory prefix, string memory delimiter, uint64 offset, uint64 limit)
         external
+        view
         returns (Query memory);
 }
