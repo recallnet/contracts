@@ -75,23 +75,24 @@ contract BucketManager is IBucketManager {
     }
 
     /// @dev See {IBucketManager-get}.
-    function get(string memory bucket, string memory key) external returns (Value memory) {
+    function get(string memory bucket, string memory key) external view returns (Value memory) {
         return LibBucket.get(bucket, key);
     }
 
     /// @dev See {IBucketManager-query}.
-    function query(string memory bucket) external returns (Query memory) {
+    function query(string memory bucket) external view returns (Query memory) {
         return LibBucket.query(bucket, "", "/", 0, 0);
     }
 
     /// @dev See {IBucketManager-query}.
-    function query(string memory bucket, string memory prefix) external returns (Query memory) {
+    function query(string memory bucket, string memory prefix) external view returns (Query memory) {
         return LibBucket.query(bucket, prefix, "/", 0, 0);
     }
 
     /// @dev See {IBucketManager-query}.
     function query(string memory bucket, string memory prefix, string memory delimiter)
         external
+        view
         returns (Query memory)
     {
         return LibBucket.query(bucket, prefix, delimiter, 0, 0);
@@ -100,6 +101,7 @@ contract BucketManager is IBucketManager {
     /// @dev See {IBucketManager-query}.
     function query(string memory bucket, string memory prefix, string memory delimiter, uint64 offset)
         external
+        view
         returns (Query memory)
     {
         return LibBucket.query(bucket, prefix, delimiter, offset, 0);
@@ -108,6 +110,7 @@ contract BucketManager is IBucketManager {
     /// @dev See {IBucketManager-query}.
     function query(string memory bucket, string memory prefix, string memory delimiter, uint64 offset, uint64 limit)
         external
+        view
         returns (Query memory)
     {
         return LibBucket.query(bucket, prefix, delimiter, offset, limit);
