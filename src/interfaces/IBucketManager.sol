@@ -16,13 +16,13 @@ interface IBucketManager {
     /// @param owner The owner.
     /// @param bucket The bucket's robust t2 address.
     /// @param key The object key.
-    event ObjectAdded(address indexed owner, string indexed bucket, string indexed key);
+    event ObjectAdded(address indexed owner, string bucket, string key);
 
     /// @dev Emitted when an object is removed from a bucket.
     /// @param owner The owner.
     /// @param bucket The bucket's robust t2 address.
     /// @param key The object key.
-    event ObjectRemoved(address indexed owner, string indexed bucket, string indexed key);
+    event ObjectRemoved(address indexed owner, string bucket, string key);
 
     /// @dev Create a bucket. Uses the sender as the owner.
     function create() external;
