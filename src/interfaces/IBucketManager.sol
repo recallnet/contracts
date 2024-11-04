@@ -1,22 +1,27 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {
-    AddParams, CreateBucketParams, KeyValue, Kind, Machine, Query, Value, WriteAccess
-} from "../types/BucketTypes.sol";
+import {AddParams, KeyValue, Kind, Machine, Query, Value} from "../types/BucketTypes.sol";
 
 /// @dev Hoku Bucket actor EVM interface for managing objects, and querying object or storage stats.
 /// See Rust implementation for details:
 /// https://github.com/hokunet/ipc/blob/develop/fendermint/actors/objectstore/src/actor.rs
 interface IBucketManager {
     /// @dev Emitted when a bucket is created.
-    // TODO: It'd be nice to emit the bucket t2 address, but decoding the CBOR is too expensive.
-    event BucketCreated(address indexed owner);
+    /// @param owner The owner.
+    /// @param data The CBOR encoded response—array with two values including the bucket's ID and robust (t2) addresses.
+    event BucketCreated(address indexed owner, bytes data);
 
     /// @dev Emitted when an object is added to a bucket.
+    /// @param owner The owner.
+    /// @param bucket The bucket's robust t2 address.
+    /// @param key The object key.
     event ObjectAdded(address indexed owner, string indexed bucket, string indexed key);
 
     /// @dev Emitted when an object is removed from a bucket.
+    /// @param owner The owner.
+    /// @param bucket The bucket's robust t2 address.
+    /// @param key The object key.
     event ObjectRemoved(address indexed owner, string indexed bucket, string indexed key);
 
     /// @dev Create a bucket. Uses the sender as the owner.

@@ -13,20 +13,21 @@ contract BucketManager is IBucketManager {
     function create() external {
         KeyValue[] memory metadata = new KeyValue[](0);
         LibBucket.create(msg.sender, metadata);
-        emit BucketCreated(msg.sender);
+        bytes memory data = LibBucket.create(msg.sender, metadata);
+        emit BucketCreated(msg.sender, data);
     }
 
     /// @dev See {IBucketManager-create}.
     function create(address owner) external {
         KeyValue[] memory metadata = new KeyValue[](0);
-        LibBucket.create(owner, metadata);
-        emit BucketCreated(owner);
+        bytes memory data = LibBucket.create(owner, metadata);
+        emit BucketCreated(owner, data);
     }
 
     /// @dev See {IBucketManager-create}.
     function create(address owner, KeyValue[] memory metadata) external {
-        LibBucket.create(owner, metadata);
-        emit BucketCreated(owner);
+        bytes memory data = LibBucket.create(owner, metadata);
+        emit BucketCreated(owner, data);
     }
 
     /// @dev See {IBucketManager-list}.
