@@ -211,7 +211,7 @@ library LibBucket {
     /// @dev Create a bucket.
     /// @param owner The owner.
     /// @param metadata The metadata.
-    function create(address owner, KeyValue[] memory metadata) external {
+    function create(address owner, KeyValue[] memory metadata) external returns (bytes memory) {
         CreateBucketParams memory createParams = CreateBucketParams({
             owner: owner,
             kind: Kind.Bucket,
@@ -219,7 +219,7 @@ library LibBucket {
             metadata: metadata
         });
         bytes memory params = encodeCreateBucketParams(createParams);
-        LibWasm.writeToWasmActor(ADM_ACTOR_ID, METHOD_CREATE_EXTERNAL, params);
+        return LibWasm.writeToWasmActor(ADM_ACTOR_ID, METHOD_CREATE_EXTERNAL, params);
     }
 
     /// @dev List all buckets owned by an address.
