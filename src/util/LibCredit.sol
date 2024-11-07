@@ -20,7 +20,7 @@ library LibCredit {
     using LibWasm for *;
 
     // Constants for the actor and method IDs of the Hoku Blobs actor
-    uint64 internal constant ACTOR_ID = 49;
+    uint64 internal constant ACTOR_ID = 66;
     uint64 internal constant METHOD_APPROVE_CREDIT = 2276438360;
     uint64 internal constant METHOD_BUY_CREDIT = 1035900737;
     uint64 internal constant METHOD_GET_ACCOUNT = 3435393067;
