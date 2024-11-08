@@ -46,11 +46,11 @@ struct Balance {
 /// @dev A credit approval from one account to another.
 /// @param limit (uint256): Optional credit approval limit.
 /// @param expiry (uint64): Optional credit approval time-to-live epochs.
-/// @param committed (uint256): Counter for how much credit has been committed via this approval.
+/// @param used (uint256): Counter for how much credit has been committed via this approval.
 struct CreditApproval {
     uint256 limit;
     uint64 expiry;
-    uint256 committed;
+    uint256 used;
 }
 
 /// @dev The stats of the blob actor.
