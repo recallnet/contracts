@@ -16,7 +16,7 @@ import {InvalidValue, LibWasm} from "./LibWasm.sol";
 
 /// @title Credit Library
 /// @dev Utility functions for interacting with the Hoku Credit actor.
-library LibCredit {
+library LibBlobs {
     using LibWasm for *;
 
     // Constants for the actor and method IDs of the Hoku Blobs actor
@@ -68,7 +68,7 @@ library LibCredit {
         // gets encoded as a BigInt (array with sign bit and nested array of values) when reading data.
         approval.limit = decoded[0].decodeCborBigIntToUint256();
         approval.expiry = decoded[1].decodeCborBytesToUint64();
-        approval.committed = decoded[2].decodeCborBigIntToUint256();
+        approval.used = decoded[2].decodeCborBigIntToUint256();
     }
 
     /// @dev Helper function to decode approvals from CBOR to solidity.
