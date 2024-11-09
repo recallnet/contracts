@@ -26,6 +26,8 @@
     - [Methods](#methods-1)
     - [Examples](#examples-1)
     - [Query objects](#query-objects)
+  - [Blobs contract](#blobs-contract)
+    - [Methods](#methods-2)
 
 ## Background
 
@@ -101,6 +103,7 @@ The scripts for deploying contracts are in `script/` directory:
 - `Faucet.s.sol`: Deploy the faucet contract.
 - `ValidatorGater.s.sol`: Deploy the validator gater contract.
 - `Credit.s.sol`: Deploy the credit contract.
+- `Blobs.s.sol`: Deploy the blobs contract.
 - `BucketManager.s.sol`: Deploy the Bucket Manager contract.
 - `Bridge.s.sol`: Deploy the bridge contract—relevant for the Hoku ERC20 on live chains.
 
@@ -306,7 +309,7 @@ CREDIT=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/Credit.s.sol \
 The following methods are available on the credit contract, shown with their function signatures.
 Note that overloads are available for some methods, primarily, where the underlying WASM contract
 accepts "optional" arguments. All of the method parameters and return types can be found in
-`util/Types.sol`.
+`util/CreditTypes.sol`.
 
 - `getSubnetStats()`: Get subnet stats.
 - `getCreditStats()`: Get credit stats.
@@ -830,7 +833,7 @@ above.
 cast abi-decode "get(string,string)((string,string,uint64,uint64,(string,string)[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "get(string,string)" $BUCKET_ADDR "hello/world")
 ```
 
-This will the following response:
+This will return the following response:
 
 ```sh
 ("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", 6, 103381 [1.033e5], [("foo","bar")])
@@ -920,4 +923,175 @@ struct KeyValue {
     string key; // "foo"
     string value; // "bar"
 }
+```
+
+### Blobs contract
+
+You can interact with the existing blobs contract on the testnet via the address above. If you're
+working on `localnet`, you'll have to deploy this yourself. Here's a quick one-liner to do so—also
+setting the `BLOBS` environment variable to the deployed address:
+
+```
+BLOBS=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/Blobs.s.sol \
+--tc DeployScript 0 \
+--sig 'run(uint8)' \
+--rpc-url localnet_subnet \
+--broadcast -g 100000 \
+| grep "0: contract Blobs" | awk '{print $NF}')
+```
+
+#### Methods
+
+The following methods are available on the credit contract, shown with their function signatures.
+Note that overloads are available for some methods, primarily, where the underlying WASM contract
+accepts "optional" arguments. All of the method parameters and return types can be found in
+`util/CreditTypes.sol`.
+
+- `addBlob(AddBlobParams memory params)`: Store a blob directly on the network. This is described in
+  more detail below, and it involves a two-step approach with first staging data with the blob
+  storage node, and then passing related values onchain.
+- `deleteBlob(address,string,string)`: Delete a blob from the network, passing the sponsor's
+  address, the blob hash, and the subscription ID (either `""` if none was originally provided, or
+  the string that was chosen during `addBlob`).
+- `getBlob(string)`: Get information about a specific blob at its blake3 hash.
+- `getBlobStatus(address,string,string)`: Get a blob's status, providing its credit sponsor (i.e.,
+  the account's `address`, or `address(0)` if null), its blake3 blob hash (the first `string`
+  parameter), and its blob hash key (an empty string `""` to indicate the default, or the key used
+  upon creating the blob).
+- `getPendingBlobs()`: Get the values of pending blobs across the network.
+- `getPendingBlobsCount(uint32)`: Get the number of pending blobs across the network, up to a limit.
+- `getPendingBytesCount()`: Get the total number of pending bytes across the network.
+
+##### Add a blob
+
+Adding a blob is a bit involved. You need to stage data offchain to a `source` blob storage node ID
+address, which will return the hashed value (`blobHash`) of the staged data and its corresponding
+`size` in bytes. You then pass all of these as parameters when you add an object to the bucket.
+
+In the example below, we've already staged this data offchain and are using the following:
+
+- `sponsor`: Optional sponsor address. E.g., if you have credits, you don't need to pass this, but
+  if someone has approve for you to use credits, you can specify the credit sponsor here.
+- `source`: The storage node ID address (e.g.,
+  `cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq`).
+- `blobHash`: The blake3 hash of the staged data (e.g.,
+  `rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq` is the base32 encoded blake3 hashed value
+  of our file contents, which contains the string `hello`).
+- `metadataHash`: Blake3 hash of the metadata to use for blob recovery (hardcoded, so you can pass
+  an empty string value here).
+- `subscriptionId`: Identifier used to differentiate blob additions for the same subscriber. You can
+  pass an empty string, indicating the default value (`Default`). Or, passing a string value, which
+  under the hood, will use this key value (`Key(Vec<u8>)`) for the hashmap key.
+- `size`: The size of the data in bytes (e.g., `6`, which is the number of bytes in the `hello`
+  string).
+- `ttl`: Blob time-to-live epochs. If specified as `0`, the auto-debitor maintains about one hour of
+  credits as an ongoing committment.
+
+This all gets passed as a single `AddBlobParams` struct to the `addBlob` method:
+
+```solidity
+struct AddBlobParams {
+    address sponsor; // `address(0)` for default/null, or the credit sponsor's address
+    string source; // cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq
+    string blobHash; // rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq
+    string metadataHash; // (note: this is currently hardcoded to an empty string)
+    string subscriptionId; // use `""` for the default, or pass a string value
+    uint64 size; // 6
+    uint64 ttl; // 0 (which is interpreted as null)
+}
+```
+
+We then pass this as a single parameter to the `add` method:
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BLOBS "addBlob((address,string,string,string,string,uint64,uint64))" '(0x0000000000000000000000000000000000000000,"iw3iqgwajbfxlbgovlqdqhbtola3g4nevdvosqqvtovjvzwub3sa","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","","",6,0)' --private-key $PRIVATE_KEY
+```
+
+If you're wondering where to get the `source` storage bucket's node ID (the example's
+`cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq`), you can find it with a `curl` request. On
+localnet, this looks like the following:
+
+```sh
+curl http://localhost:8001/v1/node | jq '.node_id'
+```
+
+Or on testnet, you'd replace the URL with public bucket API endpoint
+`https://object-api.n1.hoku.sh`.
+
+###### Delete a blob
+
+```sh
+cast send --rpc-url $EVM_RPC_URL $BLOBS "deleteBlob(address,string,string)" 0x0000000000000000000000000000000000000000 "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" "hello/world" --private-key $PRIVATE_KEY
+```
+
+This will return the following response:
+
+```sh
+
+```
+
+##### Get a blob
+
+```sh
+cast abi-decode "get(string)(bytes)" $(cast call --rpc-url $EVM_RPC_URL $BLOBS "get(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
+```
+
+This will return the following response:
+
+```sh
+
+```
+
+Which maps to the `Blob` struct:
+
+```solidity
+
+```
+
+##### Get blob status
+
+- Pass an address as the first field to represent the sponsor, or pass `address(0)` to indicate a
+  null value.
+- Provide the `blobHash` blake3 value.
+- Also give the `subscriptionId`, which uses the default empty value if you provide an empty string
+  `""`, or it can take the string that matches the blob's `subscriptionId` upon creation.
+
+```sh
+cast call --rpc-url $EVM_RPC_URL $BLOBS "getBlobStatus(address,string,string)" $EVM_ADDRESS "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" ""
+```
+
+##### Get pending blobs
+
+```sh
+cast call --rpc-url $EVM_RPC_URL $BLOBS "getPendingBlobs(uint32)" 1
+```
+
+This returns the values of pending blobs, up to the `size` passed as the parameter:
+
+```sh
+
+```
+
+##### Get pending blobs count
+
+```sh
+cast call --rpc-url $EVM_RPC_URL $BLOBS "getPendingBlobsCount()"
+```
+
+This returns the number of pending blobs:
+
+```sh
+123
+```
+
+##### Get pending bytes count
+
+```sh
+cast call --rpc-url $EVM_RPC_URL $BLOBS "getPendingBytesCount()"
+```
+
+This returns the total number of bytes that are pending network resolution:
+
+```sh
+987654321
 ```

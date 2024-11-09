@@ -255,6 +255,30 @@ contract LibWasmTest is Test {
         assertEq(result, hex"98200000000000000000000000000000000000000000000000000000000000000000");
     }
 
+    function testEncodeCborBytesArray() public {
+        bytes memory data = bytes("foo");
+        bytes memory result = LibWasm.encodeCborBytesArray(data);
+        assertEq(result, hex"831866186f186f");
+
+        // Max 255 length
+        data = bytes(
+            "foofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoo"
+        );
+        result = LibWasm.encodeCborBytesArray(data);
+        assertEq(
+            result,
+            hex"98ff1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f"
+        );
+
+        // Exceeds max length of 255 (string is 256 length)
+        data = bytes(
+            "foofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofooo"
+        );
+        bytes memory expectedError = abi.encodeWithSelector(InvalidValue.selector, "Length exceeds max size of 255");
+        vm.expectRevert(expectedError);
+        LibWasm.encodeCborBytesArray(data);
+    }
+
     function testEncodeCborIrohNodeId() public pure {
         string memory nodeId = "4wx2ocgzy2p42egwp5cwiyjhwzz6wt4elwwrrgoujx7ady5oxm7a";
         bytes memory result = LibWasm.encodeCborBlobHashOrNodeId(nodeId);
@@ -277,5 +301,15 @@ contract LibWasmTest is Test {
         string memory str = "hello/world";
         bytes memory result = LibWasm.encodeCborBytes(str);
         assertEq(result, hex"4b68656c6c6f2f776f726c64");
+    }
+
+    function testEncodeCborString() public pure {
+        string memory str = "Key";
+        bytes memory result = LibWasm.encodeCborString(str);
+        assertEq(result, hex"634B6579");
+
+        str = "Default";
+        result = LibWasm.encodeCborString(str);
+        assertEq(result, hex"6744656661756C74");
     }
 }
