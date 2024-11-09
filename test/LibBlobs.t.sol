@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
-import {Account as CreditAccount, Approvals, SubnetStats} from "../src/types/CreditTypes.sol";
+import {Account as CreditAccount, AddBlobParams, Approvals, SubnetStats} from "../src/types/CreditTypes.sol";
 import {LibBlobs} from "../src/util/LibBlobs.sol";
 
 contract LibBlobsTest is Test {
@@ -79,6 +79,24 @@ contract LibBlobsTest is Test {
         assertEq(
             params,
             hex"8356040a90f79bf6eb2c4f870365e785982e1f101e93b90656040a15d34aaf54267db7d7c367839aaf71a00a2c6a6556040a15d34aaf54267db7d7c367839aaf71a00a2c6a65"
+        );
+    }
+
+    function testEncodeAddParams() public pure {
+        AddBlobParams memory params = AddBlobParams({
+            sponsor: address(0),
+            source: "iw3iqgwajbfxlbgovlqdqhbtola3g4nevdvosqqvtovjvzwub3sa",
+            blobHash: "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq",
+            // TODO: update this once the dummy value is replaced with a blake3 hash; it's hardcoded as `[32; 0]`
+            metadataHash: "",
+            subscriptionId: "",
+            size: 6,
+            ttl: 0 // Null value
+        });
+        bytes memory encoded = LibBlobs.encodeAddBlobParams(params);
+        assertEq(
+            encoded,
+            hex"87f69820184518b61888181a18c01848184b1875188418ce18aa18e01838181c1833187218c118b3187118a418a818ea18e9184215189b18aa189a18e618d40e18e49820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a18999820185818300918d918fc011819188d18b0150818dc186b18c918e618f10a185c18ef189118a3185d1864186d187318a518b718a8181918cd18b0184d6744656661756c7406f6"
         );
     }
 }

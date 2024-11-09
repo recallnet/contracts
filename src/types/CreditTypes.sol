@@ -115,3 +115,42 @@ struct StorageStats {
 struct Usage {
     uint256 capacityUsed;
 }
+
+/// @dev Parameters for adding a raw blob.
+/// @param sponsor  Optional sponsor address.
+/// @param source Source Iroh node ID used for ingestion.
+/// @param blobHash Blob blake3 hash.
+/// @param metadataHash  Blake3 hash of the metadata to use for blob recovery.
+/// @param subscriptionId Identifier used to differentiate blob additions for the same subscriber.
+/// @param size Blob size.
+/// @param ttl Blob time-to-live epochs. If not specified, the auto-debitor maintains about one hour of credits as an
+/// ongoing commitment.
+struct AddBlobParams {
+    address sponsor;
+    string source;
+    string blobHash;
+    string metadataHash;
+    string subscriptionId;
+    uint64 size;
+    uint64 ttl;
+}
+
+struct Blob {
+    /// The size of the content.
+    uint64 size;
+    /// Blob metadata that contains information for block recovery.
+    string metadataHash;
+    /// Active subscribers (accounts) that are paying for the blob.
+    bytes subscribers; // HashMap<Address, SubscriptionGroup>,
+    /// Blob status.
+    bytes status;
+}
+
+enum BlobStatus {
+    /// Blob is pending resolve.
+    Pending,
+    /// Blob was successfully resolved.
+    Resolved,
+    /// Blob resolution failed.
+    Failed
+}

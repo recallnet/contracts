@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
+import {KeyValue} from "../types/CommonTypes.sol";
 import {
     Account,
+    AddBlobParams,
     Approval,
     Approvals,
     Balance,
+    Blob,
     CreditApproval,
     CreditStats,
     StorageStats,
@@ -21,11 +24,21 @@ library LibBlobs {
 
     // Constants for the actor and method IDs of the Hoku Blobs actor
     uint64 internal constant ACTOR_ID = 66;
-    uint64 internal constant METHOD_APPROVE_CREDIT = 2276438360;
-    uint64 internal constant METHOD_BUY_CREDIT = 1035900737;
+    // General getters
     uint64 internal constant METHOD_GET_ACCOUNT = 3435393067;
     uint64 internal constant METHOD_GET_STATS = 188400153;
+    // Credit methods
+    uint64 internal constant METHOD_APPROVE_CREDIT = 2276438360;
+    uint64 internal constant METHOD_BUY_CREDIT = 1035900737;
     uint64 internal constant METHOD_REVOKE_CREDIT = 37550845;
+    // Blob methods
+    uint64 internal constant METHOD_ADD_BLOB = 913855558;
+    uint64 internal constant METHOD_GET_BLOB = 1739171512;
+    uint64 internal constant METHOD_GET_BLOB_STATUS = 3505892271;
+    uint64 internal constant METHOD_GET_PENDING_BLOBS = 799531123;
+    uint64 internal constant METHOD_GET_PENDING_BLOBS_COUNT = 1694235671;
+    uint64 internal constant METHOD_GET_PENDING_BYTES_COUNT = 3795566289;
+    uint64 internal constant METHOD_DELETE_BLOB = 4230608948;
 
     /// @dev Helper function to decode the subnet stats from CBOR to solidity.
     /// @param data The encoded CBOR array of stats.
@@ -136,6 +149,39 @@ library LibBlobs {
         return encoded.encodeCborArray();
     }
 
+    /// @dev Encode a subscription ID.
+    /// @param subscriptionId The subscription ID.
+    /// @return encoded The encoded subscription ID.
+    function encodeSubscriptionId(string memory subscriptionId) internal pure returns (bytes memory) {
+        if (bytes(subscriptionId).length == 0) {
+            // Encoded as the raw string "Default"
+            return "Default".encodeCborString();
+        } else {
+            // Encoded as a 1 value mapping with `Key` key and an encoded bytes array of the subscription ID
+            bytes[] memory encoded = new bytes[](3);
+            encoded[0] = hex"a1";
+            encoded[1] = "Key".encodeCborString();
+            encoded[2] = bytes(subscriptionId).encodeCborBytesArray();
+            return encoded.concatBytes();
+        }
+    }
+
+    /// @dev Encode add blob params.
+    /// @param params The parameters for adding a blob.
+    /// @return encoded The encoded parameters.
+    function encodeAddBlobParams(AddBlobParams memory params) internal pure returns (bytes memory) {
+        bytes[] memory encoded = new bytes[](7);
+        encoded[0] = params.sponsor == address(0) ? LibWasm.encodeCborNull() : params.sponsor.encodeCborAddress();
+        encoded[1] = params.source.encodeCborBlobHashOrNodeId();
+        encoded[2] = params.blobHash.encodeCborBlobHashOrNodeId();
+        // TODO: this value is currently hardcoded, but it'll eventually use the same method above
+        encoded[3] = hex"0000000000000000000000000000000000000000000000000000000000000000".encodeCborFixedArray();
+        encoded[4] = encodeSubscriptionId(params.subscriptionId);
+        encoded[5] = params.size.encodeCborUint64();
+        encoded[6] = params.ttl == 0 ? LibWasm.encodeCborNull() : params.ttl.encodeCborUint64();
+        return encoded.encodeCborArray();
+    }
+
     /// @dev Helper function to convert a credit account to a balance.
     /// @param account The account to convert.
     /// @return balance The balance of the account.
@@ -228,6 +274,39 @@ library LibBlobs {
         return accountToBalance(account);
     }
 
+    function getBlob(string memory blobHash) external view returns (bytes memory) {
+        bytes memory params = blobHash.encodeCborBlobHashOrNodeId();
+        return LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_BLOB, params);
+    }
+
+    function getPendingBlobs(uint32 size) external view returns (bytes memory) {
+        bytes memory params = size.encodeCborUint64();
+        return LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_PENDING_BLOBS, params);
+    }
+
+    function getPendingBlobsCount() external view returns (uint64) {
+        bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_PENDING_BLOBS_COUNT);
+        return data.decodeCborBytesToUint64();
+    }
+
+    function getPendingBytesCount() external view returns (uint64) {
+        bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_PENDING_BYTES_COUNT);
+        return data.decodeCborBytesToUint64();
+    }
+
+    function getBlobStatus(address subscriber, string memory blobHash, string memory subscriptionId)
+        external
+        view
+        returns (bytes memory)
+    {
+        bytes[] memory encoded = new bytes[](3);
+        encoded[0] = subscriber.encodeCborAddress();
+        encoded[1] = blobHash.encodeCborBlobHashOrNodeId();
+        encoded[2] = encodeSubscriptionId(subscriptionId);
+        bytes memory params = encoded.encodeCborArray();
+        return LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_BLOB_STATUS, params);
+    }
+
     /// @dev Buy credits for a specified account with a `msg.value` for number of native currency to spend on credits.
     /// @param recipient The address of the account.
     /// @return data The balance of the account after buying credits.
@@ -261,5 +340,22 @@ library LibBlobs {
         bytes memory params = encodeRevokeCreditParams(from, receiver, requiredCaller);
         // Note: response bytes are always empty
         LibWasm.writeToWasmActor(ACTOR_ID, METHOD_REVOKE_CREDIT, params);
+    }
+
+    /// @dev Add a blob to the subnet.
+    /// @param params The parameters for adding a blob.
+    /// @return data The response from the actor.
+    function addBlob(AddBlobParams memory params) external returns (bytes memory data) {
+        bytes memory _params = encodeAddBlobParams(params);
+        return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_ADD_BLOB, _params);
+    }
+
+    function deleteBlob(address subscriber, string memory blobHash, string memory subscriptionId) external {
+        bytes[] memory encoded = new bytes[](3);
+        encoded[0] = subscriber == address(0) ? LibWasm.encodeCborNull() : subscriber.encodeCborAddress();
+        encoded[1] = blobHash.encodeCborBlobHashOrNodeId();
+        encoded[2] = encodeSubscriptionId(subscriptionId);
+        bytes memory params = encoded.encodeCborArray();
+        LibWasm.writeToWasmActor(ACTOR_ID, METHOD_DELETE_BLOB, params);
     }
 }

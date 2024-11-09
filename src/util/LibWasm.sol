@@ -101,10 +101,11 @@ library LibWasm {
 
     /// @dev Decode CBOR encoded Filecoin address bytes to an Ethereum address.
     /// @param addr The encoded CBOR Filecoin address. Example: 0x040a15d34aaf54267db7d7c367839aaf71a00a2c6a65
-    /// @return result The decoded Ethereum address.
+    /// @return result The decoded Ethereum address. Example: 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
     // TODO: we need to figure out handling `t2` addresses. For example `t2yxnetcwoaljcrctdk5bm3v3bcmg6o7kzxol4zwi` will
     // get interpreted as `0xda498aCe02D2288A635742cdd761130De77D5900`, which is not valid since a `t2` address does not
-    // have an EVM address counterpart(?).
+    // have an EVM address counterpart. But, this will be resolved with the issue below, so we can ignore, for now.
+    // See: https://github.com/hokunet/rust-hoku/issues/39
     function decodeCborAddress(bytes memory addr) internal pure returns (address) {
         address result;
         assembly {
@@ -437,12 +438,15 @@ library LibWasm {
         return CBOR.data(buf);
     }
 
-    /// @dev Encode a bytes array to a CBOR encoded fixed array/slice (e.g., a serialized Rust slice `[u8; N]`).
+    /// @dev Encode a bytes array to a CBOR encoded fixed array/slice (e.g., a serialized Rust slice `[u8; N]`; bytes =>
+    /// 98<length>...).
     /// @param value The bytes array to encode.
     /// @return encoded The CBOR encoded fixed array.
     function encodeCborFixedArray(bytes memory value) internal pure returns (bytes memory) {
+        // Check if length exceeds 255 (i.e., we only handle 0x98 array indicators)
+        if (value.length > 255) revert InvalidValue("Length exceeds max size of 255");
         uint8 length = uint8(value.length);
-        bytes memory result = new bytes(2 + length * 2); // Max possible length
+        bytes memory result = new bytes(2 + uint16(length) * 2); // Max possible length
         result[0] = 0x98; // Fixed array indicator
         result[1] = bytes1(length); // Length indicator
 
@@ -463,6 +467,39 @@ library LibWasm {
             mstore(result, resultIndex)
         }
 
+        return result;
+    }
+
+    /// @dev Encode CBOR encoded bytes to bytes array, wrapping the values in an array (e.g., serialize to a Rust
+    /// `Vec<u8>` tuple struct; bytes("foo") => 0x831866186F186F).
+    /// @param value The bytes to encode to a bytes array. All values encoded with `0x18` preceding it.
+    /// @return result The bytes array.
+    function encodeCborBytesArray(bytes memory value) internal pure returns (bytes memory) {
+        // Check if length exceeds 255 (i.e., we only handle 0x80..0x98 array indicators)
+        if (value.length > 0xFF) revert InvalidValue("Length exceeds max size of 255");
+        uint8 length = uint8(value.length);
+        bytes memory result;
+
+        // Track if we skip the only first byte (indicator + length), or also the second byte (length if > 23 length)
+        uint16 resultIndex = 1;
+        // Anything greater than 23 length is a fixed array with 0x98 indicator (i.e., max length of 255)
+        if (length > 0x17) {
+            result = new bytes(2 + uint16(length) * 2);
+            result[0] = 0x98; // Fixed array indicator
+            result[1] = bytes1(length); // Length indicator
+            resultIndex += 1;
+        } else {
+            result = new bytes(1 + length * 2);
+            result[0] = bytes1(length + 0x80); // Array indicator with length included
+        }
+        // Skip first and, possibly, second byte (indicator + length); then, every other byte is the raw value, with a
+        // 0x18 indicator preceding it (i.e., `0x<array_indicator>18<byte>18<byte>`)
+        for (uint8 i = 0; i < length; i++) {
+            uint8 val = uint8(value[i]);
+            result[resultIndex] = 0x18;
+            result[resultIndex + 1] = bytes1(val);
+            resultIndex += 2;
+        }
         return result;
     }
 
