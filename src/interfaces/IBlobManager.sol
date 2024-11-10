@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {AddBlobParams, StorageStats, SubnetStats} from "../types/BlobTypes.sol";
+import {AddBlobParams, Blob, BlobStatus, StorageStats, SubnetStats} from "../types/BlobTypes.sol";
 
 /// @dev Hoku Blobs actor EVM interface for managing and querying information about blogs/storage.
 /// See Rust implementation for details:
@@ -15,18 +15,18 @@ interface IBlobManager {
 
     /// @dev Get information about a specific blob.
     /// @param blobHash Blob blake3 hash.
-    /// @return Blob information encoded as bytes.
-    function getBlob(string memory blobHash) external view returns (bytes memory);
+    /// @return blob Information, including its hash, size, metadata hash, subscribers and status.
+    function getBlob(string memory blobHash) external view returns (Blob memory blob);
 
     /// @dev Get status of a specific blob for a subscriber.
     /// @param subscriber The address of the subscriber.
     /// @param blobHash Blob blake3 hash.
     /// @param subscriptionId Identifier used to differentiate blob additions for the same subscriber.
-    /// @return Status of the blob encoded as bytes.
+    /// @return status The status of the blob: Pending, Resolved or Failed.
     function getBlobStatus(address subscriber, string memory blobHash, string memory subscriptionId)
         external
         view
-        returns (bytes memory);
+        returns (BlobStatus status);
 
     /// @dev Get a list of pending blobs.
     /// @param size Maximum number of pending blobs to return.

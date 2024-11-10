@@ -2,12 +2,12 @@
 pragma solidity ^0.8.26;
 
 import {IBlobManager} from "./interfaces/IBlobManager.sol";
-import {AddBlobParams, StorageStats, SubnetStats} from "./types/BlobTypes.sol";
+import {AddBlobParams, Blob, BlobStatus, StorageStats, SubnetStats} from "./types/BlobTypes.sol";
 import {LibBlob} from "./util/LibBlob.sol";
 
 contract BlobManager is IBlobManager {
     /// @dev See {ICredit-getBlob}.
-    function getBlob(string memory blobHash) external view returns (bytes memory) {
+    function getBlob(string memory blobHash) external view returns (Blob memory blob) {
         return LibBlob.getBlob(blobHash);
     }
 
@@ -15,7 +15,7 @@ contract BlobManager is IBlobManager {
     function getBlobStatus(address subscriber, string memory blobHash, string memory subscriptionId)
         external
         view
-        returns (bytes memory)
+        returns (BlobStatus status)
     {
         return LibBlob.getBlobStatus(subscriber, blobHash, subscriptionId);
     }

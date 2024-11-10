@@ -138,8 +138,9 @@ struct AddBlobParams {
 struct Blob {
     uint64 size;
     string metadataHash;
+    // TODO: decode the following from Rust type: HashMap<Address, SubscriptionGroup>
     bytes subscribers;
-    bytes status;
+    BlobStatus status;
 }
 
 /// @dev Status of a blob in the system.
@@ -150,4 +151,22 @@ enum BlobStatus {
     Pending,
     Resolved,
     Failed
+}
+
+/// @dev Pending subscription information.
+/// @param subscriber (address): The subscriber address.
+/// @param subscriptionId (string): The subscription ID.
+/// @param publicKey (bytes): The public key.
+struct Subscription {
+    address subscriber;
+    string subscriptionId;
+    bytes publicKey;
+}
+
+/// @dev Pending blob information. Represents a Rust `(Hash, HashSet<(Address, SubscriptionId, PublicKey)>)`
+/// @param hash (bytes): The blob hash.
+/// @param subscriptions (Subscription[]): The pending subscriptions.
+struct PendingBlob {
+    bytes hash;
+    Subscription[] subscriptions;
 }

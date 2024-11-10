@@ -8,6 +8,7 @@ import {
     Approvals,
     Balance,
     Blob,
+    BlobStatus,
     CreditApproval,
     CreditStats,
     StorageStats,
@@ -99,6 +100,29 @@ library LibBlob {
                 approvals[i].approval[j].approval = decodeCreditApproval(approvalBytes[j][1]);
             }
         }
+    }
+
+    /// @dev Convert a string to a blob status.
+    /// @param status The string representation of the blob status, either "Resolved", "Pending" or "Failed".
+    /// @return status The blob status.
+    function decodeBlobStatus(bytes memory status) internal pure returns (BlobStatus) {
+        bytes32 statusBytes = keccak256(status);
+        if (statusBytes == keccak256(bytes("Resolved"))) {
+            return BlobStatus.Resolved;
+        } else if (statusBytes == keccak256(bytes("Pending"))) {
+            return BlobStatus.Pending;
+        } else {
+            return BlobStatus.Failed;
+        }
+    }
+
+    function decodeBlob(bytes memory data) internal view returns (Blob memory blob) {
+        bytes[] memory decoded = data.decodeCborArrayToBytes();
+        if (decoded.length == 0) return blob;
+        blob.size = decoded[0].decodeCborBytesToUint64();
+        blob.metadataHash = string(decoded[1].decodeBlobHash());
+        blob.subscribers = decoded[2];
+        blob.status = decodeBlobStatus(decoded[3]);
     }
 
     /// @dev Helper function to encode approve credit params.
@@ -266,9 +290,24 @@ library LibBlob {
         return accountToBalance(account);
     }
 
-    function getBlob(string memory blobHash) external view returns (bytes memory) {
+    function getBlob(string memory blobHash) external view returns (Blob memory blob) {
         bytes memory params = blobHash.encodeCborBlobHashOrNodeId();
-        return LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_BLOB, params);
+        bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_BLOB, params);
+        return decodeBlob(data);
+    }
+
+    function getBlobStatus(address subscriber, string memory blobHash, string memory subscriptionId)
+        external
+        view
+        returns (BlobStatus status)
+    {
+        bytes[] memory encoded = new bytes[](3);
+        encoded[0] = subscriber.encodeCborAddress();
+        encoded[1] = blobHash.encodeCborBlobHashOrNodeId();
+        encoded[2] = encodeSubscriptionId(subscriptionId);
+        bytes memory params = encoded.encodeCborArray();
+        bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_BLOB_STATUS, params);
+        return decodeBlobStatus(data);
     }
 
     function getPendingBlobs(uint32 size) external view returns (bytes memory) {
@@ -284,19 +323,6 @@ library LibBlob {
     function getPendingBytesCount() external view returns (uint64) {
         bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_PENDING_BYTES_COUNT);
         return data.decodeCborBytesToUint64();
-    }
-
-    function getBlobStatus(address subscriber, string memory blobHash, string memory subscriptionId)
-        external
-        view
-        returns (bytes memory)
-    {
-        bytes[] memory encoded = new bytes[](3);
-        encoded[0] = subscriber.encodeCborAddress();
-        encoded[1] = blobHash.encodeCborBlobHashOrNodeId();
-        encoded[2] = encodeSubscriptionId(subscriptionId);
-        bytes memory params = encoded.encodeCborArray();
-        return LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_BLOB_STATUS, params);
     }
 
     /// @dev Buy credits for a specified account with a `msg.value` for number of native currency to spend on credits.
@@ -348,6 +374,7 @@ library LibBlob {
         encoded[1] = blobHash.encodeCborBlobHashOrNodeId();
         encoded[2] = encodeSubscriptionId(subscriptionId);
         bytes memory params = encoded.encodeCborArray();
+        // Note: response bytes are always empty
         LibWasm.writeToWasmActor(ACTOR_ID, METHOD_DELETE_BLOB, params);
     }
 }
