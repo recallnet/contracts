@@ -946,32 +946,37 @@ Or on testnet, you'd replace the URL with public bucket API endpoint
 
 ###### Delete a blob
 
-```sh
-cast send --rpc-url $EVM_RPC_URL $BLOBS "deleteBlob(address,string,string)" 0x0000000000000000000000000000000000000000 "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" "hello/world" --private-key $PRIVATE_KEY
-```
-
-This will return the following response:
+You can a delete a blob you've created with the following, passing the sponsor's address (zero
+address if null), the blob's blake3 hash, and the subscription ID (either the default empty string
+`""` or the string you passed during `addBlob`).
 
 ```sh
-
+cast send --rpc-url $EVM_RPC_URL $BLOBS "deleteBlob(address,string,string)" 0x0000000000000000000000000000000000000000 "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" "" --private-key $PRIVATE_KEY
 ```
+
+This will emit a `DeleteBlob` event and delete the blob from the network.
 
 ##### Get a blob
 
 ```sh
-cast abi-decode "getObject(string)(bytes)" $(cast call --rpc-url $EVM_RPC_URL $BLOBS "getObject(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
+cast abi-decode "getBlob(string)((uint64,string,bytes,uint8))" $(cast call --rpc-url $EVM_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
 ```
 
 This will return the following response:
 
 ```sh
-
+(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", 0xa156040a..., 1)
 ```
 
 Which maps to the `Blob` struct:
 
 ```solidity
-
+struct Blob {
+    uint64 size; // 6
+    string metadataHash; // utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq
+    bytes subscribers; // 0xa156040a... (raw bytes of the subscribers map)
+    BlobStatus status; // 1 (Resolved)
+}
 ```
 
 ##### Get blob status
@@ -983,7 +988,24 @@ Which maps to the `Blob` struct:
   `""`, or it can take the string that matches the blob's `subscriptionId` upon creation.
 
 ```sh
-cast call --rpc-url $EVM_RPC_URL $BLOBS "getBlobStatus(address,string,string)" $EVM_ADDRESS "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" ""
+cast abi-decode "getBlobStatus(address,string,string)(uint8)" $(cast call --rpc-url $EVM_RPC_URL $BLOBS "getBlobStatus(address,string,string)" $EVM_ADDRESS "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" "")
+```
+
+This will return the following response (either a `0` for `Pending`, `1` for `Resolved`, or `2` for
+`Failed`):
+
+```sh
+1
+```
+
+Which maps to the `BlobStatus` enum:
+
+```solidity
+enum BlobStatus {
+    Pending, // 0
+    Resolved, // 1
+    Failed // 2
+}
 ```
 
 ##### Get pending blobs

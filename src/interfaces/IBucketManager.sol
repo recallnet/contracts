@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {AddObjectParams, KeyValue, Kind, Machine, Query, Value} from "../types/BucketTypes.sol";
+import {AddObjectParams, KeyValue, Machine, Query, Value} from "../types/BucketTypes.sol";
 
 /// @dev Hoku Bucket actor EVM interface for managing objects, and querying object or storage stats.
 /// See Rust implementation for details:
