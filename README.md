@@ -959,13 +959,13 @@ This will emit a `DeleteBlob` event and delete the blob from the network.
 ##### Get a blob
 
 ```sh
-cast abi-decode "getBlob(string)((uint64,string,bytes,uint8))" $(cast call --rpc-url $EVM_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
+cast abi-decode "getBlob(string)((uint64,string,(address,(string,bytes)[])[],uint8))" $(cast call --rpc-url $EVM_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
 ```
 
 This will return the following response:
 
 ```sh
-(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", 0xa156040a..., 1)
+(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, [("foo", 0x861904...)])], 1)
 ```
 
 Which maps to the `Blob` struct:
@@ -974,8 +974,18 @@ Which maps to the `Blob` struct:
 struct Blob {
     uint64 size; // 6
     string metadataHash; // utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq
-    bytes subscribers; // 0xa156040a... (raw bytes of the subscribers map)
+    Subscribers subscribers; // See `Subscribers` struct below
     BlobStatus status; // 1 (Resolved)
+}
+
+struct Subscribers {
+    address subscriber; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
+    SubscriptionGroup[] subscriptionGroup; // See `SubscriptionGroup` struct below
+}
+
+struct SubscriptionGroup {
+    string subscriptionId; // "foo"
+    bytes subscription; // 0x861904...
 }
 ```
 

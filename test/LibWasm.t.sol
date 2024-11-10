@@ -213,7 +213,7 @@ contract LibWasmTest is Test {
 
     function testDecodeCborString() public view {
         bytes memory data = hex"6b4f626a65637453746f726555";
-        bytes memory result = LibWasm.decodeStringToBytes(data);
+        bytes memory result = LibWasm.decodeCborStringToBytes(data);
         assertEq(string(result), "ObjectStore");
     }
 

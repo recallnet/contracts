@@ -12,7 +12,9 @@ import {
     CreditApproval,
     CreditStats,
     StorageStats,
-    SubnetStats
+    SubnetStats,
+    Subscriber,
+    SubscriptionGroup
 } from "../types/BlobTypes.sol";
 import {KeyValue} from "../types/CommonTypes.sol";
 import {InvalidValue, LibWasm} from "./LibWasm.sol";
@@ -116,12 +118,48 @@ library LibBlob {
         }
     }
 
+    /// @dev Decode a subscription ID from CBOR.
+    /// @param data The encoded subscription ID.
+    /// @return decoded The decoded subscription ID.
+    function decodeSubscriptionId(bytes memory data) internal view returns (string memory) {
+        // If the leading indicator is `a1`, it's a mapping with a single key-value pair; else, default
+        if (data[0] == hex"a1") {
+            // Decode the mapping with Key and subscription ID bytes (a single key-value pair)
+            bytes[2][] memory decoded = data.decodeCborMappingToBytes();
+            // Second value is the subscription ID bytes (ignore the first value `Key` key)
+            bytes memory subscriptionId = decoded[0][1].decodeCborBytesArrayToBytes();
+            return string(subscriptionId);
+        } else {
+            return "Default";
+        }
+    }
+
+    /// @dev Decode subscribers from CBOR.
+    /// @param data The encoded CBOR mapping of subscribers.
+    /// @return subscribers The decoded subscribers.
+    function decodeSubscribers(bytes memory data) internal view returns (Subscriber[] memory subscribers) {
+        bytes[2][] memory decoded = data.decodeCborMappingToBytes();
+        subscribers = new Subscriber[](decoded.length);
+        for (uint256 i = 0; i < decoded.length; i++) {
+            subscribers[i].subscriber = decoded[i][0].decodeCborAddress();
+            bytes[2][] memory subscriptionGroupBytes = decoded[i][1].decodeCborMappingToBytes();
+            subscribers[i].subscriptionGroup = new SubscriptionGroup[](subscriptionGroupBytes.length);
+            for (uint256 j = 0; j < subscriptionGroupBytes.length; j++) {
+                subscribers[i].subscriptionGroup[j].subscriptionId = decodeSubscriptionId(subscriptionGroupBytes[j][0]);
+                subscribers[i].subscriptionGroup[j].subscription = subscriptionGroupBytes[j][1];
+            }
+        }
+    }
+
+    /// @dev Decode a blob from CBOR.
+    /// @param data The encoded CBOR array of a blob.
+    /// @return blob The decoded blob.
     function decodeBlob(bytes memory data) internal view returns (Blob memory blob) {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return blob;
         blob.size = decoded[0].decodeCborBytesToUint64();
         blob.metadataHash = string(decoded[1].decodeBlobHash());
-        blob.subscribers = decoded[2];
+        blob.subscribers = decodeSubscribers(decoded[2]);
         blob.status = decodeBlobStatus(decoded[3]);
     }
 
@@ -368,6 +406,10 @@ library LibBlob {
         return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_ADD_BLOB, _params);
     }
 
+    /// @dev Delete a blob from the subnet.
+    /// @param subscriber The address of the subscriber.
+    /// @param blobHash The hash of the blob.
+    /// @param subscriptionId The subscription ID.
     function deleteBlob(address subscriber, string memory blobHash, string memory subscriptionId) external {
         bytes[] memory encoded = new bytes[](3);
         encoded[0] = subscriber == address(0) ? LibWasm.encodeCborNull() : subscriber.encodeCborAddress();
