@@ -56,12 +56,12 @@ struct CreditApproval {
 /// @dev The stats of the blob actor.
 /// This is the return type for the blobs actor `get_stats` method:
 /// - The `balance` is a uint256, encoded as a CBOR byte string (e.g., 0x00010f0cf064dd59200000).
-/// - The `capacityFree`, `capacityUsed`, `creditSold`, `creditCommitted`, and `creditDebited` are
+/// - The `capacityTotal`, `capacityUsed`, `creditSold`, `creditCommitted`, and `creditDebited` are
 /// WASM BigInt types: a CBOR array with a sign (assume non-negative) and array of numbers (e.g., 0x8201820001).
 /// - The `creditDebitRate`, `numAccounts`, `numBlobs`, and `numResolving` are uint64, encoded as a
 /// CBOR byte string (e.g., 0x317).
 /// @param balance (uint256): The current token balance earned by the subnet.
-/// @param capacityFree (uint256): The total free storage capacity of the subnet.
+/// @param capacityTotal (uint256): The total free storage capacity of the subnet.
 /// @param capacityUsed (uint256): The total used storage capacity of the subnet.
 /// @param creditSold (uint256): The total number of credits sold in the subnet.
 /// @param creditCommitted (uint256): The total number of credits committed to active storage in the subnet.
@@ -71,7 +71,7 @@ struct CreditApproval {
 /// @param numBlobs (uint64): Total number of actively stored blobs.
 struct SubnetStats {
     uint256 balance;
-    uint256 capacityFree;
+    uint256 capacityTotal;
     uint256 capacityUsed;
     uint256 creditSold;
     uint256 creditCommitted;
@@ -99,21 +99,15 @@ struct CreditStats {
 }
 
 /// @dev Subnet-wide storage statistics.
-/// @param capacityFree (uint256): The total free storage capacity of the subnet.
+/// @param capacityTotal (uint256): The total free storage capacity of the subnet.
 /// @param capacityUsed (uint256): The total used storage capacity of the subnet.
 /// @param numBlobs (uint64): Total number of actively stored blobs.
 /// @param numResolving (uint64): Total number of currently resolving blobs.
 struct StorageStats {
-    uint256 capacityFree;
+    uint256 capacityTotal;
     uint256 capacityUsed;
     uint64 numBlobs;
     uint64 numResolving;
-}
-
-/// @dev Storage usage stats for an account.
-/// @param capacityUsed (uint256): Total size of all blobs managed by the account.
-struct Usage {
-    uint256 capacityUsed;
 }
 
 /// @dev Parameters for adding a raw blob.
@@ -135,22 +129,25 @@ struct AddBlobParams {
     uint64 ttl;
 }
 
+/// @dev Blob information and status.
+/// @param size (uint64): The size of the blob content in bytes.
+/// @param metadataHash (string): Blob metadata hash that contains information for block recovery.
+/// @param subscribers (bytes): Active subscribers (accounts) that are paying for the blob, encoded as HashMap<Address,
+/// SubscriptionGroup>.
+/// @param status (bytes): Current status of the blob.
 struct Blob {
-    /// The size of the content.
     uint64 size;
-    /// Blob metadata that contains information for block recovery.
     string metadataHash;
-    /// Active subscribers (accounts) that are paying for the blob.
-    bytes subscribers; // HashMap<Address, SubscriptionGroup>,
-    /// Blob status.
+    bytes subscribers;
     bytes status;
 }
 
+/// @dev Status of a blob in the system.
+/// @param Pending Blob is pending resolve.
+/// @param Resolved Blob was successfully resolved.
+/// @param Failed Blob resolution failed.
 enum BlobStatus {
-    /// Blob is pending resolve.
     Pending,
-    /// Blob was successfully resolved.
     Resolved,
-    /// Blob resolution failed.
     Failed
 }

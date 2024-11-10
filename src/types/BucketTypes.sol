@@ -80,7 +80,7 @@ struct Machine {
 /// @param ttl (uint64): The object time-to-live epochs.
 /// @param metadata (KeyValue[]): The object metadata.
 /// @param overwrite (bool): Whether to overwrite a key if it already exists.
-struct AddParams {
+struct AddObjectParams {
     string source;
     string key;
     string blobHash;

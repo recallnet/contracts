@@ -311,12 +311,9 @@ Note that overloads are available for some methods, primarily, where the underly
 accepts "optional" arguments. All of the method parameters and return types can be found in
 `util/CreditTypes.sol`.
 
-- `getSubnetStats()`: Get subnet stats.
 - `getCreditStats()`: Get credit stats.
-- `getStorageStats()`: Get storage stats.
 - `getAccount(address)`: Get credit account info for an address.
 - `getCreditBalance(address)`: Get credit balance for an address.
-- `getStorageUsage(address)`: Get storage usage for an address.
 - `buyCredit()`: Buy credit for the `msg.sender`.
 - `buyCredit(address)`: Buy credit for the given address.
 - `approveCredit(address)`: Approve credit for an address (`receiver`), assuming `msg.sender` is the
@@ -363,37 +360,6 @@ address we'll be approving and revoking credit for. For example:
 export RECEIVER_ADDR=0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
 ```
 
-##### Get subnet stats
-
-We can fetch the overall subnet stats with the following command:
-
-```sh
-cast abi-decode "getSubnetStats()((uint256,uint256,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getSubnetStats()")
-```
-
-This will return the following values:
-
-```
-(50000000000000000000000 [5e22], 4294967296 [4.294e9], 0, 50000000000000000000000 [5e22], 0, 0, 1, 10, 0, 0)
-```
-
-Which maps to the `SubnetStats` struct:
-
-```solidity
-struct SubnetStats {
-    uint256 balance; // 50000000000000000000000
-    uint256 capacityFree; // 4294967296
-    uint256 capacityUsed; // 0
-    uint256 creditSold; // 50000000000000000000000
-    uint256 creditCommitted; // 0
-    uint256 creditDebited; // 0
-    uint64 creditDebitRate; // 1
-    uint64 numAccounts; // 10
-    uint64 numBlobs; // 0
-    uint64 numResolving; // 0
-}
-```
-
 ##### Get credit stats
 
 We can fetch the overall credit stats for the subnet with the following command:
@@ -418,31 +384,6 @@ struct CreditStats {
     uint256 creditDebited; // 0
     uint64 creditDebitRate; // 1
     uint64 numAccounts; // 10
-}
-```
-
-##### Get storage stats
-
-We can fetch the overall storage stats for the subnet with the following command:
-
-```sh
-cast abi-decode "getStorageStats()((uint256,uint256,uint64,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getStorageStats()")
-```
-
-This will return the following values:
-
-```
-(4294967296 [4.294e9], 0, 0, 0)
-```
-
-Which maps to the `StorageStats` struct:
-
-```solidity
-StorageStats {
-    uint256 capacityFree; // 4294967296
-    uint256 capacityUsed; // 0
-    uint64 numBlobs; // 0
-    uint64 numResolving; // 0
 }
 ```
 
@@ -519,28 +460,6 @@ struct Balance {
     uint256 creditFree; // 5000000000000000000000
     uint256 creditCommitted; // 0
     uint64 lastDebitEpoch; // 18061
-}
-```
-
-##### Get storage usage for an account
-
-Fetch the storage usage for the address at `EVM_ADDRESS`:
-
-```sh
-cast abi-decode "getStorageUsage(address)((uint256))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getStorageUsage(address)" $EVM_ADDRESS)
-```
-
-This will return the following values:
-
-```
-(0)
-```
-
-Which maps to the `Usage` struct:
-
-```solidity
-struct Usage {
-    uint256 capacityUsed; // 0
 }
 ```
 
@@ -643,28 +562,30 @@ BUCKETS=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/BucketManager.s.sol \
 
 The following methods are available on the credit contract, shown with their function signatures.
 
-- `create()`: Create a bucket for the sender.
-- `create(address)`: Create a bucket for the specified address.
-- `create(address,(string,string)[])`: Create a bucket for the specified address with metadata.
-- `list()`: List all buckets for the sender.
-- `list(address)`: List all buckets for the specified address.
-- `add(string,string,string,string,uint64)`: Add an object to a bucket and associated object upload
-  parameters. The first value is the bucket address, the subsequent values are all of the "required"
-  values in `AddParams` (`source` node ID, `key`, `blobHash`, and `size`).
-- `add(string,(string,string,string,string,uint64,uint64,(string,string)[],bool))`: Add an object to
-  a bucket (first value) and associated object upload parameters (second value) as the `AddParams`
-  struct, described in more detail below.
-- `remove(string,string)`: Remove an object from a bucket.
-- `get(string,string)`: Get an object from a bucket.
-- `query(string)`: Query the bucket (`t2...` string address) with no prefix (defaults to `/`
+- `createBucket()`: Create a bucket for the sender.
+- `createBucket(address)`: Create a bucket for the specified address.
+- `createBucket(address,(string,string)[])`: Create a bucket for the specified address with
+  metadata.
+- `listBuckets()`: List all buckets for the sender.
+- `listBuckets(address)`: List all buckets for the specified address.
+- `addObject(string,string,string,string,uint64)`: Add an object to a bucket and associated object
+  upload parameters. The first value is the bucket address, the subsequent values are all of the
+  "required" values in `AddObjectParams` (`source` node ID, `key`, `blobHash`, and `size`).
+- `addObject(string,(string,string,string,string,uint64,uint64,(string,string)[],bool))`: Add an
+  object to a bucket (first value) and associated object upload parameters (second value) as the
+  `AddObjectParams` struct, described in more detail below.
+- `deleteObject((string,string)`: Remove an object from a bucket.
+- `getObject(string,string)`: Get an object from a bucket.
+- `queryObjects(string)`: Query the bucket (`t2...` string address) with no prefix (defaults to `/`
   delimiter and the default offset and limit in the underlying WASM layer).
-- `query(string,string)`: Query the bucket with a prefix (e.g., `<prefix>/` string value), but no
-  delimiter, offset, or limit.
-- `query(string,string,string)`: Query the bucket with a custom delimiter (e.g., something besides
-  the default `/` delimeter value), but default offset and limit.
-- `query(string,string,string,uint64)`: Query the bucket with a prefix and delimiter, but no limit.
-- `query(string,string,string,uint64,uint64)`: Query the bucket with a prefix, delimiter, offset,
-  and limit.
+- `queryObjects(string,string)`: Query the bucket with a prefix (e.g., `<prefix>/` string value),
+  but no delimiter, offset, or limit.
+- `queryObjects(string,string,string)`: Query the bucket with a custom delimiter (e.g., something
+  besides the default `/` delimeter value), but default offset and limit.
+- `queryObjects(string,string,string,uint64)`: Query the bucket with a prefix and delimiter, but no
+  limit.
+- `queryObjects(string,string,string,uint64,uint64)`: Query the bucket with a prefix, delimiter,
+  offset, and limit.
 
 #### Examples
 
@@ -692,30 +613,30 @@ Creating a bucket will cost native HOKU tokens, and writing to it will cost cred
 To create a bucket, you can use the following command:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "create(address)" $EVM_ADDRESS --private-key $PRIVATE_KEY
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "createBucket(address)" $EVM_ADDRESS --private-key $PRIVATE_KEY
 ```
 
 This will execute an onchain transaction to create a bucket for the provided address. Alternatively,
 you can create a bucket for the sender with the following command:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "create()" --private-key $PRIVATE_KEY
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "createBucket()" --private-key $PRIVATE_KEY
 ```
 
 To create a bucket with metadata, you can use the following command, where each metadata value is a
 `KeyValue` (a pair of strings) within an array—something like `[("alias","foo")]`:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "create(address,(string,string)[])" $EVM_ADDRESS '[("alias","foo")]' --private-key $PRIVATE_KEY
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "createBucket(address,(string,string)[])" $EVM_ADDRESS '[("alias","foo")]' --private-key $PRIVATE_KEY
 ```
 
 ##### List buckets
 
 You can list buckets for a specific address with the following command. Note you can use the
-overloaded `list()` to list buckets for the sender.
+overloaded `listBuckets()` to list buckets for the sender.
 
 ```sh
-cast abi-decode "list(address)((uint8,string,(string,string)[])[])" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "list(address)" $EVM_ADDRESS)
+cast abi-decode "listBuckets(address)((uint8,string,(string,string)[])[])" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "listBuckets(address)" $EVM_ADDRESS)
 ```
 
 This will return the following output:
@@ -775,10 +696,10 @@ We also include custom parameters for the bucket key, metadata, TTL, and overwri
 - `metadata`: The metadata to assign to the object in the bucket (`[("foo","bar")]`).
 - `overwrite`: The overwrite flag to assign to the object in the bucket (`false`).
 
-This all gets passed as a single `AddParams` struct to the `add` method:
+This all gets passed as a single `AddObjectParams` struct to the `add` method:
 
 ```solidity
-struct AddParams {
+struct AddObjectParams {
     string source; // cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq
     string key; // hello/world
     string blobHash; // rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq
@@ -793,14 +714,14 @@ struct AddParams {
 We then pass this as a single parameter to the `add` method:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "add(string,(string,string,string,string,uint64,uint64,(string,string)[],bool))" $BUCKET_ADDR '("cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq","hello/world","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","",6,0,[("foo","bar")],false)' --private-key $PRIVATE_KEY
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "addObject(string,(string,string,string,string,uint64,uint64,(string,string)[],bool))" $BUCKET_ADDR '("cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq","hello/world","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","",6,0,[("foo","bar")],false)' --private-key $PRIVATE_KEY
 ```
 
 Alternatively, to use the overloaded `add` method that has default values for the `ttl`, `metadata`,
 and `overwrite`, you can do the following:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "add(string,string,string,string,string,uint64)" $BUCKET_ADDR "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq" "hello/world" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" "" 6 --private-key $PRIVATE_KEY
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "addObject(string,string,string,string,string,uint64)" $BUCKET_ADDR "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq" "hello/world" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" "" 6 --private-key $PRIVATE_KEY
 ```
 
 If you're wondering where to get the `source` storage bucket's node ID (the example's
@@ -820,7 +741,7 @@ Similar to [getting an object](#get-an-object), you can delete an object with th
 specifying the bucket and key for the mutating transaction:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "remove(string,string)" $BUCKET_ADDR "hello/world" --private-key $PRIVATE_KEY
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "deleteObject((string,string)" $BUCKET_ADDR "hello/world" --private-key $PRIVATE_KEY
 ```
 
 ##### Get an object
@@ -830,7 +751,7 @@ returned. Thus, the response simply includes a single value. The `BUCKET_ADDR` i
 above.
 
 ```sh
-cast abi-decode "get(string,string)((string,string,uint64,uint64,(string,string)[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "get(string,string)" $BUCKET_ADDR "hello/world")
+cast abi-decode "getObject(string,string)((string,string,uint64,uint64,(string,string)[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "getObject(string,string)" $BUCKET_ADDR "hello/world")
 ```
 
 This will return the following response:
@@ -861,7 +782,7 @@ struct KeyValue {
 We'll continue using the same `BUCKET_ADDR` from the previous examples.
 
 ```sh
-cast abi-decode "query(string)(((string,(string,string,uint64,uint64,(string,string)[]))[],string[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "query(string)" $BUCKET_ADDR)
+cast abi-decode "queryObjects(string)(((string,(string,string,uint64,uint64,(string,string)[]))[],string[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "queryObjects(string)" $BUCKET_ADDR)
 ```
 
 This will return the following `Query` output:
@@ -889,7 +810,7 @@ export PREFIX="hello/"
 Now, we can query for these objects with the following command:
 
 ```sh
-cast abi-decode "query(string,string)(((string,(string,string,uint64,uint64,(string,string)[]))[],string[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "query(string,string)" $BUCKET_ADDR $PREFIX)
+cast abi-decode "queryObjects(string,string)(((string,(string,string,uint64,uint64,(string,string)[]))[],string[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "queryObjects(string,string)" $BUCKET_ADDR $PREFIX)
 ```
 
 This will return the following `Query` output:
@@ -961,6 +882,9 @@ accepts "optional" arguments. All of the method parameters and return types can 
 - `getPendingBlobs()`: Get the values of pending blobs across the network.
 - `getPendingBlobsCount(uint32)`: Get the number of pending blobs across the network, up to a limit.
 - `getPendingBytesCount()`: Get the total number of pending bytes across the network.
+- `getStorageStats()`: Get storage stats.
+- `getStorageUsage(address)`: Get storage usage for an address.
+- `getSubnetStats()`: Get subnet stats.
 
 ##### Add a blob
 
@@ -1033,7 +957,7 @@ This will return the following response:
 ##### Get a blob
 
 ```sh
-cast abi-decode "get(string)(bytes)" $(cast call --rpc-url $EVM_RPC_URL $BLOBS "get(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
+cast abi-decode "getObject(string)(bytes)" $(cast call --rpc-url $EVM_RPC_URL $BLOBS "getObject(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
 ```
 
 This will return the following response:
@@ -1094,4 +1018,74 @@ This returns the total number of bytes that are pending network resolution:
 
 ```sh
 987654321
+```
+
+##### Get subnet stats
+
+We can fetch the overall subnet stats with the following command:
+
+```sh
+cast abi-decode "getSubnetStats()((uint256,uint256,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint64))" $(cast call --rpc-url $EVM_RPC_URL $BLOBS "getSubnetStats()")
+```
+
+This will return the following values:
+
+```
+(50000000000000000000000 [5e22], 4294967296 [4.294e9], 0, 50000000000000000000000 [5e22], 0, 0, 1, 10, 0, 0)
+```
+
+Which maps to the `SubnetStats` struct:
+
+```solidity
+struct SubnetStats {
+    uint256 balance; // 50000000000000000000000
+    uint256 capacityTotal; // 4294967296
+    uint256 capacityUsed; // 0
+    uint256 creditSold; // 50000000000000000000000
+    uint256 creditCommitted; // 0
+    uint256 creditDebited; // 0
+    uint64 creditDebitRate; // 1
+    uint64 numAccounts; // 10
+    uint64 numBlobs; // 0
+    uint64 numResolving; // 0
+}
+```
+
+##### Get storage stats
+
+We can fetch the overall storage stats for the subnet with the following command:
+
+```sh
+cast abi-decode "getStorageStats()((uint256,uint256,uint64,uint64))" $(cast call --rpc-url $EVM_RPC_URL $BLOBS "getStorageStats()")
+```
+
+This will return the following values:
+
+```
+(4294967296 [4.294e9], 0, 0, 0)
+```
+
+Which maps to the `StorageStats` struct:
+
+```solidity
+StorageStats {
+    uint256 capacityTotal; // 4294967296
+    uint256 capacityUsed; // 0
+    uint64 numBlobs; // 0
+    uint64 numResolving; // 0
+}
+```
+
+##### Get storage usage for an account
+
+Fetch the storage usage for the address at `EVM_ADDRESS`:
+
+```sh
+cast abi-decode "getStorageUsage(address)(uint256)" $(cast call --rpc-url $EVM_RPC_URL $BLOBS "getStorageUsage(address)" $EVM_ADDRESS)
+```
+
+This will return the following values:
+
+```
+123
 ```
