@@ -4,11 +4,11 @@ pragma solidity ^0.8.26;
 import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
-import {Account as CreditAccount, AddBlobParams, Approvals, SubnetStats} from "../src/types/BlobsTypes.sol";
-import {LibBlobs} from "../src/util/LibBlobs.sol";
+import {Account as CreditAccount, AddBlobParams, Approvals, SubnetStats} from "../src/types/BlobTypes.sol";
+import {LibBlob} from "../src/util/LibBlob.sol";
 
-contract LibBlobsTest is Test {
-    using LibBlobs for bytes;
+contract LibBlobTest is Test {
+    using LibBlob for bytes;
 
     function testDecodeSubnetStats() public view {
         bytes memory data =
@@ -64,7 +64,7 @@ contract LibBlobsTest is Test {
         address requiredCaller = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
         uint256 limit = 1000;
         uint64 ttl = 3600;
-        bytes memory params = LibBlobs.encodeApproveCreditParams(from, receiver, requiredCaller, limit, ttl);
+        bytes memory params = LibBlob.encodeApproveCreditParams(from, receiver, requiredCaller, limit, ttl);
         assertEq(
             params,
             hex"8556040a90f79bf6eb2c4f870365e785982e1f101e93b90656040a15d34aaf54267db7d7c367839aaf71a00a2c6a6556040a15d34aaf54267db7d7c367839aaf71a00a2c6a65811903e8190e10"
@@ -75,7 +75,7 @@ contract LibBlobsTest is Test {
         address from = 0x90F79bf6EB2c4f870365E785982E1f101E93b906;
         address receiver = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
         address requiredCaller = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
-        bytes memory params = LibBlobs.encodeRevokeCreditParams(from, receiver, requiredCaller);
+        bytes memory params = LibBlob.encodeRevokeCreditParams(from, receiver, requiredCaller);
         assertEq(
             params,
             hex"8356040a90f79bf6eb2c4f870365e785982e1f101e93b90656040a15d34aaf54267db7d7c367839aaf71a00a2c6a6556040a15d34aaf54267db7d7c367839aaf71a00a2c6a65"
@@ -93,7 +93,7 @@ contract LibBlobsTest is Test {
             size: 6,
             ttl: 0 // Null value
         });
-        bytes memory encoded = LibBlobs.encodeAddBlobParams(params);
+        bytes memory encoded = LibBlob.encodeAddBlobParams(params);
         assertEq(
             encoded,
             hex"87f69820184518b61888181a18c01848184b1875188418ce18aa18e01838181c1833187218c118b3187118a418a818ea18e9184215189b18aa189a18e618d40e18e49820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a1899982000000000000000000000000000000000000000000000000000000000000000006744656661756c7406f6"

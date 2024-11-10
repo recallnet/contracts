@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {AddBlobParams, StorageStats, SubnetStats} from "../types/BlobsTypes.sol";
+import {AddBlobParams, StorageStats, SubnetStats} from "../types/BlobTypes.sol";
 
 /// @dev Hoku Blobs actor EVM interface for managing and querying information about blogs/storage.
 /// See Rust implementation for details:
 /// https://github.com/hokunet/ipc/blob/develop/fendermint/actors/blobs/src/actor.rs
-interface IBlobs {
+interface IBlobManager {
     /// @dev Emitted when a blob is added.
     event AddBlob(address indexed caller, address indexed sponsor, string blobHash, string subscriptionId);
 

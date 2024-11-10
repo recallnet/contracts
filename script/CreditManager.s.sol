@@ -5,14 +5,14 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {Script} from "forge-std/Script.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
-import {Credit} from "../src/Credit.sol";
+import {CreditManager} from "../src/CreditManager.sol";
 
 contract DeployScript is Script {
     string constant PRIVATE_KEY = "PRIVATE_KEY";
 
     function setUp() public {}
 
-    function run(string memory network) public returns (Credit) {
+    function run(string memory network) public returns (CreditManager) {
         if (vm.envExists(PRIVATE_KEY)) {
             uint256 privateKey = vm.envUint(PRIVATE_KEY);
             vm.startBroadcast(privateKey);
@@ -22,7 +22,7 @@ contract DeployScript is Script {
             revert("PRIVATE_KEY not set in non-local environment");
         }
 
-        Credit credit = new Credit();
+        CreditManager credit = new CreditManager();
 
         vm.stopBroadcast();
 

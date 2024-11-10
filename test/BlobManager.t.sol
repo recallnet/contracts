@@ -5,16 +5,16 @@ import {StdUtils} from "forge-std/StdUtils.sol";
 import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
-import {DeployScript as BlobsDeployer} from "../script/Blobs.s.sol";
-import {Blobs} from "../src/Blobs.sol";
+import {DeployScript as BlobDeployer} from "../script/BlobManager.s.sol";
+import {BlobManager} from "../src/BlobManager.sol";
 import {Environment} from "../src/types/CommonTypes.sol";
 
 // TODO: add integration tests once it's possible in CI
-contract BlobsTest is Test, Blobs {
-    Blobs internal blobs;
+contract BlobManagerTest is Test, BlobManager {
+    BlobManager internal blobs;
 
     function setUp() public virtual {
-        BlobsDeployer blobsDeployer = new BlobsDeployer();
+        BlobDeployer blobsDeployer = new BlobDeployer();
         blobs = blobsDeployer.run(Environment.Foundry);
     }
 }
