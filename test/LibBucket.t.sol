@@ -5,7 +5,7 @@ import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
 import {Kind, Machine, Query, Value} from "../src/types/BucketTypes.sol";
-import {AddParams, KeyValue, LibBucket} from "../src/util/LibBucket.sol";
+import {AddObjectParams, KeyValue, LibBucket} from "../src/util/LibBucket.sol";
 
 contract LibBucketTest is Test {
     function testDecodeQuery() public view {
@@ -112,10 +112,10 @@ contract LibBucketTest is Test {
         assertEq(value.metadata[1].value, "application/octet-stream");
     }
 
-    function testEncodeAddParams() public pure {
+    function testEncodeAddObjectParams() public pure {
         KeyValue[] memory metadata = new KeyValue[](1);
         metadata[0] = KeyValue({key: "content-type", value: "application/octet-stream"});
-        AddParams memory params = AddParams({
+        AddObjectParams memory params = AddObjectParams({
             source: "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq",
             key: "hello/world",
             blobHash: "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq",
@@ -126,7 +126,7 @@ contract LibBucketTest is Test {
             metadata: metadata,
             overwrite: false
         });
-        bytes memory encoded = LibBucket.encodeAddParams(params);
+        bytes memory encoded = LibBucket.encodeAddObjectParams(params);
         assertEq(
             encoded,
             hex"889820160618a818c918670a18791827184118ef18c818bd18ea1879187918b518cc189b18181827181a18ee18cc100718c418f308189f18dd188418d34b68656c6c6f2f776f726c649820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a18999820000000000000000000000000000000000000000000000000000000000000000006f6a16c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616df4"

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {KeyValue} from "../types/CommonTypes.sol";
 import {
     Account,
     AddBlobParams,
@@ -12,13 +11,13 @@ import {
     CreditApproval,
     CreditStats,
     StorageStats,
-    SubnetStats,
-    Usage
-} from "../types/CreditTypes.sol";
+    SubnetStats
+} from "../types/BlobsTypes.sol";
+import {KeyValue} from "../types/CommonTypes.sol";
 import {InvalidValue, LibWasm} from "./LibWasm.sol";
 
-/// @title Credit Library
-/// @dev Utility functions for interacting with the Hoku Credit actor.
+/// @title Blobs Library
+/// @dev Utility functions for interacting with the Hoku Blobs actor.
 library LibBlobs {
     using LibWasm for *;
 
@@ -47,7 +46,7 @@ library LibBlobs {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return stats;
         stats.balance = decoded[0].decodeCborBytesToUint256();
-        stats.capacityFree = decoded[1].decodeCborBigIntToUint256();
+        stats.capacityTotal = decoded[1].decodeCborBigIntToUint256();
         stats.capacityUsed = decoded[2].decodeCborBigIntToUint256();
         stats.creditSold = decoded[3].decodeCborBigIntToUint256();
         stats.creditCommitted = decoded[4].decodeCborBigIntToUint256();
@@ -199,17 +198,10 @@ library LibBlobs {
         pure
         returns (StorageStats memory stats)
     {
-        stats.capacityFree = subnetStats.capacityFree;
+        stats.capacityTotal = subnetStats.capacityTotal;
         stats.capacityUsed = subnetStats.capacityUsed;
         stats.numBlobs = subnetStats.numBlobs;
         stats.numResolving = subnetStats.numResolving;
-    }
-
-    /// @dev Helper function to convert a credit account to a usage.
-    /// @param account The account to convert.
-    /// @return usage The usage of the account.
-    function accountToUsage(Account memory account) internal pure returns (Usage memory usage) {
-        usage.capacityUsed = account.capacityUsed;
     }
 
     /// @dev Helper function to convert subnet stats to credit stats.
@@ -247,9 +239,9 @@ library LibBlobs {
     /// @dev Get the storage usage for an account.
     /// @param addr The address of the account.
     /// @return usage The storage usage for the account.
-    function getStorageUsage(address addr) external view returns (Usage memory usage) {
+    function getStorageUsage(address addr) external view returns (uint256) {
         Account memory account = getAccount(addr);
-        return accountToUsage(account);
+        return account.capacityUsed;
     }
 
     /// @dev Get the storage stats for the subnet.

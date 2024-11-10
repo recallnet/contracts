@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {
-    AddParams,
+    AddObjectParams,
     CreateBucketParams,
     KeyValue,
     Kind,
@@ -138,7 +138,7 @@ library LibBucket {
     /// @dev Encode a CBOR encoded add params.
     /// @param params The add params.
     /// @return encoded The CBOR encoded add params.
-    function encodeAddParams(AddParams memory params) internal pure returns (bytes memory) {
+    function encodeAddObjectParams(AddObjectParams memory params) internal pure returns (bytes memory) {
         bytes[] memory encoded = new bytes[](8);
         encoded[0] = params.source.encodeCborBlobHashOrNodeId();
         encoded[1] = params.key.encodeCborBytes();
@@ -211,7 +211,7 @@ library LibBucket {
     /// @dev Create a bucket.
     /// @param owner The owner.
     /// @param metadata The metadata.
-    function create(address owner, KeyValue[] memory metadata) external returns (bytes memory) {
+    function createBucket(address owner, KeyValue[] memory metadata) external returns (bytes memory) {
         CreateBucketParams memory createParams = CreateBucketParams({
             owner: owner,
             kind: Kind.Bucket,
@@ -225,7 +225,7 @@ library LibBucket {
     /// @dev List all buckets owned by an address.
     /// @param owner The owner of the buckets.
     /// @return The list of buckets.
-    function list(address owner) external view returns (Machine[] memory) {
+    function listBuckets(address owner) external view returns (Machine[] memory) {
         bytes memory addrEncoded = owner.encodeCborAddress();
         bytes[] memory encoded = new bytes[](1);
         encoded[0] = addrEncoded;
@@ -236,17 +236,17 @@ library LibBucket {
 
     /// @dev Add an object to the bucket.
     /// @param bucket The bucket.
-    /// @param addParams The add object params. See {AddParams} for more details.
-    function add(string memory bucket, AddParams memory addParams) external {
+    /// @param params The add object params. See {AddObjectParams} for more details.
+    function addObject(string memory bucket, AddObjectParams memory params) external {
         bytes memory bucketAddr = bucket.encodeCborActorAddress();
-        bytes memory params = encodeAddParams(addParams);
-        LibWasm.writeToWasmActorByAddress(bucketAddr, METHOD_ADD_OBJECT, params);
+        bytes memory _params = encodeAddObjectParams(params);
+        LibWasm.writeToWasmActorByAddress(bucketAddr, METHOD_ADD_OBJECT, _params);
     }
 
     /// @dev Delete an object from the bucket.
     /// @param bucket The bucket.
     /// @param key The object key.
-    function remove(string memory bucket, string memory key) external {
+    function deleteObject(string memory bucket, string memory key) external {
         bytes memory bucketAddr = bucket.encodeCborActorAddress();
         bytes memory params = key.encodeCborBytes();
         LibWasm.writeToWasmActorByAddress(bucketAddr, METHOD_DELETE_OBJECT, params);
@@ -256,7 +256,7 @@ library LibBucket {
     /// @param bucket The bucket.
     /// @param key The object key.
     /// @return Object's value. See {Value} for more details.
-    function get(string memory bucket, string memory key) external view returns (Value memory) {
+    function getObject(string memory bucket, string memory key) external view returns (Value memory) {
         bytes memory bucketAddr = bucket.encodeCborActorAddress();
         bytes memory params = key.encodeCborBytes();
         bytes memory data = LibWasm.readFromWasmActorByAddress(bucketAddr, METHOD_GET_OBJECT, params);
@@ -270,11 +270,13 @@ library LibBucket {
     /// @param offset The offset.
     /// @param limit The limit.
     /// @return All objects matching the query.
-    function query(string memory bucket, string memory prefix, string memory delimiter, uint64 offset, uint64 limit)
-        external
-        view
-        returns (Query memory)
-    {
+    function queryObjects(
+        string memory bucket,
+        string memory prefix,
+        string memory delimiter,
+        uint64 offset,
+        uint64 limit
+    ) external view returns (Query memory) {
         bytes memory bucketAddr = bucket.encodeCborActorAddress();
         bytes memory params = encodeQueryParams(prefix, delimiter, offset, limit);
         bytes memory data = LibWasm.readFromWasmActorByAddress(bucketAddr, METHOD_LIST_OBJECTS, params);

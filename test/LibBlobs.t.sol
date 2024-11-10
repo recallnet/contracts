@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
-import {Account as CreditAccount, AddBlobParams, Approvals, SubnetStats} from "../src/types/CreditTypes.sol";
+import {Account as CreditAccount, AddBlobParams, Approvals, SubnetStats} from "../src/types/BlobsTypes.sol";
 import {LibBlobs} from "../src/util/LibBlobs.sol";
 
 contract LibBlobsTest is Test {
@@ -15,7 +15,7 @@ contract LibBlobsTest is Test {
             hex"8a4b000a9796f236ae8f10000082018200018201810c8201831a8f1000001a96f236ae190a97820181194a2e82018119b4ea010a0100";
         SubnetStats memory stats = data.decodeSubnetStats();
         assertEq(stats.balance, 50020000000000000000000);
-        assertEq(stats.capacityFree, 4294967296);
+        assertEq(stats.capacityTotal, 4294967296);
         assertEq(stats.capacityUsed, 12);
         assertEq(stats.creditSold, 50020000000000000000000);
         assertEq(stats.creditCommitted, 18990);
@@ -82,7 +82,7 @@ contract LibBlobsTest is Test {
         );
     }
 
-    function testEncodeAddParams() public pure {
+    function testEncodeAddBlobParams() public pure {
         AddBlobParams memory params = AddBlobParams({
             sponsor: address(0),
             source: "iw3iqgwajbfxlbgovlqdqhbtola3g4nevdvosqqvtovjvzwub3sa",
@@ -96,7 +96,7 @@ contract LibBlobsTest is Test {
         bytes memory encoded = LibBlobs.encodeAddBlobParams(params);
         assertEq(
             encoded,
-            hex"87f69820184518b61888181a18c01848184b1875188418ce18aa18e01838181c1833187218c118b3187118a418a818ea18e9184215189b18aa189a18e618d40e18e49820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a18999820185818300918d918fc011819188d18b0150818dc186b18c918e618f10a185c18ef189118a3185d1864186d187318a518b718a8181918cd18b0184d6744656661756c7406f6"
+            hex"87f69820184518b61888181a18c01848184b1875188418ce18aa18e01838181c1833187218c118b3187118a418a818ea18e9184215189b18aa189a18e618d40e18e49820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a1899982000000000000000000000000000000000000000000000000000000000000000006744656661756c7406f6"
         );
     }
 }
