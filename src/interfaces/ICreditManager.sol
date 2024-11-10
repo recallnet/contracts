@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {Account, Balance, CreditApproval, CreditStats} from "../types/BlobsTypes.sol";
+import {Account, Balance, CreditApproval, CreditStats} from "../types/BlobTypes.sol";
 
 /// @dev Hoku Blobs actor EVM interface for managing and querying information about credit.
 /// See Rust implementation for details:
 /// https://github.com/hokunet/ipc/blob/develop/fendermint/actors/blobs/src/actor.rs
-interface ICredit {
+interface ICreditManager {
     /// @dev Emitted when an account buys credits.
     event BuyCredit(address indexed addr, uint256 amount);
 

@@ -12,13 +12,13 @@ import {
     CreditStats,
     StorageStats,
     SubnetStats
-} from "../types/BlobsTypes.sol";
+} from "../types/BlobTypes.sol";
 import {KeyValue} from "../types/CommonTypes.sol";
 import {InvalidValue, LibWasm} from "./LibWasm.sol";
 
 /// @title Blobs Library
 /// @dev Utility functions for interacting with the Hoku Blobs actor.
-library LibBlobs {
+library LibBlob {
     using LibWasm for *;
 
     // Constants for the actor and method IDs of the Hoku Blobs actor

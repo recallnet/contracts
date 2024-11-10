@@ -36,8 +36,8 @@ for Hoku. It includes the following:
 
 - `Hoku.sol`: An ERC20 token implementation.
 - `Faucet.sol`: The accompanying onchain faucet (rate limiter) contract for dripping testnet funds.
-- `Credit.sol`: Manage subnet credit, including credit purchases, approvals/rejections, and related
-  read-only operations (uses the `LibCredit` and `LibWasm` libraries).
+- `CreditManager.sol`: Manage subnet credit, including credit purchases, approvals/rejections, and
+  related read-only operations (uses the `LibCredit` and `LibWasm` libraries).
 - `BucketManager.sol`: Manage buckets, including creating buckets, listing buckets, querying
   objects, and other object-related operations (uses the `LibBucket` and `LibWasm` libraries).
 - `ValidatorGater.sol`: A contract for managing validator access.
@@ -57,13 +57,15 @@ for Hoku. It includes the following:
 The following contracts are deployed in the testnet environment (Filecoin Calibration or the Hoku
 subnet):
 
-| Contract      | Chain       | Address                                      |
-| ------------- | ----------- | -------------------------------------------- |
-| Hoku (ERC20)  | Calibration | `0x8e3Fd2b47e564E7D636Fa80082f286eD038BE54b` |
-| Faucet        | Subnet      | `0x10bc34a0C11E5e51774833603955CB7Ec3c79AC6` |
-| Credit        | Subnet      | `0x8c2e3e8ba0d6084786d60A6600e832E8df84846C` |
-| BucketManager | Subnet      | `0x4c74c78B3698cA00473f12eF517D21C65461305F` |
-| LibCredit     | Subnet      | `0xfF73c2705B8b77a832c7ec33864B8BEF201002E1` |
+<!-- TODO: update addresses -->
+
+| Contract      | Chain       | Address  |
+| ------------- | ----------- | -------- |
+| Hoku (ERC20)  | Calibration | `0xTODO` |
+| Faucet        | Subnet      | `0xTODO` |
+| CreditManager | Subnet      | `0xTODO` |
+| BlobManager   | Subnet      | `0xTODO` |
+| BucketManager | Subnet      | `0xTODO` |
 
 To get testnet tokens, visit: [https://faucet.hoku.sh](https://faucet.hoku.sh). Also, you can check
 out the `foundry.toml` file to see the RPC URLs for each network (described in more detail below).
@@ -102,8 +104,8 @@ The scripts for deploying contracts are in `script/` directory:
 - `Hoku.s.sol`: Deploy the Hoku ERC20 contract.
 - `Faucet.s.sol`: Deploy the faucet contract.
 - `ValidatorGater.s.sol`: Deploy the validator gater contract.
-- `Credit.s.sol`: Deploy the credit contract.
-- `Blobs.s.sol`: Deploy the blobs contract.
+- `CreditManager.s.sol`: Deploy the credit contract.
+- `BlobManager.s.sol`: Deploy the blobs contract.
 - `BucketManager.s.sol`: Deploy the Bucket Manager contract.
 - `Bridge.s.sol`: Deploy the bridge contract—relevant for the Hoku ERC20 on live chains.
 
@@ -174,7 +176,7 @@ PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript 0 5000000
 Deploy the Credit contract to the localnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/CreditManager.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
 ```
 
 ##### Buckets
@@ -211,7 +213,7 @@ PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript 1 5000000
 Deploy the Credit contract to the testnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url testnet_subnet --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/CreditManager.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url testnet_subnet --broadcast -g 100000 -vv
 ```
 
 ##### Buckets
@@ -296,12 +298,12 @@ working on `localnet`, you'll have to deploy this yourself. Here's a quick one-l
 setting the `CREDIT` environment variable to the deployed address:
 
 ```
-CREDIT=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/Credit.s.sol \
+CREDIT=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/CreditManager.s.sol \
 --tc DeployScript 0 \
 --sig 'run(uint8)' \
 --rpc-url localnet_subnet \
 --broadcast -g 100000 \
-| grep "0: contract Credit" | awk '{print $NF}')
+| grep "0: contract CreditManager" | awk '{print $NF}')
 ```
 
 #### Methods
@@ -853,12 +855,12 @@ working on `localnet`, you'll have to deploy this yourself. Here's a quick one-l
 setting the `BLOBS` environment variable to the deployed address:
 
 ```
-BLOBS=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/Blobs.s.sol \
+BLOBS=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/BlobManager.s.sol \
 --tc DeployScript 0 \
 --sig 'run(uint8)' \
 --rpc-url localnet_subnet \
 --broadcast -g 100000 \
-| grep "0: contract Blobs" | awk '{print $NF}')
+| grep "0: contract BlobManager" | awk '{print $NF}')
 ```
 
 #### Methods

@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {Script} from "forge-std/Script.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
-import {Credit} from "../src/Credit.sol";
+import {BlobManager} from "../src/BlobManager.sol";
 import {Environment} from "../src/types/CommonTypes.sol";
 
 contract DeployScript is Script {
@@ -12,7 +12,7 @@ contract DeployScript is Script {
 
     function setUp() public {}
 
-    function run(Environment env) public returns (Credit) {
+    function run(Environment env) public returns (BlobManager) {
         if (vm.envExists(PRIVATE_KEY)) {
             uint256 privateKey = vm.envUint(PRIVATE_KEY);
             if (env == Environment.Local) {
@@ -30,10 +30,10 @@ contract DeployScript is Script {
             revert("PRIVATE_KEY not set");
         }
 
-        Credit credit = new Credit();
+        BlobManager blobs = new BlobManager();
 
         vm.stopBroadcast();
 
-        return credit;
+        return blobs;
     }
 }
