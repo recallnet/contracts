@@ -4,8 +4,9 @@ pragma solidity ^0.8.26;
 import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
-import {Account as CreditAccount, AddBlobParams, Approvals, SubnetStats} from "../src/types/BlobTypes.sol";
+import {Account as CreditAccount, AddBlobParams, Approvals, SubnetStats, Subscriber} from "../src/types/BlobTypes.sol";
 import {LibBlob} from "../src/util/LibBlob.sol";
+import {LibWasm} from "../src/util/LibWasm.sol";
 
 contract LibBlobTest is Test {
     using LibBlob for bytes;
@@ -100,14 +101,62 @@ contract LibBlobTest is Test {
         );
     }
 
-    // function testDecodeSubscribers() public view {
-    //     // One subscriber
-    //     bytes memory data =
-    //         hex"a156040a90f79bf6eb2c4f870365e785982e1f101e93b906a26744656661756c74861903d1192b8cf59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4a1634b6579982018a118a7182203183b184c184d18b0186e18c918c018a718e01899186f1821184d18a4189b187318f318df18c0187618e61518d002182918d4184118d086190f77191d87f59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4";
-    //     // Two subscribers
-    //     data =
-    //         hex"a256040a90f79bf6eb2c4f870365e785982e1f101e93b906a26744656661756c74861903d1192b8cf59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4a1634b6579982018a118a7182203183b184c184d18b0186e18c918c018a718e01899186f1821184d18a4189b187318f318df18c0187618e61518d002182918d4184118d086190f77192b98f59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f456040a976ea74026e726554db657fa54763abd0c3a0aa9a16744656661756c7486191d9c192bacf59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4";
-    // }
+    function testEncodeDecodeSubscriptionId() public view {
+        // A small key string
+        string memory key = "foo";
+        bytes memory data = LibBlob.encodeSubscriptionId(key);
+        assertEq(data, hex"a1634b6579831866186f186f");
+        string memory decoded = LibBlob.decodeSubscriptionId(data);
+        assertEq(decoded, key);
+
+        // Max 255 bytes
+        key =
+            "foofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoo";
+        data = LibBlob.encodeSubscriptionId(key);
+        assertEq(
+            data,
+            hex"a1634b657998ff1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f"
+        );
+        decoded = LibBlob.decodeSubscriptionId(data);
+        assertEq(decoded, key);
+
+        // Default case
+        key = "";
+        data = LibBlob.encodeSubscriptionId(key);
+        assertEq(data, hex"6744656661756c74");
+        decoded = LibBlob.decodeSubscriptionId(data);
+        assertEq(decoded, "Default");
+    }
+
+    function testDecodeSubscribers() public view {
+        // One subscriber
+        bytes memory data =
+            hex"a156040a90f79bf6eb2c4f870365e785982e1f101e93b906a26744656661756c74861903d1192b8cf59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4a1634b6579982018a118a7182203183b184c184d18b0186e18c918c018a718e01899186f1821184d18a4189b187318f318df18c0187618e61518d002182918d4184118d086190f77191d87f59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4";
+        Subscriber[] memory subscribers = LibBlob.decodeSubscribers(data);
+        assertEq(subscribers[0].subscriber, 0x90F79bf6EB2c4f870365E785982E1f101E93b906);
+        assertEq(subscribers[0].subscriptionGroup[0].subscriptionId, "Default");
+        assertEq(
+            subscribers[0].subscriptionGroup[0].subscription,
+            hex"861903d1192b8cf59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4"
+        );
+
+        // Two subscribers
+        data =
+            hex"a256040a90f79bf6eb2c4f870365e785982e1f101e93b906a26744656661756c74861903d1192b8cf59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4a1634b6579982018a118a7182203183b184c184d18b0186e18c918c018a718e01899186f1821184d18a4189b187318f318df18c0187618e61518d002182918d4184118d086190f77192b98f59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f456040a976ea74026e726554db657fa54763abd0c3a0aa9a16744656661756c7486191d9c192bacf59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4";
+        subscribers = LibBlob.decodeSubscribers(data);
+        assertEq(subscribers[0].subscriber, 0x90F79bf6EB2c4f870365E785982E1f101E93b906);
+        assertEq(subscribers[0].subscriptionGroup[0].subscriptionId, "Default");
+        assertEq(
+            subscribers[0].subscriptionGroup[0].subscription,
+            hex"861903d1192b8cf59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4"
+        );
+        assertEq(subscribers[1].subscriber, 0x976EA74026E726554dB657fA54763abd0C3a0aa9);
+        assertEq(subscribers[1].subscriptionGroup[0].subscriptionId, "Default");
+        assertEq(
+            subscribers[1].subscriptionGroup[0].subscription,
+            hex"86191d9c192bacf59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4"
+        );
+    }
 
     // function testDecodePendingBlobs() public view {
     //     bytes memory data =

@@ -139,7 +139,7 @@ struct Blob {
     uint64 size;
     string metadataHash;
     // TODO: decode the following from Rust type: HashMap<Address, SubscriptionGroup>
-    bytes subscribers;
+    Subscriber[] subscribers;
     BlobStatus status;
 }
 
@@ -153,20 +153,56 @@ enum BlobStatus {
     Failed
 }
 
+/// @dev A subscriber and their subscription groups.
+/// @param subscriber (address): The subscriber address.
+/// @param subscriptionGroup (SubscriptionGroup[]): The subscription groups. See {SubscriptionGroup} for more details.
+struct Subscriber {
+    address subscriber;
+    SubscriptionGroup[] subscriptionGroup;
+}
+
 /// @dev Pending subscription information.
 /// @param subscriber (address): The subscriber address.
 /// @param subscriptionId (string): The subscription ID.
 /// @param publicKey (bytes): The public key.
-struct Subscription {
-    address subscriber;
+struct SubscriptionGroup {
+    // TODO: the blobs solidity logic assumes a string key. But, a blob added when pushing to a bucket will serialize
+    // the key as the blake3(Vec<bucket_address + object_key>). We should probably make this value a bytes type, but all
+    // of the encoding/decoding logic works...except you might see odd decoding with a bucket-backed blob, like a
+    // subscription ID of `��0������䣱p�V�%���?��:\u{8}4T�~��V`.
     string subscriptionId;
-    bytes publicKey;
+    bytes subscription; // TODO: update type
+}
+
+/// @dev A subscription to a blob.
+/// @param added (uint64): The block number when the subscription was added.
+/// @param expiry (uint64): The block number when the subscription will expire.
+/// @param autoRenew (bool): Whether the subscription will automatically renew.
+/// @param source (string): The source Iroh node ID used for ingestion.
+/// @param delegate (Delegate): The delegate origin and caller that may have created the subscription via a credit
+/// approval.
+/// @param failed (bool): Whether the subscription failed due to an issue resolving the target blob.
+struct Subscription {
+    uint64 added;
+    uint64 expiry;
+    bool autoRenew;
+    string source;
+    Delegate delegate;
+    bool failed;
+}
+
+/// @dev The delegate origin and caller that may have created the subscription via a credit approval.
+/// @param origin (address): The delegate origin.
+/// @param caller (address): The caller address.
+struct Delegate {
+    address origin;
+    address caller;
 }
 
 /// @dev Pending blob information. Represents a Rust `(Hash, HashSet<(Address, SubscriptionId, PublicKey)>)`
-/// @param hash (bytes): The blob hash.
-/// @param subscriptions (Subscription[]): The pending subscriptions.
+/// @param blobHash (bytes): The blob hash.
+/// @param sourceInfo (Subscription[]): The pending subscriptions.
 struct PendingBlob {
-    bytes hash;
-    Subscription[] subscriptions;
+    bytes blobHash;
+    bytes sourceInfo;
 }

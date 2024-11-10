@@ -33,18 +33,32 @@ library LibWasm {
         return CBORDecoding.decodeArray(data);
     }
 
-    /// @dev Decode CBOR encoded bytes array to underlying bytes string (e.g., a serialized Rust `Vec<u8>`).
+    /// @dev Decode CBOR encoded bytes array to underlying bytes string (e.g., a serialized Rust `Vec<u8>`). Handles up
+    /// to 255 bytes.
     /// @param data The encoded CBOR bytes (e.g., 0x8618681865...).
     /// @return result The decoded bytes.
     function decodeCborBytesArrayToBytes(bytes memory data) internal pure returns (bytes memory) {
-        if (uint8(data[0]) < 0x80 || uint8(data[0]) > 0x97) revert InvalidValue("Invalid fixed array indicator");
-        // Initial data is a CBOR array (0x8<length>) of single byte values (0x18<byte>18<byte>)
-        uint8 length = uint8(data[0]) - 0x80;
+        if (uint8(data[0]) < 0x80 || uint8(data[0]) > 0x98) {
+            revert InvalidValue("Invalid fixed array indicator or length exceeds max size of 255");
+        }
+        // Initial data is a CBOR array (0x<indicator>(<length>)) of single byte values (0x18<byte>18<byte>)
+        uint8 length = data[0] > 0x97 ? uint8(data[1]) : uint8(data[0]) - 0x80;
         bytes memory result = new bytes(length);
-        // Skip first byte (indicator + length) and the second byte (first instance of 0x18 indicator)
-        // Then, get every other byte since this is the raw value (skipping the 0x18 indicator)
-        for (uint8 i = 0; i < length; i++) {
-            result[i] = data[2 * i + 2];
+
+        // Track if we skip the only first byte (indicator + length), or also the second byte (if > 23 length)
+        // Anything greater than 23 length is a fixed array with 0x98 indicator (i.e., max length of 255)
+        uint16 resultIndex = data[0] > 0x97 ? 2 : 1;
+        // Skip first and, possibly, second byte (indicator + length); then, every other byte is the raw value, with a
+        // 0x18 indicator preceding it (i.e., `0x<array_indicator>18<byte>18<byte>`)
+        for (uint16 i = 0; i < length; i++) {
+            if (data[resultIndex] == 0x18) {
+                result[i] = data[resultIndex + 1];
+                resultIndex += 2;
+            } else {
+                // Assume that if the value has no byte prefix (i.e., 0x18), it's the direct value (0x00..0x17)
+                result[i] = data[resultIndex];
+                resultIndex += 1;
+            }
         }
         return result;
     }
@@ -56,15 +70,15 @@ library LibWasm {
         if (data[0] != 0x98) revert InvalidValue("Invalid fixed array indicator");
         uint8 length = uint8(data[1]);
         bytes memory result = new bytes(length);
-        uint256 index = 2; // Start at the third byte (i.e., the first instance of 0x18 or 0x00 to 0x17)
-        for (uint8 i = 0; i < length; i++) {
-            if (data[index] == 0x18) {
-                result[i] = data[index + 1];
-                index += 2;
+        uint16 resultIndex = 2; // Start at the third byte (i.e., the first instance of 0x18 or 0x00 to 0x17)
+        for (uint16 i = 0; i < length; i++) {
+            if (data[resultIndex] == 0x18) {
+                result[i] = data[resultIndex + 1];
+                resultIndex += 2;
             } else {
-                // Assume that if the value is not a single byte (i.e., 0x18), it's the direct value (0x00..0x17)
-                result[i] = data[index];
-                index += 1;
+                // Assume that if the value has no byte prefix (i.e., 0x18), it's the direct value (0x00..0x17)
+                result[i] = data[resultIndex];
+                resultIndex += 1;
             }
         }
         return result;
@@ -81,7 +95,7 @@ library LibWasm {
     /// @dev Decode a CBOR encoded string to bytes.
     /// @param data The encoded CBOR string.
     /// @return decoded The decoded CBOR string.
-    function decodeStringToBytes(bytes memory data) internal view returns (bytes memory) {
+    function decodeCborStringToBytes(bytes memory data) internal view returns (bytes memory) {
         return CBORDecoding.decodePrimitive(data);
     }
 
@@ -480,7 +494,7 @@ library LibWasm {
         uint8 length = uint8(value.length);
         bytes memory result;
 
-        // Track if we skip the only first byte (indicator + length), or also the second byte (length if > 23 length)
+        // Track if we skip the only first byte (indicator + length), or also the second byte (if > 23 length)
         uint16 resultIndex = 1;
         // Anything greater than 23 length is a fixed array with 0x98 indicator (i.e., max length of 255)
         if (length > 0x17) {
@@ -496,9 +510,14 @@ library LibWasm {
         // 0x18 indicator preceding it (i.e., `0x<array_indicator>18<byte>18<byte>`)
         for (uint8 i = 0; i < length; i++) {
             uint8 val = uint8(value[i]);
-            result[resultIndex] = 0x18;
-            result[resultIndex + 1] = bytes1(val);
-            resultIndex += 2;
+            if (val <= 0x17) {
+                result[resultIndex] = bytes1(val);
+                resultIndex++;
+            } else {
+                result[resultIndex] = 0x18;
+                result[resultIndex + 1] = bytes1(val);
+                resultIndex += 2;
+            }
         }
         return result;
     }
