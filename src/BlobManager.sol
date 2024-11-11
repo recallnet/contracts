@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {IBlobManager} from "./interfaces/IBlobManager.sol";
-import {AddBlobParams, Blob, BlobStatus, StorageStats, SubnetStats} from "./types/BlobTypes.sol";
+import {AddBlobParams, Blob, BlobStatus, BlobTuple, StorageStats, SubnetStats} from "./types/BlobTypes.sol";
 import {LibBlob} from "./util/LibBlob.sol";
 
 contract BlobManager is IBlobManager {
@@ -21,7 +21,7 @@ contract BlobManager is IBlobManager {
     }
 
     /// @dev See {ICredit-getPendingBlobs}.
-    function getPendingBlobs(uint32 size) external view returns (bytes memory) {
+    function getPendingBlobs(uint32 size) external view returns (BlobTuple[] memory blobs) {
         return LibBlob.getPendingBlobs(size);
     }
 

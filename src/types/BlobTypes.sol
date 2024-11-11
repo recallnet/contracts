@@ -138,7 +138,6 @@ struct AddBlobParams {
 struct Blob {
     uint64 size;
     string metadataHash;
-    // TODO: decode the following from Rust type: HashMap<Address, SubscriptionGroup>
     Subscriber[] subscribers;
     BlobStatus status;
 }
@@ -171,7 +170,7 @@ struct SubscriptionGroup {
     // of the encoding/decoding logic works...except you might see odd decoding with a bucket-backed blob, like a
     // subscription ID of `��0������䣱p�V�%���?��:\u{8}4T�~��V`.
     string subscriptionId;
-    bytes subscription; // TODO: update type
+    Subscription subscription;
 }
 
 /// @dev A subscription to a blob.
@@ -200,9 +199,19 @@ struct Delegate {
 }
 
 /// @dev Pending blob information. Represents a Rust `(Hash, HashSet<(Address, SubscriptionId, PublicKey)>)`
-/// @param blobHash (bytes): The blob hash.
-/// @param sourceInfo (Subscription[]): The pending subscriptions.
-struct PendingBlob {
-    bytes blobHash;
-    bytes sourceInfo;
+/// @param blobHash (string): The blob hash.
+/// @param sourceInfo (BlobSourceInfo[]): The source information for the blob.
+struct BlobTuple {
+    string blobHash;
+    BlobSourceInfo sourceInfo;
+}
+
+/// @dev Source information for a blob.
+/// @param subscriber (address): The subscriber address.
+/// @param subscriptionId (string): The subscription ID.
+/// @param source (string): The source Iroh node ID used for ingestion.
+struct BlobSourceInfo {
+    address subscriber;
+    string subscriptionId;
+    string source;
 }

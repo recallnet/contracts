@@ -4,7 +4,15 @@ pragma solidity ^0.8.26;
 import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
-import {Account as CreditAccount, AddBlobParams, Approvals, SubnetStats, Subscriber} from "../src/types/BlobTypes.sol";
+import {
+    Account as CreditAccount,
+    AddBlobParams,
+    Approvals,
+    BlobTuple,
+    SubnetStats,
+    Subscriber,
+    Subscription
+} from "../src/types/BlobTypes.sol";
 import {LibBlob} from "../src/util/LibBlob.sol";
 import {LibWasm} from "../src/util/LibWasm.sol";
 
@@ -135,10 +143,16 @@ contract LibBlobTest is Test {
         Subscriber[] memory subscribers = LibBlob.decodeSubscribers(data);
         assertEq(subscribers[0].subscriber, 0x90F79bf6EB2c4f870365E785982E1f101E93b906);
         assertEq(subscribers[0].subscriptionGroup[0].subscriptionId, "Default");
+        assertEq(subscribers[0].subscriptionGroup[0].subscription.added, 977);
+        assertEq(subscribers[0].subscriptionGroup[0].subscription.expiry, 11148);
+        assertEq(subscribers[0].subscriptionGroup[0].subscription.autoRenew, true);
         assertEq(
-            subscribers[0].subscriptionGroup[0].subscription,
-            hex"861903d1192b8cf59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4"
+            subscribers[0].subscriptionGroup[0].subscription.source,
+            "dj46xqiflbnyljn2uv5nbmjb7twj3g2u5mgo72xxtyhwmvarlcxa"
         );
+        assertEq(subscribers[0].subscriptionGroup[0].subscription.delegate.origin, address(0));
+        assertEq(subscribers[0].subscriptionGroup[0].subscription.delegate.caller, address(0));
+        assertEq(subscribers[0].subscriptionGroup[0].subscription.failed, false);
 
         // Two subscribers
         data =
@@ -146,20 +160,46 @@ contract LibBlobTest is Test {
         subscribers = LibBlob.decodeSubscribers(data);
         assertEq(subscribers[0].subscriber, 0x90F79bf6EB2c4f870365E785982E1f101E93b906);
         assertEq(subscribers[0].subscriptionGroup[0].subscriptionId, "Default");
-        assertEq(
-            subscribers[0].subscriptionGroup[0].subscription,
-            hex"861903d1192b8cf59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4"
-        );
         assertEq(subscribers[1].subscriber, 0x976EA74026E726554dB657fA54763abd0C3a0aa9);
         assertEq(subscribers[1].subscriptionGroup[0].subscriptionId, "Default");
-        assertEq(
-            subscribers[1].subscriptionGroup[0].subscription,
-            hex"86191d9c192bacf59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4"
-        );
     }
 
-    // function testDecodePendingBlobs() public view {
-    //     bytes memory data =
-    //         hex"8182982018a1189d18c605187b1818188c18bd186718ea1839186618fd188d182c18a2188318f4185a187718d9185c182d18a51861189318ca189818d0187b183c18a7818356040a90f79bf6eb2c4f870365e785982e1f101e93b906a1634b657998201837182f183318e505188d18d7081870184d18d718de18180c185e183318f51857189a18c518b1187518781845184418b718a7183f182b189c18b018be9820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818ae";
-    // }
+    function testDecodeSubscription() public view {
+        // No delegate
+        bytes memory data =
+            hex"8619045e19126ef59820184e1871182818b3189318920f011876188d189a182318c5189b185c18910b18f418cc18961876183518b6187a185c0418a318a2185f18ac18af1825f6f4";
+        Subscription memory subscription = LibBlob.decodeSubscription(data);
+        assertEq(subscription.added, 1118);
+        assertEq(subscription.expiry, 4718);
+        assertEq(subscription.autoRenew, true);
+        assertEq(subscription.source, "jzysrm4tsihqc5untir4lg24sef7jtewoy23m6s4asr2ex5mv4sq");
+        assertEq(subscription.delegate.origin, address(0));
+        assertEq(subscription.delegate.caller, address(0));
+        assertEq(subscription.failed, false);
+
+        // With delegate
+        data =
+            hex"86191a54192864f59820184e1871182818b3189318920f011876188d189a182318c5189b185c18910b18f418cc18961876183518b6187a185c0418a318a2185f18ac18af18258256040aa0ee7a142d267c1f36714e4a8f75612f20a7972056040a11c81c1a7979cdd309096d1ea53f887ea9f8d14df4";
+        subscription = LibBlob.decodeSubscription(data);
+        assertEq(subscription.added, 6740);
+        assertEq(subscription.expiry, 10340);
+        assertEq(subscription.autoRenew, true);
+        assertEq(subscription.source, "jzysrm4tsihqc5untir4lg24sef7jtewoy23m6s4asr2ex5mv4sq");
+        assertEq(subscription.delegate.origin, 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720);
+        assertEq(subscription.delegate.caller, 0x11c81c1A7979cdd309096D1ea53F887EA9f8D14d);
+        assertEq(subscription.failed, false);
+    }
+
+    function testDecodePendingBlobs() public view {
+        bytes memory data =
+            hex"8182982018a1189d18c605187b1818188c18bd186718ea1839186618fd188d182c18a2188318f4185a187718d9185c182d18a51861189318ca189818d0187b183c18a7818356040a90f79bf6eb2c4f870365e785982e1f101e93b906a1634b657998201837182f183318e505188d18d7081870184d18d718de18180c185e183318f51857189a18c518b1187518781845184418b718a7183f182b189c18b018be9820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818ae";
+        BlobTuple[] memory blobs = LibBlob.decodePendingBlobs(data);
+        assertEq(blobs[0].blobHash, "ugo4mbl3dcgl2z7khftp3djmukb7iwtx3foc3jlbspfjrud3hstq");
+        assertEq(blobs[0].sourceInfo.subscriber, 0x90F79bf6EB2c4f870365E785982E1f101E93b906);
+        assertEq(
+            bytes(blobs[0].sourceInfo.subscriptionId),
+            hex"372f33e5058dd708704dd7de180c5e33f5579ac5b175784544b7a73f2b9cb0be"
+        );
+        assertEq(blobs[0].sourceInfo.source, "dj46xqiflbnyljn2uv5nbmjb7twj3g2u5mgo72xxtyhwmvarlcxa");
+    }
 }
