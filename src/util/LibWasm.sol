@@ -113,6 +113,15 @@ library LibWasm {
         return ByteParser.bytesToBigNumber(data);
     }
 
+    /// @dev Decode CBOR encoded boolean.
+    /// @param data The encoded CBOR boolean.
+    /// @return result The decoded boolean.
+    function decodeCborBool(bytes memory data) internal pure returns (bool) {
+        // In CBOR, `0xf5` is true, `0xf4` is false; in practice, it may decode to `0x01` for true and `0x00` for false
+        // This happens when `decodeCborArrayToBytes` is used to unpack a boolean value, so we need to handle both.
+        return data[0] == 0x01 || data[0] == 0xf5;
+    }
+
     /// @dev Decode CBOR encoded Filecoin address bytes to an Ethereum address.
     /// @param addr The encoded CBOR Filecoin address. Example: 0x040a15d34aaf54267db7d7c367839aaf71a00a2c6a65
     /// @return result The decoded Ethereum address. Example: 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
@@ -266,7 +275,7 @@ library LibWasm {
     /// @dev Decode a CBOR encoded blob hash to a string (a Rust Iroh hash value `Hash(pub [u8; 32])`).
     /// @param value The encoded CBOR blob hash (e.g,. `0x9820188e184c...`)
     /// @return result The decoded blob hash as base32 encoded bytes.
-    function decodeBlobHash(bytes memory value) internal pure returns (bytes memory) {
+    function decodeCborBlobHashOrNodeId(bytes memory value) internal pure returns (bytes memory) {
         bytes memory decoded = decodeCborFixedArrayToBytes(value);
         return Base32.encode(decoded);
     }

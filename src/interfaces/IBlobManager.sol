@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {AddBlobParams, Blob, BlobStatus, StorageStats, SubnetStats} from "../types/BlobTypes.sol";
+import {AddBlobParams, Blob, BlobStatus, BlobTuple, StorageStats, SubnetStats} from "../types/BlobTypes.sol";
 
 /// @dev Hoku Blobs actor EVM interface for managing and querying information about blogs/storage.
 /// See Rust implementation for details:
@@ -30,8 +30,8 @@ interface IBlobManager {
 
     /// @dev Get a list of pending blobs.
     /// @param size Maximum number of pending blobs to return.
-    /// @return List of pending blobs encoded as bytes.
-    function getPendingBlobs(uint32 size) external view returns (bytes memory);
+    /// @return blobs List of pending blobs.
+    function getPendingBlobs(uint32 size) external view returns (BlobTuple[] memory blobs);
 
     /// @dev Get the total count of pending blobs.
     /// @return Total number of pending blobs.

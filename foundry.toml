@@ -9,6 +9,7 @@ gas_reports = ["Hoku"]
 ffi = true
 ast = true
 evm_version = "paris"
+via_ir = true
 
 [fmt]
 # These are all the `forge fmt` defaults

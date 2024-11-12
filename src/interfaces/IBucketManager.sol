@@ -63,8 +63,8 @@ interface IBucketManager {
 
     /// @dev Add an object to a bucket.
     /// @param bucket The bucket.
-    /// @param AddObjectParams The add object params. See {AddObjectParams} for more details.
-    function addObject(string memory bucket, AddObjectParams memory AddObjectParams) external;
+    /// @param addObjectParams The add object params. See {AddObjectParams} for more details.
+    function addObject(string memory bucket, AddObjectParams memory addObjectParams) external;
 
     /// @dev Delete an object from a bucket.
     /// @param bucket The bucket.

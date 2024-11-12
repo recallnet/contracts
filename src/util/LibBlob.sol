@@ -8,12 +8,16 @@ import {
     Approvals,
     Balance,
     Blob,
+    BlobSourceInfo,
     BlobStatus,
+    BlobTuple,
     CreditApproval,
     CreditStats,
+    Delegate,
     StorageStats,
     SubnetStats,
     Subscriber,
+    Subscription,
     SubscriptionGroup
 } from "../types/BlobTypes.sol";
 import {KeyValue} from "../types/CommonTypes.sol";
@@ -122,15 +126,54 @@ library LibBlob {
     /// @param data The encoded subscription ID.
     /// @return decoded The decoded subscription ID.
     function decodeSubscriptionId(bytes memory data) internal view returns (string memory) {
-        // If the leading indicator is `a1`, it's a mapping with a single key-value pair; else, default
-        if (data[0] == hex"a1") {
-            // Decode the mapping with Key and subscription ID bytes (a single key-value pair)
-            bytes[2][] memory decoded = data.decodeCborMappingToBytes();
-            // Second value is the subscription ID bytes (ignore the first value `Key` key)
-            bytes memory subscriptionId = decoded[0][1].decodeCborBytesArrayToBytes();
-            return string(subscriptionId);
-        } else {
+        // If not a mapping with key-value pair, return default
+        if (data[0] != hex"a1") {
             return "Default";
+        }
+
+        // Decode the mapping and return subscription ID bytes
+        bytes[2][] memory decoded = data.decodeCborMappingToBytes();
+        return string(decoded[0][1].decodeCborBytesArrayToBytes());
+    }
+
+    /// @dev Decode a delegate from CBOR.
+    /// @param data The encoded CBOR array of a delegate.
+    /// @return origin The delegate origin address
+    /// @return caller The delegate caller address
+    function decodeDelegate(bytes memory data) internal view returns (address origin, address caller) {
+        if (data[0] == hex"00" || data[0] == hex"f6") {
+            return (address(0), address(0));
+        }
+        bytes[] memory decoded = data.decodeCborArrayToBytes();
+        origin = decoded[0].decodeCborAddress();
+        caller = decoded[1].decodeCborAddress();
+    }
+
+    /// @dev Decode a subscription from CBOR.
+    /// @param data The encoded CBOR array of a subscription.
+    /// @return subscription The decoded subscription.
+    function decodeSubscription(bytes memory data) internal view returns (Subscription memory subscription) {
+        bytes[] memory decoded = data.decodeCborArrayToBytes();
+        subscription.added = decoded[0].decodeCborBytesToUint64();
+        subscription.expiry = decoded[1].decodeCborBytesToUint64();
+        subscription.autoRenew = decoded[2].decodeCborBool();
+        subscription.source = string(decoded[3].decodeCborBlobHashOrNodeId());
+        (subscription.delegate.origin, subscription.delegate.caller) = decodeDelegate(decoded[4]);
+        subscription.failed = decoded[5].decodeCborBool();
+    }
+
+    /// @dev Decode a subscription group from CBOR.
+    /// @param subscriptionGroupBytes The encoded subscription group bytes
+    /// @return group The decoded subscription group
+    function decodeSubscriptionGroup(bytes[2][] memory subscriptionGroupBytes)
+        internal
+        view
+        returns (SubscriptionGroup[] memory group)
+    {
+        group = new SubscriptionGroup[](subscriptionGroupBytes.length);
+        for (uint256 j = 0; j < subscriptionGroupBytes.length; j++) {
+            group[j].subscriptionId = decodeSubscriptionId(subscriptionGroupBytes[j][0]);
+            group[j].subscription = decodeSubscription(subscriptionGroupBytes[j][1]);
         }
     }
 
@@ -142,12 +185,7 @@ library LibBlob {
         subscribers = new Subscriber[](decoded.length);
         for (uint256 i = 0; i < decoded.length; i++) {
             subscribers[i].subscriber = decoded[i][0].decodeCborAddress();
-            bytes[2][] memory subscriptionGroupBytes = decoded[i][1].decodeCborMappingToBytes();
-            subscribers[i].subscriptionGroup = new SubscriptionGroup[](subscriptionGroupBytes.length);
-            for (uint256 j = 0; j < subscriptionGroupBytes.length; j++) {
-                subscribers[i].subscriptionGroup[j].subscriptionId = decodeSubscriptionId(subscriptionGroupBytes[j][0]);
-                subscribers[i].subscriptionGroup[j].subscription = subscriptionGroupBytes[j][1];
-            }
+            subscribers[i].subscriptionGroup = decodeSubscriptionGroup(decoded[i][1].decodeCborMappingToBytes());
         }
     }
 
@@ -157,10 +195,36 @@ library LibBlob {
     function decodeBlob(bytes memory data) internal view returns (Blob memory blob) {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return blob;
+
         blob.size = decoded[0].decodeCborBytesToUint64();
-        blob.metadataHash = string(decoded[1].decodeBlobHash());
+        blob.metadataHash = string(decoded[1].decodeCborBlobHashOrNodeId());
         blob.subscribers = decodeSubscribers(decoded[2]);
         blob.status = decodeBlobStatus(decoded[3]);
+    }
+
+    /// @dev Decode a blob source info from CBOR.
+    /// @param data The encoded CBOR array of a blob source info.
+    /// @return sourceInfo The decoded blob source info.
+    function decodeBlobSourceInfo(bytes memory data) internal view returns (BlobSourceInfo memory sourceInfo) {
+        bytes[] memory decodedOuter = data.decodeCborArrayToBytes();
+        bytes[] memory decodedInner = decodedOuter[0].decodeCborArrayToBytes();
+        sourceInfo.subscriber = decodedInner[0].decodeCborAddress();
+        sourceInfo.subscriptionId = decodeSubscriptionId(decodedInner[1]);
+        sourceInfo.source = string(decodedInner[2].decodeCborBlobHashOrNodeId());
+    }
+
+    /// @dev Decode pending blobs from CBOR.
+    /// @param data The encoded CBOR array of pending blobs.
+    /// @return blobs The decoded pending blobs.
+    function decodePendingBlobs(bytes memory data) internal view returns (BlobTuple[] memory blobs) {
+        bytes[] memory decoded = data.decodeCborArrayToBytes();
+        if (decoded.length == 0) return blobs;
+        blobs = new BlobTuple[](decoded.length);
+        for (uint256 i = 0; i < decoded.length; i++) {
+            bytes[] memory blobTuple = decoded[i].decodeCborArrayToBytes();
+            blobs[i].blobHash = string(blobTuple[0].decodeCborBlobHashOrNodeId());
+            blobs[i].sourceInfo = decodeBlobSourceInfo(blobTuple[1]);
+        }
     }
 
     /// @dev Helper function to encode approve credit params.
@@ -328,12 +392,20 @@ library LibBlob {
         return accountToBalance(account);
     }
 
+    /// @dev Get a blob.
+    /// @param blobHash The hash of the blob.
+    /// @return blob The blob.
     function getBlob(string memory blobHash) external view returns (Blob memory blob) {
         bytes memory params = blobHash.encodeCborBlobHashOrNodeId();
         bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_BLOB, params);
         return decodeBlob(data);
     }
 
+    /// @dev Get the status of a blob.
+    /// @param subscriber The address of the subscriber.
+    /// @param blobHash The hash of the blob.
+    /// @param subscriptionId The subscription ID.
+    /// @return status The status of the blob.
     function getBlobStatus(address subscriber, string memory blobHash, string memory subscriptionId)
         external
         view
@@ -348,16 +420,24 @@ library LibBlob {
         return decodeBlobStatus(data);
     }
 
-    function getPendingBlobs(uint32 size) external view returns (bytes memory) {
+    /// @dev Get pending blobs.
+    /// @param size The size of the blobs to get.
+    /// @return blobs The pending blobs.
+    function getPendingBlobs(uint32 size) external view returns (BlobTuple[] memory blobs) {
         bytes memory params = size.encodeCborUint64();
-        return LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_PENDING_BLOBS, params);
+        bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_PENDING_BLOBS, params);
+        return decodePendingBlobs(data);
     }
 
+    /// @dev Get the number of pending blobs.
+    /// @return count The number of pending blobs.
     function getPendingBlobsCount() external view returns (uint64) {
         bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_PENDING_BLOBS_COUNT);
         return data.decodeCborBytesToUint64();
     }
 
+    /// @dev Get the number of pending bytes.
+    /// @return count The number of pending bytes.
     function getPendingBytesCount() external view returns (uint64) {
         bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_PENDING_BYTES_COUNT);
         return data.decodeCborBytesToUint64();

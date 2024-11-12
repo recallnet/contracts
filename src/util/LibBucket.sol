@@ -103,8 +103,8 @@ library LibBucket {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return value;
         value = Value({
-            blobHash: string(decoded[0].decodeBlobHash()),
-            recoveryHash: string(decoded[1].decodeBlobHash()),
+            blobHash: string(decoded[0].decodeCborBlobHashOrNodeId()),
+            recoveryHash: string(decoded[1].decodeCborBlobHashOrNodeId()),
             size: decoded[2].decodeCborBytesToUint64(),
             expiry: decoded[3].decodeCborBytesToUint64(),
             metadata: decodeMetadata(decoded[4])
