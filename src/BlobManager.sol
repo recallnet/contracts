@@ -2,7 +2,15 @@
 pragma solidity ^0.8.26;
 
 import {IBlobManager} from "./interfaces/IBlobManager.sol";
-import {AddBlobParams, Blob, BlobStatus, BlobTuple, StorageStats, SubnetStats} from "./types/BlobTypes.sol";
+import {
+    AddBlobParams,
+    Blob,
+    BlobStatus,
+    BlobTuple,
+    StorageStats,
+    SubnetStats,
+    SubscriptionGroup
+} from "./types/BlobTypes.sol";
 import {LibBlob} from "./util/LibBlob.sol";
 
 contract BlobManager is IBlobManager {

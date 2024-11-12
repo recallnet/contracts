@@ -13,11 +13,8 @@ import {
     BlobTuple,
     CreditApproval,
     CreditStats,
-    Delegate,
     StorageStats,
     SubnetStats,
-    Subscriber,
-    Subscription,
     SubscriptionGroup
 } from "../types/BlobTypes.sol";
 import {KeyValue} from "../types/CommonTypes.sol";
@@ -140,40 +137,57 @@ library LibBlob {
 
     /// @dev Decode a delegate from CBOR.
     /// @param data The encoded CBOR array of a delegate.
-    /// @return delegate The decoded delegate.
-    function decodeDelegate(bytes memory data) internal view returns (Delegate memory delegate) {
-        if (data[0] == hex"00" || data[0] == hex"f6") return delegate; // Handle null delegate
+    /// @return delegateOrigin The origin of the delegate.
+    /// @return delegateCaller The caller of the delegate.
+    function decodeDelegate(bytes memory data) internal view returns (address delegateOrigin, address delegateCaller) {
+        if (data[0] == hex"00" || data[0] == hex"f6") return (address(0), address(0)); // Handle null delegate
         bytes[] memory decoded = data.decodeCborArrayToBytes();
-        delegate.origin = decoded[0].decodeCborAddress();
-        delegate.caller = decoded[1].decodeCborAddress();
+        delegateOrigin = decoded[0].decodeCborAddress();
+        delegateCaller = decoded[1].decodeCborAddress();
     }
 
     /// @dev Decode a subscription from CBOR.
     /// @param data The encoded CBOR array of a subscription.
     /// @return subscription The decoded subscription.
-    function decodeSubscription(bytes memory data) internal view returns (Subscription memory subscription) {
+    function decodeSubscription(bytes memory data) internal view returns (SubscriptionGroup memory subscription) {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         subscription.added = decoded[0].decodeCborBytesToUint64();
         subscription.expiry = decoded[1].decodeCborBytesToUint64();
         subscription.autoRenew = decoded[2].decodeCborBool();
         subscription.source = string(decoded[3].decodeCborBlobHashOrNodeId());
-        subscription.delegate = decodeDelegate(decoded[4]);
+        (subscription.delegateOrigin, subscription.delegateCaller) = decodeDelegate(decoded[4]);
         subscription.failed = decoded[5].decodeCborBool();
+    }
+
+    /// @dev Decode subscription groups from CBOR.
+    /// @param data The encoded CBOR mapping of subscription groups.
+    /// @return subscriptionGroup The decoded subscription groups.
+    function decodeSubscriptionGroup(address subscriber, bytes memory data)
+        internal
+        view
+        returns (SubscriptionGroup[] memory subscriptionGroup)
+    {
+        bytes[2][] memory subscriptionGroupBytes = data.decodeCborMappingToBytes();
+        subscriptionGroup = new SubscriptionGroup[](subscriptionGroupBytes.length);
+
+        for (uint256 i = 0; i < subscriptionGroupBytes.length; i++) {
+            subscriptionGroup[i] = decodeSubscription(subscriptionGroupBytes[i][1]);
+            subscriptionGroup[i].subscriptionId = decodeSubscriptionId(subscriptionGroupBytes[i][0]);
+            subscriptionGroup[i].subscriber = subscriber;
+        }
     }
 
     /// @dev Decode subscribers from CBOR.
     /// @param data The encoded CBOR mapping of subscribers.
     /// @return subscribers The decoded subscribers.
-    function decodeSubscribers(bytes memory data) internal view returns (Subscriber[] memory subscribers) {
+    function decodeSubscribers(bytes memory data) internal view returns (SubscriptionGroup[] memory subscribers) {
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
-        subscribers = new Subscriber[](decoded.length);
+        subscribers = new SubscriptionGroup[](decoded.length);
         for (uint256 i = 0; i < decoded.length; i++) {
-            subscribers[i].subscriber = decoded[i][0].decodeCborAddress();
-            bytes[2][] memory subscriptionGroupBytes = decoded[i][1].decodeCborMappingToBytes();
-            subscribers[i].subscriptionGroup = new SubscriptionGroup[](subscriptionGroupBytes.length);
-            for (uint256 j = 0; j < subscriptionGroupBytes.length; j++) {
-                subscribers[i].subscriptionGroup[j].subscriptionId = decodeSubscriptionId(subscriptionGroupBytes[j][0]);
-                subscribers[i].subscriptionGroup[j].subscription = decodeSubscription(subscriptionGroupBytes[j][1]);
+            address subscriber = decoded[i][0].decodeCborAddress();
+            SubscriptionGroup[] memory groups = decodeSubscriptionGroup(subscriber, decoded[i][1]);
+            for (uint256 j = 0; j < groups.length; j++) {
+                subscribers[i] = groups[j];
             }
         }
     }
@@ -188,6 +202,7 @@ library LibBlob {
         blob.metadataHash = string(decoded[1].decodeCborBlobHashOrNodeId());
         blob.subscribers = decodeSubscribers(decoded[2]);
         blob.status = decodeBlobStatus(decoded[3]);
+        // To avoid stack too deep issues, subscribers are not nested with `Blob` but their own value
     }
 
     /// @dev Decode a blob source info from CBOR.
