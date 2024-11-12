@@ -125,13 +125,13 @@ You can run a script with `forge script`, passing the script path/name and any a
 - `devnet`: Deploy to the devnet network.
 
 The `--target-contract` (`--tc`) should be `DeployScript`, and it takes an argument for the
-environment:
+environment used by the `--sig` flag below:
 
-- `0`: Local (for either localnet or devnet)
-- `1`: Testnet
-- `2`: Mainnet (note: mainnet is not available yet)
+- `local`: Local chain(for either localnet or devnet)
+- `testnet`: Testnet chain
+- `ethereum` or `filecoin`: Mainnet chain (note: mainnet is not available yet)
 
-Most scripts use the `--sig` flag with `run(uint8)` (or `run(uint8,uint256)` for the faucet) to
+Most scripts use the `--sig` flag with `run(string)` (or `run(string,uint256)` for the faucet) to
 execute deployment with the given argument above, and the `--broadcast` flag actually sends the
 transaction to the network. Recall that you **must** set `-g 100000` to ensure the gas estimate is
 sufficiently high.
@@ -153,7 +153,7 @@ Deploy the Hoku ERC20 contract to the localnet parent chain (i.e., `http://local
 the `-g` flag is not used here since the gas estimate is sufficiently low on Anvil.
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript local --sig 'run(string)' --rpc-url localnet_parent --broadcast -vv
+PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url localnet_parent --broadcast -vv
 ```
 
 ##### Faucet
@@ -163,7 +163,7 @@ tokens, owned by the deployer's account which will be transferred to the faucet 
 with 10\*\*18 decimal units).
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript 0 5000000000000000000000 --sig 'run(uint8,uint256)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript --sig 'run(string,uint256)' local 5000000000000000000000 --rpc-url localnet_subnet --broadcast -g 100000 -vv
 ```
 
 ##### Credit
@@ -171,7 +171,7 @@ PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript 0 5000000
 Deploy the Credit contract to the localnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url localnet_subnet --broadcast -g 100000 -vv
 ```
 
 ##### Buckets
@@ -179,7 +179,7 @@ PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript 0 --sig '
 Deploy the Bucket Manager contract to the localnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/BucketManager.s.sol --tc DeployScript 0 --sig 'run(uint8)' --rpc-url localnet_subnet --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/BucketManager.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url localnet_subnet --broadcast -g 100000 -vv
 ```
 
 #### Testnet
@@ -190,7 +190,7 @@ Deploy the Hoku ERC20 contract to the testnet parent chain. Note the `-g` flag _
 differs from the localnet setup above since we're deploying to Filecoin Calibration);
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript testnet --sig 'run(string)' --rpc-url testnet_parent --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_parent --broadcast -g 100000 -vv
 ```
 
 ##### Faucet
@@ -200,7 +200,7 @@ tokens, owned by the deployer's account which will be transferred to the faucet 
 with 10\*\*18 decimal units).
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript 1 5000000000000000000000 --sig 'run(uint8,uint256)'--rpc-url testnet_subnet --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript --sig 'run(string,uint256)' testnet 5000000000000000000000 --rpc-url testnet_subnet --broadcast -g 100000 -vv
 ```
 
 ##### Credit
@@ -208,7 +208,7 @@ PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript 1 5000000
 Deploy the Credit contract to the testnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url testnet_subnet --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_subnet --broadcast -g 100000 -vv
 ```
 
 ##### Buckets
@@ -216,7 +216,7 @@ PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript 1 --sig '
 Deploy the Bucket Manager contract to the testnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/BucketManager.s.sol --tc DeployScript 1 --sig 'run(uint8)' --rpc-url testnet_subnet --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/BucketManager.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_subnet --broadcast -g 100000 -vv
 ```
 
 #### Devnet
@@ -228,7 +228,7 @@ If you're trying to simply deploy to an Anvil node (i.e., `http://localhost:8545
 same pattern, or just explicitly set the RPC URL:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript local --sig 'run(string)' --rpc-url http://localhost:8545 --broadcast -vv
+PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url http://localhost:8545 --broadcast -vv
 ```
 
 #### Mainnet
@@ -294,8 +294,8 @@ setting the `CREDIT` environment variable to the deployed address:
 
 ```
 CREDIT=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/Credit.s.sol \
---tc DeployScript 0 \
---sig 'run(uint8)' \
+--tc DeployScript \
+--sig 'run(string)' local \
 --rpc-url localnet_subnet \
 --broadcast -g 100000 \
 | grep "0: contract Credit" | awk '{print $NF}')
@@ -629,8 +629,8 @@ setting the `BUCKETS` environment variable to the deployed address:
 
 ```
 BUCKETS=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/BucketManager.s.sol \
---tc DeployScript 0 \
---sig 'run(uint8)' \
+--tc DeployScript \
+--sig 'run(string)' local \
 --rpc-url localnet_subnet \
 --broadcast -g 100000 \
 | grep "0: contract Bucket" | awk '{print $NF}')

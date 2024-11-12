@@ -9,7 +9,6 @@ import {DeployScript as FaucetDeployer} from "../script/Faucet.s.sol";
 import {DeployScript as TokenDeployer} from "../script/Hoku.s.sol";
 import {Faucet, TryLater} from "../src/Faucet.sol";
 import {Hoku} from "../src/Hoku.sol";
-import {Environment} from "../src/types/CommonTypes.sol";
 
 contract FaucetTest is Test {
     Faucet internal faucet;
@@ -23,7 +22,7 @@ contract FaucetTest is Test {
         vm.deal(chain.addr, mintAmount);
         wallet = vm.createWallet("user");
         FaucetDeployer faucetDeployer = new FaucetDeployer();
-        faucet = faucetDeployer.run(Environment.Foundry, mintAmount / 2);
+        faucet = faucetDeployer.run("local", mintAmount / 2);
         assertEq(faucet.supply(), mintAmount / 2);
     }
 

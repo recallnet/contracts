@@ -18,6 +18,7 @@
   "license": "MIT OR Apache-2.0",
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.1.2",
+    "@openzeppelin/upgrades-core": "^1.40.0",
     "hardhat": "^2.22.13",
     "solhint": "^5.0.3"
   },

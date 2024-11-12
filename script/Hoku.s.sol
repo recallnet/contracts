@@ -12,6 +12,7 @@ import {Script, console} from "forge-std/Script.sol";
 address constant INTERCHAIN_TOKEN_SERVICE = 0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C;
 
 contract DeployScript is Script {
+    string constant PRIVATE_KEY = "PRIVATE_KEY";
     address public proxyAddress;
 
     function setUp() public {}
@@ -21,6 +22,15 @@ contract DeployScript is Script {
     }
 
     function run(string memory network) public returns (Hoku) {
+        if (vm.envExists(PRIVATE_KEY)) {
+            uint256 privateKey = vm.envUint(PRIVATE_KEY);
+            vm.startBroadcast(privateKey);
+        } else if (Strings.equal(network, "local")) {
+            vm.startBroadcast();
+        } else {
+            revert("PRIVATE_KEY not set in non-local environment");
+        }
+
         string memory prefix = "";
         if (Strings.equal(network, "local")) {
             prefix = "l";
@@ -29,7 +39,6 @@ contract DeployScript is Script {
         } else if (!Strings.equal(network, "ethereum") && !Strings.equal(network, "filecoin")) {
             revert("Unsupported network.");
         }
-        vm.startBroadcast();
 
         bytes32 itsSalt = keccak256("HOKU_SALT");
         proxyAddress = Upgrades.deployUUPSProxy(

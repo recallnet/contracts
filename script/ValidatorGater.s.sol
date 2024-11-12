@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {ValidatorGater} from "../src/ValidatorGater.sol";
 import {SubnetID} from "../src/structs/Subnet.sol";
 
-import {Environment} from "../src/types/CommonTypes.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {Options, Upgrades} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
 import {Script, console2} from "forge-std/Script.sol";
 
@@ -18,20 +18,17 @@ contract DeployScript is Script {
         return proxyAddress;
     }
 
-    function run(Environment env) public returns (ValidatorGater) {
+    function run(string memory network) public returns (ValidatorGater) {
         if (vm.envExists(PRIVATE_KEY)) {
             uint256 privateKey = vm.envUint(PRIVATE_KEY);
             vm.startBroadcast(privateKey);
-        } else if (env == Environment.Local) {
+        } else if (Strings.equal(network, "local")) {
             vm.startBroadcast();
         } else {
             revert("PRIVATE_KEY not set in non-local environment");
         }
-        Options memory options;
-        options.unsafeAllow = "external-library-linking";
 
-        proxyAddress =
-            Upgrades.deployUUPSProxy("ValidatorGater.sol", abi.encodeCall(ValidatorGater.initialize, ()), options);
+        proxyAddress = Upgrades.deployUUPSProxy("ValidatorGater.sol", abi.encodeCall(ValidatorGater.initialize, ()));
         vm.stopBroadcast();
 
         // Check implementation

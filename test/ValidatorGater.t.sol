@@ -6,7 +6,6 @@ import {SubnetID, ValidatorGater} from "../src/ValidatorGater.sol";
 import {InvalidSubnet, NotAuthorized, ValidatorPowerChangeDenied} from "../src/errors/IPCErrors.sol";
 import {SubnetIDHelper} from "../src/lib/SubnetIDHelper.sol";
 
-import {Environment} from "../src/types/CommonTypes.sol";
 import {SubnetActorManagerFacetMock} from "./mocks/SubnetActorManagerFacetMock.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
@@ -25,7 +24,7 @@ contract ValidatorGaterTest is Test {
 
     function setUp() public {
         DeployScript deployer = new DeployScript();
-        gater = deployer.run(Environment.Local);
+        gater = deployer.run("local");
 
         subnet = ROOT_SUBNET_ID.createSubnetId(SUBNET_ROUTE);
         owner = gater.owner();

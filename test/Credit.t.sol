@@ -7,7 +7,6 @@ import {console2 as console} from "forge-std/console2.sol";
 
 import {DeployScript as CreditDeployer} from "../script/Credit.s.sol";
 import {Credit} from "../src/Credit.sol";
-import {Environment} from "../src/types/CommonTypes.sol";
 
 // TODO: add integration tests once it's possible in CI
 contract CreditTest is Test, Credit {
@@ -15,6 +14,6 @@ contract CreditTest is Test, Credit {
 
     function setUp() public virtual {
         CreditDeployer creditDeployer = new CreditDeployer();
-        credit = creditDeployer.run(Environment.Foundry);
+        credit = creditDeployer.run("local");
     }
 }
