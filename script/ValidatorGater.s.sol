@@ -27,11 +27,8 @@ contract DeployScript is Script {
         } else {
             revert("PRIVATE_KEY not set in non-local environment");
         }
-        Options memory options;
-        options.unsafeAllow = "external-library-linking";
 
-        proxyAddress =
-            Upgrades.deployUUPSProxy("ValidatorGater.sol", abi.encodeCall(ValidatorGater.initialize, ()), options);
+        proxyAddress = Upgrades.deployUUPSProxy("ValidatorGater.sol", abi.encodeCall(ValidatorGater.initialize, ()));
         vm.stopBroadcast();
 
         // Check implementation
