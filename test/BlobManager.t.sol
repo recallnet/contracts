@@ -7,7 +7,6 @@ import {console2 as console} from "forge-std/console2.sol";
 
 import {DeployScript as BlobDeployer} from "../script/BlobManager.s.sol";
 import {BlobManager} from "../src/BlobManager.sol";
-import {Environment} from "../src/types/CommonTypes.sol";
 
 // TODO: add integration tests once it's possible in CI
 contract BlobManagerTest is Test, BlobManager {
@@ -15,6 +14,6 @@ contract BlobManagerTest is Test, BlobManager {
 
     function setUp() public virtual {
         BlobDeployer blobsDeployer = new BlobDeployer();
-        blobs = blobsDeployer.run(Environment.Foundry);
+        blobs = blobsDeployer.run("local");
     }
 }

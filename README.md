@@ -186,6 +186,14 @@ Deploy the Bucket Manager contract to the localnet subnet:
 PRIVATE_KEY=<0x...> forge script script/BucketManager.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url localnet_subnet --broadcast -g 100000 -vv
 ```
 
+##### Blobs
+
+Deploy the Blob Manager contract to the localnet subnet:
+
+```shell
+PRIVATE_KEY=<0x...> forge script script/BlobManager.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url testnet_subnet --broadcast -g 100000 -vv
+```
+
 #### Testnet
 
 ##### Hoku ERC20
@@ -209,7 +217,7 @@ PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript --sig 'ru
 
 ##### Credit
 
-Deploy the Credit contract to the testnet subnet:
+Deploy the Credit Manager contract to the testnet subnet:
 
 ```shell
 PRIVATE_KEY=<0x...> forge script script/CreditManager.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_subnet --broadcast -g 100000 -vv
@@ -221,6 +229,14 @@ Deploy the Bucket Manager contract to the testnet subnet:
 
 ```shell
 PRIVATE_KEY=<0x...> forge script script/BucketManager.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_subnet --broadcast -g 100000 -vv
+```
+
+##### Blobs
+
+Deploy the Blob Manager contract to the testnet subnet:
+
+```shell
+PRIVATE_KEY=<0x...> forge script script/BlobManager.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_subnet --broadcast -g 100000 -vv
 ```
 
 #### Devnet
@@ -855,8 +871,8 @@ setting the `BLOBS` environment variable to the deployed address:
 
 ```
 BLOBS=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/BlobManager.s.sol \
---tc DeployScript 0 \
---sig 'run(uint8)' \
+--tc DeployScript \
+--sig 'run(string)' local \
 --rpc-url localnet_subnet \
 --broadcast -g 100000 \
 | grep "0: contract BlobManager" | awk '{print $NF}')
