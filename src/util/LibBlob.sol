@@ -300,7 +300,9 @@ library LibBlob {
         encoded[1] = params.source.encodeCborBlobHashOrNodeId();
         encoded[2] = params.blobHash.encodeCborBlobHashOrNodeId();
         // TODO: this value is currently hardcoded, but it'll eventually use the same method above
-        encoded[3] = hex"0000000000000000000000000000000000000000000000000000000000000000".encodeCborFixedArray();
+        encoded[3] = bytes(params.metadataHash).length == 0
+            ? hex"0000000000000000000000000000000000000000000000000000000000000000".encodeCborFixedArray()
+            : params.metadataHash.encodeCborBlobHashOrNodeId();
         encoded[4] = encodeSubscriptionId(params.subscriptionId);
         encoded[5] = params.size.encodeCborUint64();
         encoded[6] = params.ttl == 0 ? LibWasm.encodeCborNull() : params.ttl.encodeCborUint64();

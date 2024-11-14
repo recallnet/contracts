@@ -145,7 +145,9 @@ library LibBucket {
         encoded[2] = params.blobHash.encodeCborBlobHashOrNodeId();
         // TODO: this currently is hardcoded to a 32 byte array of all zeros, but should use the method above
         // Once https://github.com/hokunet/ipc/issues/300 is merged, this'll need to change
-        encoded[3] = hex"0000000000000000000000000000000000000000000000000000000000000000".encodeCborFixedArray();
+        encoded[3] = bytes(params.recoveryHash).length == 0
+            ? hex"0000000000000000000000000000000000000000000000000000000000000000".encodeCborFixedArray()
+            : params.recoveryHash.encodeCborBlobHashOrNodeId();
         encoded[4] = params.size.encodeCborUint64();
         encoded[5] = params.ttl == 0 ? LibWasm.encodeCborNull() : params.ttl.encodeCborUint64();
         encoded[6] = params.metadata.encodeCborKeyValueMap();
