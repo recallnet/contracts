@@ -55,13 +55,13 @@ for Hoku. It includes the following:
 The following contracts are deployed in the testnet environment (Filecoin Calibration or the Hoku
 subnet):
 
-| Contract      | Chain       | Address                                      |
-| ------------- | ----------- | -------------------------------------------- |
-| Hoku (ERC20)  | Calibration | `0x8e3Fd2b47e564E7D636Fa80082f286eD038BE54b` |
-| Faucet        | Subnet      | `0x10bc34a0C11E5e51774833603955CB7Ec3c79AC6` |
-| Credit        | Subnet      | `0x8c2e3e8ba0d6084786d60A6600e832E8df84846C` |
-| BucketManager | Subnet      | `0x4c74c78B3698cA00473f12eF517D21C65461305F` |
-| LibCredit     | Subnet      | `0xfF73c2705B8b77a832c7ec33864B8BEF201002E1` |
+| Contract       | Chain       | Address                                      |
+| -------------- | ----------- | -------------------------------------------- |
+| Hoku (ERC20)   | Calibration | `0x20d8a696091153c4d4816ba1fdefe113f71e0905` |
+| Faucet         | Subnet      | `0x7Aff9112A46D98A455f4d4F93c0e3D2438716A44` |
+| Credit         | Subnet      | `0xAfC2973fbc4213DA7007A6b9459003A89c9C5b0E` |
+| BucketManager  | Subnet      | `0x314512a8692245cf507ac6E9d0eB805EA820d9a8` |
+| ValidatorGater | Subnet      | `0x880126f3134EdFBa4f1a65827D5870f021bb7124` |
 
 To get testnet tokens, visit: [https://faucet.hoku.sh](https://faucet.hoku.sh). Also, you can check
 out the `foundry.toml` file to see the RPC URLs for each network (described in more detail below).
@@ -350,7 +350,7 @@ variables. Then, define a `CREDIT` environment variable, which points to the cre
 deployment address. For example:
 
 ```sh
-export CREDIT=0x8c2e3e8ba0d6084786d60A6600e832E8df84846C
+export CREDIT=0xAfC2973fbc4213DA7007A6b9459003A89c9C5b0E
 ```
 
 And lastly, we'll define a `RECEIVER_ADDR` environment variable, which points to the receiver
@@ -670,7 +670,7 @@ variables. Then, define a `BUCKETS` environment variable, which points to the bu
 deployment address. For example:
 
 ```sh
-export BUCKETS=0x4c74c78B3698cA00473f12eF517D21C65461305F
+export BUCKETS=0x314512a8692245cf507ac6E9d0eB805EA820d9a8
 ```
 
 The account you use to create buckets should have the following:
