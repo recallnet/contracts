@@ -8,6 +8,7 @@ extra_output = ["storageLayout"]
 gas_reports = ["Hoku"]
 ffi = true
 ast = true
+evm_version = "paris"
 
 [fmt]
 # These are all the `forge fmt` defaults
