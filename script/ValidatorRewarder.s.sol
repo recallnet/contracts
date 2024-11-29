@@ -29,10 +29,8 @@ contract DeployScript is Script {
         }
 
         // Deploy as UUPS proxy
-        proxyAddress = Upgrades.deployUUPSProxy(
-            "ValidatorRewarder.sol",
-            abi.encodeCall(ValidatorRewarder.initialize, ())
-        );
+        proxyAddress =
+            Upgrades.deployUUPSProxy("ValidatorRewarder.sol", abi.encodeCall(ValidatorRewarder.initialize, ()));
 
         // Check implementation
         address implAddr = Upgrades.getImplementationAddress(proxyAddress);
@@ -73,4 +71,4 @@ contract UpgradeRewarderProxyScript is Script {
 
         require(implOld != implNew, "Implementation address not changed");
     }
-} 
+}
