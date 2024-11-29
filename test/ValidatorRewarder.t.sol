@@ -3,26 +3,27 @@ pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
 
-import {ValidatorRewarder} from "../src/ValidatorRewarder.sol";
-import {Hoku} from "../src/Hoku.sol";
 import {DeployScript} from "../script/Hoku.s.sol";
-import {SubnetID} from "../src/structs/Subnet.sol";
-import {Consensus} from "../src/structs/Activity.sol";
-import {SubnetIDHelper} from "../src/lib/SubnetIDHelper.sol";
+import {Hoku} from "../src/Hoku.sol";
+import {ValidatorRewarder} from "../src/ValidatorRewarder.sol";
 
+import {SubnetIDHelper} from "../src/lib/SubnetIDHelper.sol";
+import {Consensus} from "../src/structs/Activity.sol";
+import {SubnetID} from "../src/structs/Subnet.sol";
 
 contract ValidatorRewarderTest is Test {
     using SubnetIDHelper for SubnetID;
+
     ValidatorRewarder internal rewarder;
     Hoku internal token;
     address internal owner;
     address internal validator;
     address internal subnetActor;
-    
+
     // Constants for testing
     uint64 private constant ROOTNET_CHAINID = 123;
     SubnetID subnet;
-    SubnetID ROOT_SUBNET_ID = SubnetID(ROOTNET_CHAINID, new address[](0));    
+    SubnetID ROOT_SUBNET_ID = SubnetID(ROOTNET_CHAINID, new address[](0));
     address constant SUBNET_ROUTE = address(101);
     uint64 constant CHECKPOINT_HEIGHT = 1000;
     bytes32 constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -31,22 +32,22 @@ contract ValidatorRewarderTest is Test {
         owner = address(this);
         validator = address(0x123);
         subnetActor = address(0x456);
-    
+
         // Deploy Hoku token using the deploy script
         DeployScript deployer = new DeployScript();
         token = deployer.run("local");
-    
+
         // Deploy and initialize ValidatorRewarder
         rewarder = new ValidatorRewarder();
         rewarder.initialize();
 
         // Setup subnet
-        subnet = ROOT_SUBNET_ID.createSubnetId(SUBNET_ROUTE);                    
+        subnet = ROOT_SUBNET_ID.createSubnetId(SUBNET_ROUTE);
         rewarder.setSubnet(subnet);
 
         // Get the deployer address which has the admin role
         address tokenDeployer = token.deployer();
-        
+
         // Impersonate the deployer to grant MINTER_ROLE to rewarder
         vm.startPrank(tokenDeployer);
         token.grantRole(MINTER_ROLE, address(rewarder));
@@ -84,11 +85,9 @@ contract ValidatorRewarderTest is Test {
         rewarder.setToken(token);
 
         // Create validator data
-        Consensus.ValidatorData memory validatorData = Consensus.ValidatorData({
-            validator: validator,
-            blocksCommitted: 50
-        });
-                
+        Consensus.ValidatorData memory validatorData =
+            Consensus.ValidatorData({validator: validator, blocksCommitted: 50});
+
         // Call notifyValidClaim as subnet actor
         vm.prank(subnet.route[0]);
         rewarder.notifyValidClaim(subnet, CHECKPOINT_HEIGHT, validatorData);
@@ -103,13 +102,11 @@ contract ValidatorRewarderTest is Test {
         SubnetID memory wrongSubnet = ROOT_SUBNET_ID.createSubnetId(wrongRoute);
 
         // Create validator data
-        Consensus.ValidatorData memory validatorData = Consensus.ValidatorData({
-            validator: validator,
-            blocksCommitted: 50
-        });
+        Consensus.ValidatorData memory validatorData =
+            Consensus.ValidatorData({validator: validator, blocksCommitted: 50});
 
         // Call notifyValidClaim with wrong subnet - should fail
-        vm.prank(wrongRoute);  // Impersonate the wrong subnet's actor
+        vm.prank(wrongRoute); // Impersonate the wrong subnet's actor
         vm.expectRevert("not my subnet");
         rewarder.notifyValidClaim(wrongSubnet, CHECKPOINT_HEIGHT, validatorData);
 
@@ -119,10 +116,8 @@ contract ValidatorRewarderTest is Test {
 
     function testNotifyValidClaimWrongCaller() public {
         // Create validator data
-        Consensus.ValidatorData memory validatorData = Consensus.ValidatorData({
-            validator: validator,
-            blocksCommitted: 50
-        });
+        Consensus.ValidatorData memory validatorData =
+            Consensus.ValidatorData({validator: validator, blocksCommitted: 50});
 
         // Call notifyValidClaim with wrong caller (not the subnet actor)
         address wrongCaller = address(0x999);
@@ -136,19 +131,17 @@ contract ValidatorRewarderTest is Test {
 
     function testSetActiveAndPause() public {
         assertTrue(rewarder.isActive());
-        
+
         rewarder.setActive(false);
         assertFalse(rewarder.isActive());
-        
+
         rewarder.setActive(true);
         assertTrue(rewarder.isActive());
     }
 
     function testSetActiveNotOwner() public {
         vm.prank(address(0x789));
-        vm.expectRevert(
-            abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", address(0x789))
-        );
+        vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", address(0x789)));
         rewarder.setActive(false);
     }
-} 
+}

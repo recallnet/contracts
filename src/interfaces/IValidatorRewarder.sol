@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {SubnetID} from "../structs/Subnet.sol";
 import {Consensus} from "../structs/Activity.sol";
+import {SubnetID} from "../structs/Subnet.sol";
 
 /// @title ValidatorRewarder interface.
 ///

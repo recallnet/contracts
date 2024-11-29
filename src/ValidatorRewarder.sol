@@ -4,12 +4,12 @@ pragma solidity ^0.8.26;
 import {InvalidSubnet, NotAuthorized, ValidatorPowerChangeDenied} from "./errors/IPCErrors.sol";
 import {IValidatorRewarder} from "./interfaces/IValidatorRewarder.sol";
 
+import {Hoku} from "./Hoku.sol";
 import {SubnetIDHelper} from "./lib/SubnetIDHelper.sol";
-import {SubnetID} from "./structs/Subnet.sol";
 import {Consensus} from "./structs/Activity.sol";
+import {SubnetID} from "./structs/Subnet.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {Hoku} from "./Hoku.sol";
 
 /// This is a simple implementation of `IValidatorRewarder`. It makes sure the exact power change
 /// request is approved. This is a very strict requirement.
@@ -56,11 +56,10 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
         token = _token;
     }
 
-    function notifyValidClaim(
-        SubnetID calldata id,
-        uint64 checkpointHeight,
-        Consensus.ValidatorData calldata data
-    ) external override {                
+    function notifyValidClaim(SubnetID calldata id, uint64 checkpointHeight, Consensus.ValidatorData calldata data)
+        external
+        override
+    {
         require(keccak256(abi.encode(id)) == keccak256(abi.encode(subnet)), "not my subnet");
 
         address actor = id.route[id.route.length - 1];
@@ -77,7 +76,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
         // Reward is the same as blocks mined for convenience.
         return data.blocksCommitted;
     }
-    
+
     /// @dev Function that should revert when `msg.sender` is not authorized to upgrade the contract
     /// @param newImplementation Address of the new implementation contract
     function _authorizeUpgrade(address newImplementation) internal view override onlyOwner {} // solhint-disable
