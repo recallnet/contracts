@@ -18,7 +18,7 @@ contract ValidatorGaterTest is Test {
     address owner = address(1);
     address validator1 = address(2);
     address validator2 = address(3);
-    uint64 private constant ROOTNET_CHAINID = 123;
+    uint64 private constant ROOTNET_CHAINID = 123;    
     SubnetID ROOT_SUBNET_ID = SubnetID(ROOTNET_CHAINID, new address[](0));
     address constant SUBNET_ROUTE = address(101);
 
