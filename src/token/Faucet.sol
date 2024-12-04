@@ -58,17 +58,21 @@ contract Faucet is Ownable {
     /// @dev Distributes tokens to the specified recipient
     /// @dev Reverts if the recipient has requested tokens too recently
     /// @param recipient The address to receive the tokens
-    /// @param key The key to identify the recipient used in the _nextRequestAt mapping
-    function drip(address payable recipient, string calldata key) external onlyOwner {
-        uint256 nextRequestAt = _nextRequestAt[key];
-        if (nextRequestAt > block.timestamp) {
-            revert TryLater();
-        }
+    /// @param keys Array of keys to identify the recipient used in the _nextRequestAt mapping
+    function drip(address payable recipient, string[] calldata keys) external onlyOwner {
+        uint256 keysLength = keys.length;
         uint256 amount = _dripAmount;
+        for (uint256 i = 0; i < keysLength; i++) {
+            if (_nextRequestAt[keys[i]] > block.timestamp) {
+                revert TryLater();
+            }
+        }
         if (address(this).balance < amount) {
             revert FaucetEmpty();
         }
-        _nextRequestAt[key] = block.timestamp + (5 minutes);
+        for (uint256 i = 0; i < keysLength; i++) {
+            _nextRequestAt[keys[i]] = block.timestamp + (5 minutes);
+        }
         recipient.transfer(amount);
     }
 
