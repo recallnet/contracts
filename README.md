@@ -112,8 +112,8 @@ The scripts for deploying contracts are in `script/` directory:
 > (significantly) bump the gas estimation multiplier by adding a `-g 100000` flag to the
 > `forge script` command.
 
-Each script expects the `PRIVATE_KEY` (hex prefixed) private key of the account to deploy the
-contract:
+Each script uses the `--private-key` flag, and the script examples below demonstrate its usage with
+a `PRIVATE_KEY` (hex prefixed) environment variable for the account that deploy the contract:
 
 ```sh
 export PRIVATE_KEY=<0x...>
@@ -157,7 +157,7 @@ Deploy the Hoku ERC20 contract to the localnet parent chain (i.e., `http://local
 the `-g` flag is not used here since the gas estimate is sufficiently low on Anvil.
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url localnet_parent --broadcast -vv
+forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url localnet_parent --private-key $PRIVATE_KEY --broadcast -vv
 ```
 
 ##### Faucet
@@ -167,7 +167,7 @@ tokens, owned by the deployer's account which will be transferred to the faucet 
 with 10\*\*18 decimal units).
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript --sig 'run(string,uint256)' local 5000000000000000000000 --rpc-url localnet_subnet --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript --sig 'run(uint256)' 5000000000000000000000 --rpc-url localnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 ##### Credit
@@ -175,7 +175,7 @@ PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript --sig 'ru
 Deploy the Credit contract to the localnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/CreditManager.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url localnet_subnet --broadcast -g 100000 -vv
+forge script script/CreditManager.s.sol --tc DeployScript --sig 'run()' --rpc-url localnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 ##### Buckets
@@ -183,7 +183,7 @@ PRIVATE_KEY=<0x...> forge script script/CreditManager.s.sol --tc DeployScript --
 Deploy the Bucket Manager contract to the localnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/BucketManager.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url localnet_subnet --broadcast -g 100000 -vv
+forge script script/BucketManager.s.sol --tc DeployScript --sig 'run()' --rpc-url localnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 ##### Blobs
@@ -191,7 +191,7 @@ PRIVATE_KEY=<0x...> forge script script/BucketManager.s.sol --tc DeployScript --
 Deploy the Blob Manager contract to the localnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/BlobManager.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url testnet_subnet --broadcast -g 100000 -vv
+forge script script/BlobManager.s.sol --tc DeployScript --sig 'run()' --rpc-url testnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 #### Testnet
@@ -202,7 +202,7 @@ Deploy the Hoku ERC20 contract to the testnet parent chain. Note the `-g` flag _
 differs from the localnet setup above since we're deploying to Filecoin Calibration);
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_parent --broadcast -g 100000 -vv
+forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_parent --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 ##### Faucet
@@ -212,7 +212,7 @@ tokens, owned by the deployer's account which will be transferred to the faucet 
 with 10\*\*18 decimal units).
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript --sig 'run(string,uint256)' testnet 5000000000000000000000 --rpc-url testnet_subnet --broadcast -g 100000 -vv
+forge script script/Faucet.s.sol --tc DeployScript --sig 'run(uint256)' 5000000000000000000000 --rpc-url testnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 ##### Credit
@@ -220,7 +220,7 @@ PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript --sig 'ru
 Deploy the Credit Manager contract to the testnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/CreditManager.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_subnet --broadcast -g 100000 -vv
+forge script script/CreditManager.s.sol --tc DeployScript --sig 'run()' --rpc-url testnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 ##### Buckets
@@ -228,7 +228,7 @@ PRIVATE_KEY=<0x...> forge script script/CreditManager.s.sol --tc DeployScript --
 Deploy the Bucket Manager contract to the testnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/BucketManager.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_subnet --broadcast -g 100000 -vv
+forge script script/BucketManager.s.sol --tc DeployScript --sig 'run()' --rpc-url testnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 ##### Blobs
@@ -236,7 +236,7 @@ PRIVATE_KEY=<0x...> forge script script/BucketManager.s.sol --tc DeployScript --
 Deploy the Blob Manager contract to the testnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/BlobManager.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_subnet --broadcast -g 100000 -vv
+forge script script/BlobManager.s.sol --tc DeployScript --sig 'run()' --rpc-url testnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 #### Devnet
@@ -248,7 +248,7 @@ If you're trying to simply deploy to an Anvil node (i.e., `http://localhost:8545
 same pattern, or just explicitly set the RPC URL:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url http://localhost:8545 --broadcast -vv
+forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url http://localhost:8545 --private-key $PRIVATE_KEY --broadcast -vv
 ```
 
 #### Mainnet
@@ -264,13 +264,13 @@ use the following. Note these will enable behavior for the Axelar Interchain Tok
 Deploy to Ethereum:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' ethereum --broadcast -vv --rpc-url https://eth.merkle.io
+forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' ethereum --rpc-url https://eth.merkle.io --private-key $PRIVATE_KEY --broadcast -vv
 ```
 
 And for Filecoin:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' filecoin --broadcast -vv -g 100000 --rpc-url https://api.node.glif.io/rpc/v1
+forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' filecoin --rpc-url https://api.node.glif.io/rpc/v1 --private-key $PRIVATE_KEY --broadcast -vv
 ```
 
 ## Development
@@ -313,10 +313,11 @@ working on `localnet`, you'll have to deploy this yourself. Here's a quick one-l
 setting the `CREDIT` environment variable to the deployed address:
 
 ```
-CREDIT=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/CreditManager.s.sol \
+CREDIT=$(forge script script/CreditManager.s.sol \
 --tc DeployScript \
---sig 'run(string)' local \
+--sig 'run()' \
 --rpc-url localnet_subnet \
+--private-key $PRIVATE_KEY \
 --broadcast -g 100000 \
 | grep "0: contract CreditManager" | awk '{print $NF}')
 ```
@@ -567,12 +568,14 @@ working on `localnet`, you'll have to deploy this yourself. Here's a quick one-l
 setting the `BUCKETS` environment variable to the deployed address:
 
 ```
-BUCKETS=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/BucketManager.s.sol \
+BUCKETS=$(forge script script/BucketManager.s.sol \
 --tc DeployScript \
---sig 'run(string)' local \
+--sig 'run()' \
 --rpc-url localnet_subnet \
---broadcast -g 100000 \
-| grep "0: contract Bucket" | awk '{print $NF}')
+--private-key $PRIVATE_KEY \
+--broadcast \
+-g 100000
+| grep "0: contract BucketManager" | awk '{print $NF}')
 ```
 
 #### Methods
@@ -870,11 +873,13 @@ working on `localnet`, you'll have to deploy this yourself. Here's a quick one-l
 setting the `BLOBS` environment variable to the deployed address:
 
 ```
-BLOBS=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/BlobManager.s.sol \
+BLOBS=$(forge script script/BlobManager.s.sol \
 --tc DeployScript \
---sig 'run(string)' local \
+--sig 'run()' \
 --rpc-url localnet_subnet \
---broadcast -g 100000 \
+--private-key $PRIVATE_KEY \
+--broadcast \
+-g 100000
 | grep "0: contract BlobManager" | awk '{print $NF}')
 ```
 
