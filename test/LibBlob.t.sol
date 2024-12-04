@@ -8,6 +8,7 @@ import {
     Account as CreditAccount,
     AddBlobParams,
     Approvals,
+    BlobStatus,
     BlobTuple,
     SubnetStats,
     Subscriber,
@@ -190,16 +191,43 @@ contract LibBlobTest is Test {
         assertEq(subscription.failed, false);
     }
 
-    function testDecodePendingBlobs() public view {
+    function testDecodeAddedOrPendingBlobs() public view {
+        // Single blob
         bytes memory data =
             hex"8182982018a1189d18c605187b1818188c18bd186718ea1839186618fd188d182c18a2188318f4185a187718d9185c182d18a51861189318ca189818d0187b183c18a7818356040a90f79bf6eb2c4f870365e785982e1f101e93b906a1634b657998201837182f183318e505188d18d7081870184d18d718de18180c185e183318f51857189a18c518b1187518781845184418b718a7183f182b189c18b018be9820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818ae";
-        BlobTuple[] memory blobs = LibBlob.decodePendingBlobs(data);
+        BlobTuple[] memory blobs = LibBlob.decodeAddedOrPendingBlobs(data);
         assertEq(blobs[0].blobHash, "ugo4mbl3dcgl2z7khftp3djmukb7iwtx3foc3jlbspfjrud3hstq");
-        assertEq(blobs[0].sourceInfo.subscriber, 0x90F79bf6EB2c4f870365E785982E1f101E93b906);
+        assertEq(blobs[0].sourceInfo[0].subscriber, 0x90F79bf6EB2c4f870365E785982E1f101E93b906);
         assertEq(
-            bytes(blobs[0].sourceInfo.subscriptionId),
+            bytes(blobs[0].sourceInfo[0].subscriptionId),
             hex"372f33e5058dd708704dd7de180c5e33f5579ac5b175784544b7a73f2b9cb0be"
         );
-        assertEq(blobs[0].sourceInfo.source, "dj46xqiflbnyljn2uv5nbmjb7twj3g2u5mgo72xxtyhwmvarlcxa");
+        assertEq(blobs[0].sourceInfo[0].source, "dj46xqiflbnyljn2uv5nbmjb7twj3g2u5mgo72xxtyhwmvarlcxa");
+
+        // Two different blobs, one of which has multiple subscribers
+        data =
+            hex"828298201618e218f118210318a518b7183d18a818a3186f187618b318b018f01897182318e9051718501879186a18bd183a1118561895186d182c18901896818356040acafeb0ba00000000000000000000000000000000a1634b65798618681865186c186c186f18329820181a181e182118dc18db1874185e18e118c318331018521850189a183d18ce1618b8181e18b2184e1718c518f718bf185618b418df1838184b18a9187d8298201835182918be18d018931887186d185b183718e618a90b18c518a4182918201841187a18f1185e182d188e15186a0418f31838181818e318fc185618ce828356040acafeb0ba00000000000000000000000000000000a1634b65798518681865186c186c186f982018b3188f18be18aa1847041837189218ab186a18c51881183118a3184f18a2183d18441820185818fa18780918471867189a18de1818182a183018d518338356040acafeb0ba000000000000000000000000000000006744656661756c7498201846185a185418ed18bd18b817021823186e18d918e018e218511888187518f2031845182918e11829186e188618271853188718650c188e18bb18b2";
+        blobs = LibBlob.decodeAddedOrPendingBlobs(data);
+        assertEq(blobs[0].blobHash, "c3rpciiduw3t3kfdn53lhmhqs4r6sbixkb4wvpj2cfljk3jmscla");
+        assertEq(blobs[0].sourceInfo[0].subscriber, 0xCafeB0ba00000000000000000000000000000000);
+        assertEq(bytes(blobs[0].sourceInfo[0].subscriptionId), bytes("hello2"));
+        assertEq(blobs[0].sourceInfo[0].source, "dipcdxg3orpodqztcbjfbgr5zyllqhvsjyl4l557k22n6oclvf6q");
+
+        assertEq(blobs[1].blobHash, "guu35uetq5wvwn7gvef4ljbjebaxv4k6fwhbk2qe6m4bry74k3ha");
+        assertEq(blobs[1].sourceInfo[0].subscriber, 0xCafeB0ba00000000000000000000000000000000);
+        assertEq(bytes(blobs[1].sourceInfo[0].subscriptionId), bytes("hello"));
+        assertEq(blobs[1].sourceInfo[0].source, "woh35kshaq3zfk3kywatdi2pui6uiicy7j4asr3htlpbqkrq2uzq");
+
+        assertEq(blobs[1].blobHash, "guu35uetq5wvwn7gvef4ljbjebaxv4k6fwhbk2qe6m4bry74k3ha");
+        assertEq(blobs[1].sourceInfo[1].subscriber, 0xCafeB0ba00000000000000000000000000000000);
+        assertEq(bytes(blobs[1].sourceInfo[1].subscriptionId), bytes("Default"));
+        assertEq(blobs[1].sourceInfo[1].source, "iznfj3n5xalqei3o3hqoeumioxzagrjj4euw5brhkodwkdeoxoza");
+    }
+
+    function testDecodeBlobStatus() public view {
+        bytes memory status = hex"685265736F6C766564"; // Resolved
+        bytes memory decoded = LibWasm.decodeCborStringToBytes(status);
+        BlobStatus decodedStatus = LibBlob.decodeBlobStatus(decoded);
+        assertEq(uint256(decodedStatus), uint256(BlobStatus.Resolved));
     }
 }

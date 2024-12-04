@@ -39,12 +39,13 @@ library LibBlob {
     uint64 internal constant METHOD_REVOKE_CREDIT = 37550845;
     // Blob methods
     uint64 internal constant METHOD_ADD_BLOB = 913855558;
+    uint64 internal constant METHOD_DELETE_BLOB = 4230608948;
     uint64 internal constant METHOD_GET_BLOB = 1739171512;
+    uint64 internal constant METHOD_GET_ADDED_BLOBS = 2462124090;
     uint64 internal constant METHOD_GET_BLOB_STATUS = 3505892271;
     uint64 internal constant METHOD_GET_PENDING_BLOBS = 799531123;
     uint64 internal constant METHOD_GET_PENDING_BLOBS_COUNT = 1694235671;
     uint64 internal constant METHOD_GET_PENDING_BYTES_COUNT = 3795566289;
-    uint64 internal constant METHOD_DELETE_BLOB = 4230608948;
 
     /// @dev Helper function to decode the subnet stats from CBOR to solidity.
     /// @param data The encoded CBOR array of stats.
@@ -109,14 +110,16 @@ library LibBlob {
     }
 
     /// @dev Convert a string to a blob status.
-    /// @param status The string representation of the blob status, either "Resolved", "Pending" or "Failed".
+    /// @param status The string representation of the blob status, either "Added", "Pending", "Resolved", or "Failed".
     /// @return status The blob status.
     function decodeBlobStatus(bytes memory status) internal pure returns (BlobStatus) {
         bytes32 statusBytes = keccak256(status);
-        if (statusBytes == keccak256(bytes("Resolved"))) {
-            return BlobStatus.Resolved;
+        if (statusBytes == keccak256(bytes("Added"))) {
+            return BlobStatus.Added;
         } else if (statusBytes == keccak256(bytes("Pending"))) {
             return BlobStatus.Pending;
+        } else if (statusBytes == keccak256(bytes("Resolved"))) {
+            return BlobStatus.Resolved;
         } else {
             return BlobStatus.Failed;
         }
@@ -205,18 +208,22 @@ library LibBlob {
     /// @dev Decode a blob source info from CBOR.
     /// @param data The encoded CBOR array of a blob source info.
     /// @return sourceInfo The decoded blob source info.
-    function decodeBlobSourceInfo(bytes memory data) internal view returns (BlobSourceInfo memory sourceInfo) {
-        bytes[] memory decodedOuter = data.decodeCborArrayToBytes();
-        bytes[] memory decodedInner = decodedOuter[0].decodeCborArrayToBytes();
-        sourceInfo.subscriber = decodedInner[0].decodeCborAddress();
-        sourceInfo.subscriptionId = decodeSubscriptionId(decodedInner[1]);
-        sourceInfo.source = string(decodedInner[2].decodeCborBlobHashOrNodeId());
+    function decodeBlobSourceInfo(bytes memory data) internal view returns (BlobSourceInfo[] memory sourceInfo) {
+        bytes[] memory decoded = data.decodeCborArrayToBytes();
+        if (decoded.length == 0) return sourceInfo;
+        sourceInfo = new BlobSourceInfo[](decoded.length);
+        for (uint256 i = 0; i < decoded.length; i++) {
+            bytes[] memory decodedInner = decoded[i].decodeCborArrayToBytes();
+            sourceInfo[i].subscriber = decodedInner[0].decodeCborAddress();
+            sourceInfo[i].subscriptionId = decodeSubscriptionId(decodedInner[1]);
+            sourceInfo[i].source = string(decodedInner[2].decodeCborBlobHashOrNodeId());
+        }
     }
 
     /// @dev Decode pending blobs from CBOR.
     /// @param data The encoded CBOR array of pending blobs.
     /// @return blobs The decoded pending blobs.
-    function decodePendingBlobs(bytes memory data) internal view returns (BlobTuple[] memory blobs) {
+    function decodeAddedOrPendingBlobs(bytes memory data) internal view returns (BlobTuple[] memory blobs) {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return blobs;
         blobs = new BlobTuple[](decoded.length);
@@ -282,7 +289,7 @@ library LibBlob {
             // Encoded as the raw string "Default"
             return "Default".encodeCborString();
         } else {
-            // Encoded as a 1 value mapping with `Key` key and an encoded bytes array of the subscription ID
+            // Encoded as a 1 value mapping with `Key` key and value of the subscription ID as bytes
             bytes[] memory encoded = new bytes[](3);
             encoded[0] = hex"a1";
             encoded[1] = "Key".encodeCborString();
@@ -419,16 +426,26 @@ library LibBlob {
         encoded[2] = encodeSubscriptionId(subscriptionId);
         bytes memory params = encoded.encodeCborArray();
         bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_BLOB_STATUS, params);
-        return decodeBlobStatus(data);
+        bytes memory decoded = data.decodeCborStringToBytes();
+        return decodeBlobStatus(decoded);
+    }
+
+    /// @dev Get added blobs.
+    /// @param size Maximum number of added blobs to return.
+    /// @return blobs The added blobs.
+    function getAddedBlobs(uint32 size) external view returns (BlobTuple[] memory blobs) {
+        bytes memory params = size.encodeCborUint64();
+        bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_ADDED_BLOBS, params);
+        return decodeAddedOrPendingBlobs(data);
     }
 
     /// @dev Get pending blobs.
-    /// @param size The size of the blobs to get.
+    /// @param size Maximum number of added blobs to return.
     /// @return blobs The pending blobs.
     function getPendingBlobs(uint32 size) external view returns (BlobTuple[] memory blobs) {
         bytes memory params = size.encodeCborUint64();
         bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_PENDING_BLOBS, params);
-        return decodePendingBlobs(data);
+        return decodeAddedOrPendingBlobs(data);
     }
 
     /// @dev Get the number of pending blobs.

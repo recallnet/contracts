@@ -9,8 +9,8 @@ import {InvalidValue, KeyValue, LibWasm} from "../src/util/LibWasm.sol";
 
 contract LibWasmTest is Test {
     function testDecodeCborArray() public view {
-        bytes[] memory array_null = LibWasm.decodeCborArrayToBytes(hex"f6");
-        assertEq(array_null.length, 0);
+        bytes[] memory arrayNull = LibWasm.decodeCborArrayToBytes(hex"f6");
+        assertEq(arrayNull.length, 0);
 
         bytes[] memory array =
             LibWasm.decodeCborArrayToBytes(hex"85820181068201821a44c08d341a456391828201811936ba1a000af53da0");
@@ -24,8 +24,8 @@ contract LibWasmTest is Test {
 
     function testDecodeCborBigInt() public pure {
         // Zero, empty array, or null
-        require(LibWasm.decodeCborBigIntToUint256(hex"820080") == 0, "it should be zero for empty array");
-        require(LibWasm.decodeCborBigIntToUint256(hex"82008100") == 0, "it should be zero for array with zero");
+        require(LibWasm.decodeCborBigIntToUint256(hex"820080") == 0, "it should be zero for empty");
+        require(LibWasm.decodeCborBigIntToUint256(hex"82008100") == 0, "it should be zero for zero array");
         // Handles the case where WASM returns a null string for a BigInt
         require(
             LibWasm.decodeCborBigIntToUint256(hex"f6") == 0, "it should be zero if bigint serialized as null string"

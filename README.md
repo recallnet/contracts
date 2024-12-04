@@ -17,7 +17,7 @@
     - [Devnet](#devnet)
     - [Mainnet](#mainnet)
 - [Development](#development)
-- [Scripts](#scripts)
+  - [Scripts](#scripts)
   - [Examples usage](#examples-usage)
   - [Credit contract](#credit-contract)
     - [Methods](#methods)
@@ -275,7 +275,7 @@ PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol:DeployScript --sig 'run(strin
 
 ## Development
 
-## Scripts
+### Scripts
 
 Deployment scripts are described above. Additional `pnpm` scripts are available in `package.json`:
 
@@ -328,8 +328,8 @@ Note that overloads are available for some methods, primarily, where the underly
 accepts "optional" arguments. All of the method parameters and return types can be found in
 `util/CreditTypes.sol`.
 
-- `getCreditStats()`: Get credit stats.
 - `getAccount(address)`: Get credit account info for an address.
+- `getCreditStats()`: Get credit stats.
 - `getCreditBalance(address)`: Get credit balance for an address.
 - `buyCredit()`: Buy credit for the `msg.sender`.
 - `buyCredit(address)`: Buy credit for the given address.
@@ -377,39 +377,12 @@ address we'll be approving and revoking credit for. For example:
 export RECEIVER_ADDR=0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
 ```
 
-##### Get credit stats
-
-We can fetch the overall credit stats for the subnet with the following command:
-
-```sh
-cast abi-decode "getCreditStats()((uint256,uint256,uint256,uint256,uint64,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getCreditStats()")
-```
-
-This will return the following values:
-
-```
-(50000000000000000000000 [5e22], 50000000000000000000000 [5e22], 0, 0, 1, 10)
-```
-
-Which maps to the `CreditStats` struct:
-
-```solidity
-struct CreditStats {
-    uint256 balance; // 50000000000000000000000
-    uint256 creditSold; // 50000000000000000000000
-    uint256 creditCommitted; // 0
-    uint256 creditDebited; // 0
-    uint64 creditDebitRate; // 1
-    uint64 numAccounts; // 10
-}
-```
-
-##### Get credit account info
+##### Get account info
 
 We can get the credit account info for the address at `EVM_ADDRESS` (the variable we set above), or
 you could provide any account's EVM public key that exists in the subnet.
 
-```solidity
+```sh
 cast abi-decode "getAccount(address)((uint256,uint256,uint256,uint64,(address,(address,(uint256,uint256,uint64))[])[]))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)
 ```
 
@@ -455,6 +428,33 @@ struct CreditApproval {
 Due to intricacies with optional arguments in WASM being used in Solidity, you can interpret zero
 values as null values in the structs above. That is, the example address has no restrictions on the
 `limit` or `expiry` with using the delegated/approved credit from the owner's account.
+
+##### Get credit stats
+
+We can fetch the overall credit stats for the subnet with the following command:
+
+```sh
+cast abi-decode "getCreditStats()((uint256,uint256,uint256,uint256,uint64,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getCreditStats()")
+```
+
+This will return the following values:
+
+```
+(50000000000000000000000 [5e22], 50000000000000000000000 [5e22], 0, 0, 1, 10)
+```
+
+Which maps to the `CreditStats` struct:
+
+```solidity
+struct CreditStats {
+    uint256 balance; // 50000000000000000000000
+    uint256 creditSold; // 50000000000000000000000
+    uint256 creditCommitted; // 0
+    uint256 creditDebited; // 0
+    uint64 creditDebitRate; // 1
+    uint64 numAccounts; // 10
+}
+```
 
 ##### Get credit balance for an account
 
@@ -750,7 +750,7 @@ curl http://localhost:8001/v1/node | jq '.node_id'
 ```
 
 Or on testnet, you'd replace the URL with public bucket API endpoint
-`https://object-api.n1.hoku.sh`.
+`https://object-api-ignition-0.hoku.sh`.
 
 ##### Delete an object
 
@@ -758,7 +758,7 @@ Similar to [getting an object](#get-an-object), you can delete an object with th
 specifying the bucket and key for the mutating transaction:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "deleteObject((string,string)" $BUCKET_ADDR "hello/world" --private-key $PRIVATE_KEY
+cast send --rpc-url $EVM_RPC_URL $BUCKETS "deleteObject(string,string)" $BUCKET_ADDR "hello/world" --private-key $PRIVATE_KEY
 ```
 
 ##### Get an object
@@ -926,7 +926,7 @@ In the example below, we've already staged this data offchain and are using the 
 - `size`: The size of the data in bytes (e.g., `6`, which is the number of bytes in the `hello`
   string).
 - `ttl`: Blob time-to-live epochs. If specified as `0`, the auto-debitor maintains about one hour of
-  credits as an ongoing committment.
+  credits as an ongoing commitment.
 
 This all gets passed as a single `AddBlobParams` struct to the `addBlob` method:
 
@@ -945,8 +945,11 @@ struct AddBlobParams {
 We then pass this as a single parameter to the `add` method:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $BLOBS "addBlob((address,string,string,string,string,uint64,uint64))" '(0x0000000000000000000000000000000000000000,"iw3iqgwajbfxlbgovlqdqhbtola3g4nevdvosqqvtovjvzwub3sa","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","","",6,0)' --private-key $PRIVATE_KEY
+cast send --rpc-url $EVM_RPC_URL $BLOBS "addBlob((address,string,string,string,string,uint64,uint64))" '(0x0000000000000000000000000000000000000000,"cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","","",6,0)' --private-key $PRIVATE_KEY
 ```
+
+To include a custom subscription ID, you would replace the empty string (which indicates `Default`)
+in the call above, like so: `(...,"rzgh...","","my_custom_id",6,0)`.
 
 If you're wondering where to get the `source` storage bucket's node ID (the example's
 `cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq`), you can find it with a `curl` request. On
@@ -957,7 +960,7 @@ curl http://localhost:8001/v1/node | jq '.node_id'
 ```
 
 Or on testnet, you'd replace the URL with public bucket API endpoint
-`https://object-api.n1.hoku.sh`.
+`https://object-api-ignition-0.hoku.sh`.
 
 ###### Delete a blob
 
@@ -974,13 +977,13 @@ This will emit a `DeleteBlob` event and delete the blob from the network.
 ##### Get a blob
 
 ```sh
-cast abi-decode "getBlob(string)((uint64,string,(address,(string,bytes)[])[],uint8))" $(cast call --rpc-url $EVM_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
+cast abi-decode "getBlob(string)((uint64,string,(address,(string,(uint64,uint64,bool,string,(address,address),bool))[])[],uint8))" $(cast call --rpc-url $EVM_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
 ```
 
 This will return the following response:
 
 ```sh
-(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, [("foo", 0x861904...)])], 1)
+(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, [("foo", (5279, 8879, true, "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq", (0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000), false))])], 2)
 ```
 
 Which maps to the `Blob` struct:
@@ -988,26 +991,41 @@ Which maps to the `Blob` struct:
 ```solidity
 struct Blob {
     uint64 size; // 6
-    string metadataHash; // utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq
-    Subscribers subscribers; // See `Subscribers` struct below
-    BlobStatus status; // 1 (Resolved)
+    string metadataHash; // "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq"
+    Subscriber[] subscribers; // See `Subscriber` struct below
+    BlobStatus status; // 2 (Resolved)
 }
 
-struct Subscribers {
+struct Subscriber {
     address subscriber; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
     SubscriptionGroup[] subscriptionGroup; // See `SubscriptionGroup` struct below
 }
 
 struct SubscriptionGroup {
     string subscriptionId; // "foo"
-    bytes subscription; // 0x861904...
+    Subscription subscription; // See `Subscription` struct below
+}
+
+struct Subscription {
+    uint64 added; // 5279
+    uint64 expiry; // 8879
+    bool autoRenew; // true
+    string source; // "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq"
+    Delegate delegate; // See `Delegate` struct below
+    bool failed; // false
+}
+
+struct Delegate {
+    address origin; // Null value (0x0000000000000000000000000000000000000000)
+    address caller; // Null value (0x0000000000000000000000000000000000000000)
 }
 ```
 
 ##### Get blob status
 
-- Pass an address as the first field to represent the sponsor, or pass `address(0)` to indicate a
-  null value.
+TODO: this always returns failed
+
+- Pass an address as the first field to represent the origin address that requested the blob.
 - Provide the `blobHash` blake3 value.
 - Also give the `subscriptionId`, which uses the default empty value if you provide an empty string
   `""`, or it can take the string that matches the blob's `subscriptionId` upon creation.
@@ -1016,33 +1034,76 @@ struct SubscriptionGroup {
 cast abi-decode "getBlobStatus(address,string,string)(uint8)" $(cast call --rpc-url $EVM_RPC_URL $BLOBS "getBlobStatus(address,string,string)" $EVM_ADDRESS "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" "")
 ```
 
-This will return the following response (either a `0` for `Pending`, `1` for `Resolved`, or `2` for
-`Failed`):
+This will return the following response (either a `0` for `Added`, `1` for `Pending`, `2` for
+`Resolved`, or `3` for `Failed`):
 
 ```sh
-1
+2
 ```
 
 Which maps to the `BlobStatus` enum:
 
 ```solidity
 enum BlobStatus {
-    Pending, // 0
-    Resolved, // 1
-    Failed // 2
+    Added, // 0
+    Pending, // 1
+    Resolved, // 2 -- the value above
+    Failed // 3
+}
+```
+
+##### Get added blobs
+
+```sh
+cast abi-decode "getAddedBlobs(uint32)((string,(address,string,string)[])[])" $(cast call --rpc-url $EVM_RPC_URL $BLOBS "getAddedBlobs(uint32)" 1)
+```
+
+This returns the values of added blobs, up to the `size` passed as the parameter:
+
+```sh
+[("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, "Default", "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq")])]
+```
+
+Which maps to an array of the `BlobTuple` struct:
+
+```solidity
+struct BlobTuple {
+    string blobHash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
+    BlobSourceInfo[] sourceInfo; // See `Subscriber` struct below
+}
+
+struct BlobSourceInfo {
+    address subscriber; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
+    string subscriptionId; // "Default"
+    string source; // "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq"
 }
 ```
 
 ##### Get pending blobs
 
 ```sh
-cast call --rpc-url $EVM_RPC_URL $BLOBS "getPendingBlobs(uint32)" 1
+cast abi-decode "getPendingBlobs(uint32)((string,(address,string,string)[])[])" $(cast call --rpc-url $EVM_RPC_URL $BLOBS "getPendingBlobs(uint32)" 1)
 ```
 
 This returns the values of pending blobs, up to the `size` passed as the parameter:
 
 ```sh
+[("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, "Default", "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq")])]
+```
 
+Which maps to an array of the `BlobTuple` struct:
+
+```solidity
+struct BlobTuple {
+    string blobHash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
+    BlobSourceInfo[] sourceInfo; // See `Subscriber` struct below
+}
+
+struct BlobSourceInfo {
+    address subscriber; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
+    string subscriptionId; // "Default"
+    string source; // "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq"
+}
 ```
 
 ##### Get pending blobs count

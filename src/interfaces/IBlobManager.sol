@@ -28,6 +28,11 @@ interface IBlobManager {
         view
         returns (BlobStatus status);
 
+    /// @dev Get a list of added blobs.
+    /// @param size Maximum number of added blobs to return.
+    /// @return blobs List of added blobs.
+    function getAddedBlobs(uint32 size) external view returns (BlobTuple[] memory blobs);
+
     /// @dev Get a list of pending blobs.
     /// @param size Maximum number of pending blobs to return.
     /// @return blobs List of pending blobs.

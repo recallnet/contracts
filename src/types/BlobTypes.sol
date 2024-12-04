@@ -143,10 +143,12 @@ struct Blob {
 }
 
 /// @dev Status of a blob in the system.
+/// @param Added Blob was added to the network.
 /// @param Pending Blob is pending resolve.
 /// @param Resolved Blob was successfully resolved.
 /// @param Failed Blob resolution failed.
 enum BlobStatus {
+    Added,
     Pending,
     Resolved,
     Failed
@@ -161,7 +163,6 @@ struct Subscriber {
 }
 
 /// @dev Pending subscription information.
-/// @param subscriber (address): The subscriber address.
 /// @param subscriptionId (string): The subscription ID.
 /// @param publicKey (bytes): The public key.
 struct SubscriptionGroup {
@@ -203,7 +204,7 @@ struct Delegate {
 /// @param sourceInfo (BlobSourceInfo[]): The source information for the blob.
 struct BlobTuple {
     string blobHash;
-    BlobSourceInfo sourceInfo;
+    BlobSourceInfo[] sourceInfo;
 }
 
 /// @dev Source information for a blob.
