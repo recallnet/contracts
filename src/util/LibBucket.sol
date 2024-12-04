@@ -21,11 +21,11 @@ library LibBucket {
 
     // Constants for the actor and method IDs of the Hoku ADM actor
     uint64 internal constant ADM_ACTOR_ID = 17;
+    // Methods that don't interact with an instance of a Bucket contract
     uint64 internal constant METHOD_CREATE_EXTERNAL = 1214262202;
     uint64 internal constant METHOD_UPDATE_DEPLOYERS = 1768606754;
     uint64 internal constant METHOD_LIST_METADATA = 2283215593;
-
-    // Methods for instances Bucket contracts
+    // Methods for instances of Bucket contracts
     uint64 internal constant METHOD_GET_METADATA = 4024736952;
     uint64 internal constant METHOD_ADD_OBJECT = 3518119203;
     uint64 internal constant METHOD_DELETE_OBJECT = 4237275016;

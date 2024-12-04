@@ -13,6 +13,11 @@ interface IBlobManager {
     /// @dev Emitted when a blob is deleted.
     event DeleteBlob(address indexed caller, address indexed subscriber, string blobHash, string subscriptionId);
 
+    /// @dev Get a list of added blobs.
+    /// @param size Maximum number of added blobs to return.
+    /// @return blobs List of added blobs.
+    function getAddedBlobs(uint32 size) external view returns (BlobTuple[] memory blobs);
+
     /// @dev Get information about a specific blob.
     /// @param blobHash Blob blake3 hash.
     /// @return blob Information, including its hash, size, metadata hash, subscribers and status.
@@ -27,11 +32,6 @@ interface IBlobManager {
         external
         view
         returns (BlobStatus status);
-
-    /// @dev Get a list of added blobs.
-    /// @param size Maximum number of added blobs to return.
-    /// @return blobs List of added blobs.
-    function getAddedBlobs(uint32 size) external view returns (BlobTuple[] memory blobs);
 
     /// @dev Get a list of pending blobs.
     /// @param size Maximum number of pending blobs to return.
@@ -51,13 +51,13 @@ interface IBlobManager {
     /// @return usage The storage usage showing total size of all blobs managed by the account.
     function getStorageUsage(address addr) external view returns (uint256);
 
-    /// @dev Get the subnet stats.
-    /// @return stats The subnet stats including balance, capacity, credit metrics and counts.
-    function getSubnetStats() external view returns (SubnetStats memory stats);
-
     /// @dev Get the storage stats for the subnet.
     /// @return stats The storage stats including capacity and blob counts.
     function getStorageStats() external view returns (StorageStats memory stats);
+
+    /// @dev Get the subnet stats.
+    /// @return stats The subnet stats including balance, capacity, credit metrics and counts.
+    function getSubnetStats() external view returns (SubnetStats memory stats);
 
     /// @dev Add a new blob to storage.
     /// @param params Parameters for adding the blob including sponsor, source, hashes, size and TTL.

@@ -8,7 +8,7 @@ import {console2 as console} from "forge-std/console2.sol";
 import {BucketManager} from "../src/BucketManager.sol";
 
 contract DeployScript is Script {
-    string constant PRIVATE_KEY = "PRIVATE_KEY";
+    string private constant PRIVATE_KEY = "PRIVATE_KEY";
 
     function setUp() public {}
 

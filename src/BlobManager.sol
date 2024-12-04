@@ -6,6 +6,11 @@ import {AddBlobParams, Blob, BlobStatus, BlobTuple, StorageStats, SubnetStats} f
 import {LibBlob} from "./util/LibBlob.sol";
 
 contract BlobManager is IBlobManager {
+    /// @dev See {IBlobManager-getAddedBlobs}.
+    function getAddedBlobs(uint32 size) external view returns (BlobTuple[] memory blobs) {
+        return LibBlob.getPendingBlobs(size);
+    }
+
     /// @dev See {IBlobManager-getBlob}.
     function getBlob(string memory blobHash) external view returns (Blob memory blob) {
         return LibBlob.getBlob(blobHash);
@@ -18,11 +23,6 @@ contract BlobManager is IBlobManager {
         returns (BlobStatus status)
     {
         return LibBlob.getBlobStatus(subscriber, blobHash, subscriptionId);
-    }
-
-    /// @dev See {IBlobManager-getAddedBlobs}.
-    function getAddedBlobs(uint32 size) external view returns (BlobTuple[] memory blobs) {
-        return LibBlob.getPendingBlobs(size);
     }
 
     /// @dev See {IBlobManager-getPendingBlobs}.
@@ -45,14 +45,14 @@ contract BlobManager is IBlobManager {
         return LibBlob.getStorageUsage(addr);
     }
 
-    /// @dev See {IBlobManager-getSubnetStats}.
-    function getSubnetStats() external view returns (SubnetStats memory stats) {
-        return LibBlob.getSubnetStats();
-    }
-
     /// @dev See {IBlobManager-getStorageStats}.
     function getStorageStats() external view returns (StorageStats memory stats) {
         return LibBlob.getStorageStats();
+    }
+
+    /// @dev See {IBlobManager-getSubnetStats}.
+    function getSubnetStats() external view returns (SubnetStats memory stats) {
+        return LibBlob.getSubnetStats();
     }
 
     /// @dev See {IBlobManager-addBlob}.
