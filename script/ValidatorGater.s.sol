@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
+// solhint-disable-next-line one-contract-per-file
 pragma solidity ^0.8.26;
 
 import {ValidatorGater} from "../src/ValidatorGater.sol";
@@ -9,24 +10,14 @@ import {Options, Upgrades} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
 import {Script, console2} from "forge-std/Script.sol";
 
 contract DeployScript is Script {
-    string constant PRIVATE_KEY = "PRIVATE_KEY";
     address public proxyAddress;
-
-    function setUp() public {}
 
     function proxy() public view returns (address) {
         return proxyAddress;
     }
 
-    function run(string memory network) public returns (ValidatorGater) {
-        if (vm.envExists(PRIVATE_KEY)) {
-            uint256 privateKey = vm.envUint(PRIVATE_KEY);
-            vm.startBroadcast(privateKey);
-        } else if (Strings.equal(network, "local")) {
-            vm.startBroadcast();
-        } else {
-            revert("PRIVATE_KEY not set in non-local environment");
-        }
+    function run() public returns (ValidatorGater) {
+        vm.startBroadcast();
 
         proxyAddress = Upgrades.deployUUPSProxy("ValidatorGater.sol", abi.encodeCall(ValidatorGater.initialize, ()));
         vm.stopBroadcast();
@@ -41,8 +32,6 @@ contract DeployScript is Script {
 }
 
 contract UpgradeGaterProxyScript is Script {
-    function setUp() public {}
-
     function run() public {
         // Get proxy owner account
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
@@ -66,6 +55,7 @@ contract UpgradeGaterProxyScript is Script {
         address implNew = Upgrades.getImplementationAddress(proxy);
         console2.log("Implementation address: ", implNew);
 
-        require(implOld != implNew, "Implementation address not changed");
+        // solhint-disable-next-line custom-errors
+        require(implOld != implNew, "Implementation address unchanged");
     }
 }

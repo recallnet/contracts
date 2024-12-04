@@ -11,12 +11,12 @@ import {Hoku} from "../src/Hoku.sol";
 contract HokuTest is Test {
     Hoku internal token;
     address internal user;
-    uint256 constant mintAmount = 1000 * 10 ** 18;
-    address constant tester = address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
+    uint256 internal constant MINT_AMOUNT = 1000 * 10 ** 18;
+    address internal constant TESTER = address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
 
     // Update these constants
-    string constant destinationChain = "Ethereum";
-    bytes constant destinationAddress = abi.encodePacked(address(0x789));
+    string internal constant DESTINATION_CHAIN = "Ethereum";
+    bytes internal constant DESTINATION_ADDRESS = abi.encodePacked(address(0x789));
 
     function setUp() public {
         DeployScript deployer = new DeployScript();
@@ -26,31 +26,31 @@ contract HokuTest is Test {
     }
 
     function testMinting() public {
-        vm.prank(tester);
-        token.mint(user, mintAmount);
+        vm.prank(TESTER);
+        token.mint(user, MINT_AMOUNT);
 
-        assertEq(token.balanceOf(user), mintAmount);
+        assertEq(token.balanceOf(user), MINT_AMOUNT);
     }
 
     function testOnlyOwnerCanMint() public {
         // deployer mints to user
-        vm.prank(tester);
-        token.mint(user, mintAmount);
+        vm.prank(TESTER);
+        token.mint(user, MINT_AMOUNT);
 
-        assertEq(token.balanceOf(user), mintAmount);
+        assertEq(token.balanceOf(user), MINT_AMOUNT);
     }
 
     function testImpersonatorCannotMint() public {
         vm.prank(user); // Impersonate the user
         vm.expectRevert();
-        token.mint(user, mintAmount);
+        token.mint(user, MINT_AMOUNT);
     }
 
     function testPausableTransfer() public {
-        vm.prank(tester);
-        token.mint(user, mintAmount);
+        vm.prank(TESTER);
+        token.mint(user, MINT_AMOUNT);
 
-        vm.prank(tester);
+        vm.prank(TESTER);
         token.pause();
 
         vm.prank(user);
@@ -59,13 +59,13 @@ contract HokuTest is Test {
     }
 
     function testPausableTransferFrom() public {
-        vm.prank(tester);
-        token.mint(user, mintAmount);
+        vm.prank(TESTER);
+        token.mint(user, MINT_AMOUNT);
 
         vm.prank(user);
-        token.approve(address(this), mintAmount);
+        token.approve(address(this), MINT_AMOUNT);
 
-        vm.prank(tester);
+        vm.prank(TESTER);
         token.pause();
 
         vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
@@ -73,7 +73,7 @@ contract HokuTest is Test {
     }
 
     function testPausableApprove() public {
-        vm.prank(tester);
+        vm.prank(TESTER);
         token.pause();
 
         vm.prank(user);
@@ -82,10 +82,10 @@ contract HokuTest is Test {
     }
 
     function testPausableBurn() public {
-        vm.prank(tester);
-        token.mint(user, mintAmount);
+        vm.prank(TESTER);
+        token.mint(user, MINT_AMOUNT);
 
-        vm.prank(tester);
+        vm.prank(TESTER);
         token.pause();
 
         vm.prank(user);
@@ -94,13 +94,13 @@ contract HokuTest is Test {
     }
 
     function testPausableBurnFrom() public {
-        vm.prank(tester);
-        token.mint(user, mintAmount);
+        vm.prank(TESTER);
+        token.mint(user, MINT_AMOUNT);
 
         vm.prank(user);
-        token.approve(address(this), mintAmount);
+        token.approve(address(this), MINT_AMOUNT);
 
-        vm.prank(tester);
+        vm.prank(TESTER);
         token.pause();
 
         vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
@@ -108,50 +108,50 @@ contract HokuTest is Test {
     }
 
     function testPausableMint() public {
-        vm.prank(tester);
+        vm.prank(TESTER);
         token.pause();
 
-        vm.prank(tester);
+        vm.prank(TESTER);
         vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
-        token.mint(user, mintAmount);
+        token.mint(user, MINT_AMOUNT);
     }
 
     function testPausableInterchainTransfer() public {
-        vm.prank(tester);
-        token.mint(user, mintAmount);
+        vm.prank(TESTER);
+        token.mint(user, MINT_AMOUNT);
 
-        vm.prank(tester);
+        vm.prank(TESTER);
         token.pause();
 
         vm.prank(user);
         vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
-        token.interchainTransfer(destinationChain, destinationAddress, 100, "");
+        token.interchainTransfer(DESTINATION_CHAIN, DESTINATION_ADDRESS, 100, "");
     }
 
     function testPausableInterchainTransferFrom() public {
-        vm.prank(tester);
-        token.mint(user, mintAmount);
+        vm.prank(TESTER);
+        token.mint(user, MINT_AMOUNT);
 
         vm.prank(user);
-        token.approve(address(this), mintAmount);
+        token.approve(address(this), MINT_AMOUNT);
 
-        vm.prank(tester);
+        vm.prank(TESTER);
         token.pause();
 
         vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
-        token.interchainTransferFrom(user, destinationChain, destinationAddress, 100, "");
+        token.interchainTransferFrom(user, DESTINATION_CHAIN, DESTINATION_ADDRESS, 100, "");
     }
 
     function testUnpauseAllowsFunctions() public {
-        vm.prank(tester);
+        vm.prank(TESTER);
         token.pause();
 
-        vm.prank(tester);
+        vm.prank(TESTER);
         token.unpause();
 
         // Test that functions work after unpausing
-        vm.prank(tester);
-        token.mint(user, mintAmount);
+        vm.prank(TESTER);
+        token.mint(user, MINT_AMOUNT);
 
         vm.prank(user);
         token.transfer(address(0x456), 100);

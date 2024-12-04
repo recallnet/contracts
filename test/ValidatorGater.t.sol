@@ -7,26 +7,26 @@ import {InvalidSubnet, NotAuthorized, ValidatorPowerChangeDenied} from "../src/e
 import {SubnetIDHelper} from "../src/lib/SubnetIDHelper.sol";
 
 import {SubnetActorManagerFacetMock} from "./mocks/SubnetActorManagerFacetMock.sol";
-import "forge-std/Test.sol";
-import "forge-std/console.sol";
+import {Test} from "forge-std/Test.sol";
+import {console2 as console} from "forge-std/console2.sol";
 
 contract ValidatorGaterTest is Test {
     using SubnetIDHelper for SubnetID;
 
     ValidatorGater internal gater;
-    SubnetID subnet;
-    address owner = address(1);
-    address validator1 = address(2);
-    address validator2 = address(3);
-    uint64 private constant ROOTNET_CHAINID = 123;
-    SubnetID ROOT_SUBNET_ID = SubnetID(ROOTNET_CHAINID, new address[](0));
-    address constant SUBNET_ROUTE = address(101);
+    SubnetID internal subnet;
+    address internal owner = address(1);
+    address internal validator1 = address(2);
+    address internal validator2 = address(3);
+    uint64 internal constant ROOTNET_CHAINID = 123;
+    SubnetID internal rootSubnetId = SubnetID(ROOTNET_CHAINID, new address[](0));
+    address internal constant SUBNET_ROUTE = address(101);
 
     function setUp() public {
         DeployScript deployer = new DeployScript();
-        gater = deployer.run("local");
+        gater = deployer.run();
 
-        subnet = ROOT_SUBNET_ID.createSubnetId(SUBNET_ROUTE);
+        subnet = rootSubnetId.createSubnetId(SUBNET_ROUTE);
         owner = gater.owner();
         //  Set a subnet
         vm.startPrank(owner);
@@ -104,7 +104,7 @@ contract ValidatorGaterTest is Test {
         gater.interceptPowerDelta(subnet, validator1, 0, 5); // out of range
 
         // Test invalid subnet
-        SubnetID memory wrongSubnet = subnet = ROOT_SUBNET_ID.createSubnetId(address(this));
+        SubnetID memory wrongSubnet = subnet = rootSubnetId.createSubnetId(address(this));
         vm.expectRevert(InvalidSubnet.selector);
         gater.interceptPowerDelta(wrongSubnet, validator1, 0, 50);
         vm.stopPrank();
@@ -139,8 +139,8 @@ contract ValidatorGaterTest is Test {
         SubnetActorManagerFacetMock sa = new SubnetActorManagerFacetMock();
 
         sa.setValidatorGater(address(gater));
-        SubnetID memory saSubnet = ROOT_SUBNET_ID.createSubnetId(address(sa));
-        sa.setParentId(ROOT_SUBNET_ID);
+        SubnetID memory saSubnet = rootSubnetId.createSubnetId(address(sa));
+        sa.setParentId(rootSubnetId);
 
         vm.startPrank(owner);
         gater.setSubnet(saSubnet);

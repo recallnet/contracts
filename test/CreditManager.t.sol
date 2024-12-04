@@ -14,6 +14,6 @@ contract CreditTest is Test, CreditManager {
 
     function setUp() public virtual {
         CreditDeployer creditDeployer = new CreditDeployer();
-        credit = creditDeployer.run("local");
+        credit = creditDeployer.run();
     }
 }
