@@ -191,7 +191,7 @@ forge script script/BucketManager.s.sol --tc DeployScript --sig 'run()' --rpc-ur
 Deploy the Blob Manager contract to the localnet subnet:
 
 ```shell
-forge script script/BlobManager.s.sol --tc DeployScript --sig 'run()' --rpc-url testnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
+forge script script/BlobManager.s.sol --tc DeployScript --sig 'run()' --rpc-url localnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 #### Testnet
