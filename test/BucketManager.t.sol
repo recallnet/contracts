@@ -14,6 +14,6 @@ contract BucketManagerTest is Test, BucketManager {
 
     function setUp() public virtual {
         BucketManagerDeployer bucketManagerDeployer = new BucketManagerDeployer();
-        bucketManager = bucketManagerDeployer.run("local");
+        bucketManager = bucketManagerDeployer.run();
     }
 }

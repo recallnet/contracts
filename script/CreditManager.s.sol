@@ -8,19 +8,8 @@ import {console2 as console} from "forge-std/console2.sol";
 import {CreditManager} from "../src/CreditManager.sol";
 
 contract DeployScript is Script {
-    string constant PRIVATE_KEY = "PRIVATE_KEY";
-
-    function setUp() public {}
-
-    function run(string memory network) public returns (CreditManager) {
-        if (vm.envExists(PRIVATE_KEY)) {
-            uint256 privateKey = vm.envUint(PRIVATE_KEY);
-            vm.startBroadcast(privateKey);
-        } else if (Strings.equal(network, "local")) {
-            vm.startBroadcast();
-        } else {
-            revert("PRIVATE_KEY not set in non-local environment");
-        }
+    function run() public returns (CreditManager) {
+        vm.startBroadcast();
 
         CreditManager credit = new CreditManager();
 

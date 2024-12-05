@@ -14,6 +14,6 @@ contract BlobManagerTest is Test, BlobManager {
 
     function setUp() public virtual {
         BlobDeployer blobsDeployer = new BlobDeployer();
-        blobs = blobsDeployer.run("local");
+        blobs = blobsDeployer.run();
     }
 }
