@@ -78,6 +78,7 @@ library LibBucket {
         if (decoded.length == 0) return decodedQuery;
         decodedQuery.objects = decodeObjects(decoded[0]);
         decodedQuery.commonPrefixes = decodeCommonPrefixes(decoded[1]);
+        decodedQuery.nextKey = decoded[2].isCborNull() ? "" : string(decoded[2].decodeCborBytesArrayToBytes());
     }
 
     /// @dev Decode a CBOR encoded array of objects.
@@ -100,14 +101,16 @@ library LibBucket {
     /// @param data The CBOR encoded value.
     /// @return value The decoded value.
     function decodeValue(bytes memory data) internal view returns (Value memory value) {
-        bytes[] memory decoded = data.decodeCborArrayToBytes();
+        bytes[2][] memory decoded = data.decodeCborMappingToBytes();
         if (decoded.length == 0) return value;
+        // The object's value is encoded in a mapping with the following structure:
+        // [1] => blobHash value (with preceding key `hash`)
+        // [3] => size value (with preceding key `size`)
+        // [5] => metadata value (with preceding key `metadata`)
         value = Value({
-            blobHash: string(decoded[0].decodeCborBlobHashOrNodeId()),
-            recoveryHash: string(decoded[1].decodeCborBlobHashOrNodeId()),
-            size: decoded[2].decodeCborBytesToUint64(),
-            expiry: decoded[3].decodeCborBytesToUint64(),
-            metadata: decodeMetadata(decoded[4])
+            blobHash: string(decoded[0][1].decodeCborBlobHashOrNodeId()),
+            size: decoded[1][1].decodeCborBytesToUint64(),
+            metadata: decodeMetadata(decoded[2][1])
         });
     }
 

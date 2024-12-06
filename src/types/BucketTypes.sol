@@ -34,9 +34,11 @@ struct CreateBucketParams {
 /// @dev The result of a bucket query.
 /// @param objects (Object[]): The list of key-values matching the list query.
 /// @param commonPrefixes (string[]): When a delimiter is used in the list query, this contains common key prefixes.
+/// @param nextKey (string): Next key to use for paginating when there are more objects to list.
 struct Query {
     Object[] objects;
     string[] commonPrefixes;
+    string nextKey;
 }
 
 /// @dev An object in the bucket.
@@ -49,15 +51,11 @@ struct Object {
 
 /// @dev The value of an object.
 /// @param blobHash (string): The object blake3 hash.
-/// @param recoveryHash (string): Blake3 hash of the metadata to use for object recovery.
 /// @param size (uint64): The object size.
-/// @param expiry (uint64): The expiry block.
 /// @param metadata (KeyValue[]): The user-defined object metadata (e.g., last modified timestamp, etc.).
 struct Value {
     string blobHash;
-    string recoveryHash;
     uint64 size;
-    uint64 expiry;
     KeyValue[] metadata;
 }
 

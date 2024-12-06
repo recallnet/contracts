@@ -144,7 +144,7 @@ library LibBlob {
     /// @return origin The delegate origin address
     /// @return caller The delegate caller address
     function decodeDelegate(bytes memory data) internal view returns (address origin, address caller) {
-        if (data[0] == hex"00" || data[0] == hex"f6") {
+        if (data.isCborNull()) {
             return (address(0), address(0));
         }
         bytes[] memory decoded = data.decodeCborArrayToBytes();

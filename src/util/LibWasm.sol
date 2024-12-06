@@ -355,6 +355,15 @@ library LibWasm {
         return hex"f6";
     }
 
+    /// @dev Check if a CBOR encoded value is null. Note that `0xf6` is the CBOR encoded null value, but depending on
+    /// if a CBOR encoded value has been decomposed into its constituent bytes (e.g., after calling
+    /// `decodeCborArrayToBytes`), it may be `0x00` (empty bytes).
+    /// @param value The CBOR encoded value.
+    /// @return isNull True if the value is null, false otherwise.
+    function isCborNull(bytes memory value) internal pure returns (bool) {
+        return value.length == 1 && (value[0] == 0x00 || value[0] == 0xf6);
+    }
+
     /// @dev Prepare address parameter for a method call by serializing it.
     /// @param addr The address of the account.
     /// @return encoded The serialized address as CBOR bytes.
