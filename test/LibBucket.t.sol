@@ -8,6 +8,27 @@ import {Kind, Machine, Query, Value} from "../src/types/BucketTypes.sol";
 import {AddObjectParams, KeyValue, LibBucket} from "../src/util/LibBucket.sol";
 
 contract LibBucketTest is Test {
+    function testEncodeQueryParams() public pure {
+        // All default values
+        string memory prefix = "";
+        string memory delimiter = "/";
+        string memory startKey = "";
+        uint64 limit = 0;
+        bytes memory encoded = LibBucket.encodeQueryParams(prefix, delimiter, startKey, limit);
+        assertEq(encoded, hex"8440412ff600");
+
+        // With a prefix
+        prefix = "hello/";
+        encoded = LibBucket.encodeQueryParams(prefix, delimiter, startKey, limit);
+        assertEq(encoded, hex"844668656c6c6f2f412ff600");
+
+        // With a start key
+        prefix = "";
+        startKey = "hello/world";
+        encoded = LibBucket.encodeQueryParams(prefix, delimiter, startKey, limit);
+        assertEq(encoded, hex"8440412f8b18681865186c186c186f182f1877186f1872186c186400");
+    }
+
     function testDecodeQuery() public view {
         // Empty objects, empty common prefixes
         Query memory query = LibBucket.decodeQuery(hex"828080");

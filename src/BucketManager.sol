@@ -83,12 +83,12 @@ contract BucketManager is IBucketManager {
 
     /// @dev See {IBucketManager-queryObjects}.
     function queryObjects(string memory bucket) external view returns (Query memory) {
-        return LibBucket.queryObjects(bucket, "", "/", 0, 0);
+        return LibBucket.queryObjects(bucket, "", "/", "", 0);
     }
 
     /// @dev See {IBucketManager-queryObjects}.
     function queryObjects(string memory bucket, string memory prefix) external view returns (Query memory) {
-        return LibBucket.queryObjects(bucket, prefix, "/", 0, 0);
+        return LibBucket.queryObjects(bucket, prefix, "/", "", 0);
     }
 
     /// @dev See {IBucketManager-queryObjects}.
@@ -97,16 +97,16 @@ contract BucketManager is IBucketManager {
         view
         returns (Query memory)
     {
-        return LibBucket.queryObjects(bucket, prefix, delimiter, 0, 0);
+        return LibBucket.queryObjects(bucket, prefix, delimiter, "", 0);
     }
 
     /// @dev See {IBucketManager-queryObjects}.
-    function queryObjects(string memory bucket, string memory prefix, string memory delimiter, uint64 offset)
+    function queryObjects(string memory bucket, string memory prefix, string memory delimiter, string memory startKey)
         external
         view
         returns (Query memory)
     {
-        return LibBucket.queryObjects(bucket, prefix, delimiter, offset, 0);
+        return LibBucket.queryObjects(bucket, prefix, delimiter, startKey, 0);
     }
 
     /// @dev See {IBucketManager-queryObjects}.
@@ -114,9 +114,9 @@ contract BucketManager is IBucketManager {
         string memory bucket,
         string memory prefix,
         string memory delimiter,
-        uint64 offset,
+        string memory startKey,
         uint64 limit
     ) external view returns (Query memory) {
-        return LibBucket.queryObjects(bucket, prefix, delimiter, offset, limit);
+        return LibBucket.queryObjects(bucket, prefix, delimiter, startKey, limit);
     }
 }

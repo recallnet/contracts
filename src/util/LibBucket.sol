@@ -158,18 +158,19 @@ library LibBucket {
     /// @dev Encode a CBOR encoded query params.
     /// @param prefix The prefix.
     /// @param delimiter The delimiter.
-    /// @param offset The offset.
+    /// @param startKey The key to start listing objects from.
     /// @param limit The limit.
     /// @return encoded The CBOR encoded query params.
-    function encodeQueryParams(string memory prefix, string memory delimiter, uint64 offset, uint64 limit)
+    function encodeQueryParams(string memory prefix, string memory delimiter, string memory startKey, uint64 limit)
         internal
         pure
         returns (bytes memory)
     {
         bytes[] memory encoded = new bytes[](4);
+        bytes memory _startKey = bytes(startKey);
         encoded[0] = prefix.encodeCborBytes();
         encoded[1] = delimiter.encodeCborBytes();
-        encoded[2] = offset.encodeCborUint64();
+        encoded[2] = _startKey.length == 0 ? LibWasm.encodeCborNull() : _startKey.encodeCborBytesArray();
         encoded[3] = limit.encodeCborUint64();
         return encoded.encodeCborArray();
     }
@@ -269,18 +270,18 @@ library LibBucket {
     /// @param bucket The bucket.
     /// @param prefix The prefix.
     /// @param delimiter The delimiter.
-    /// @param offset The offset.
+    /// @param startKey The key to start listing objects from.
     /// @param limit The limit.
     /// @return All objects matching the query.
     function queryObjects(
         string memory bucket,
         string memory prefix,
         string memory delimiter,
-        uint64 offset,
+        string memory startKey,
         uint64 limit
     ) external view returns (Query memory) {
         bytes memory bucketAddr = bucket.encodeCborActorAddress();
-        bytes memory params = encodeQueryParams(prefix, delimiter, offset, limit);
+        bytes memory params = encodeQueryParams(prefix, delimiter, startKey, limit);
         bytes memory data = LibWasm.readFromWasmActorByAddress(bucketAddr, METHOD_LIST_OBJECTS, params);
         return decodeQuery(data);
     }

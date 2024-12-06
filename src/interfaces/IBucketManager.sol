@@ -79,20 +79,20 @@ interface IBucketManager {
 
     /// @dev Query the bucket.
     /// @param bucket The bucket.
-    /// @return The CBOR encoded query data.
+    /// @return All objects matching the query.
     function queryObjects(string memory bucket) external view returns (Query memory);
 
     /// @dev Query the bucket.
     /// @param bucket The bucket.
     /// @param prefix The prefix.
-    /// @return The CBOR encoded query data.
+    /// @return All objects matching the query.
     function queryObjects(string memory bucket, string memory prefix) external view returns (Query memory);
 
     /// @dev Query the bucket.
     /// @param bucket The bucket.
     /// @param prefix The prefix.
     /// @param delimiter The delimiter.
-    /// @return The CBOR encoded query data.
+    /// @return All objects matching the query.
     function queryObjects(string memory bucket, string memory prefix, string memory delimiter)
         external
         view
@@ -102,9 +102,9 @@ interface IBucketManager {
     /// @param bucket The bucket.
     /// @param prefix The prefix.
     /// @param delimiter The delimiter.
-    /// @param offset The offset.
+    /// @param startKey The key to start listing objects from.
     /// @return All objects matching the query.
-    function queryObjects(string memory bucket, string memory prefix, string memory delimiter, uint64 offset)
+    function queryObjects(string memory bucket, string memory prefix, string memory delimiter, string memory startKey)
         external
         view
         returns (Query memory);
@@ -113,14 +113,14 @@ interface IBucketManager {
     /// @param bucket The bucket.
     /// @param prefix The prefix.
     /// @param delimiter The delimiter.
-    /// @param offset The offset.
+    /// @param startKey The key to start listing objects from.
     /// @param limit The limit.
     /// @return All objects matching the query.
     function queryObjects(
         string memory bucket,
         string memory prefix,
         string memory delimiter,
-        uint64 offset,
+        string memory startKey,
         uint64 limit
     ) external view returns (Query memory);
 }
