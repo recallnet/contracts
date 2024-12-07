@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {ValidatorRewarderTestBase} from "./ValidatorRewarder.t.sol";
+import {console2} from "forge-std/console2.sol";
 
 // FFI reward calculation tests
 contract ValidatorRewarderFFITest is ValidatorRewarderTestBase {
