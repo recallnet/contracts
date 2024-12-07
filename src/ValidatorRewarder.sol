@@ -15,9 +15,10 @@ import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 /// @notice This contract is responsible for distributing rewards to validators.
 /// @dev The rewarder is responsible for distributing the inflation to the validators.
 /// @dev The rewarder is called by the subnet actor when a validator claims rewards.
+
 contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgradeable {
     using SubnetIDHelper for SubnetID;
-    
+
     // ========== STATE VARIABLES ==========
 
     /// @notice Indicates whether the rewarder is active or not
@@ -33,7 +34,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     uint64 public latestClaimableCheckpoint;
 
     /// @notice The inflation rate for the subnet
-    /// @dev The rate is expressed as a decimal*1e18. 
+    /// @dev The rate is expressed as a decimal*1e18.
     /// @dev For example 5% APY is 0.0000928276004952% yield per checkpoint period.
     /// @dev This is expressed as 928_276_004_952 or 0.000000928276004952*1e18.
     uint256 public inflationRate;
@@ -47,7 +48,8 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
 
     // ========== EVENTS & ERRORS ==========
 
-    event ActiveStateChange(bool active, address account);    
+    event ActiveStateChange(bool active, address account);
+
     error SubnetMismatch(SubnetID id);
     error InvalidClaimNotifier(address notifier);
     error InvalidCheckpointHeight(uint64 claimedCheckpointHeight);
@@ -59,16 +61,12 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @param hokuToken The address of the HOKU token contract
     /// @param subnetId The subnet ID
     /// @param period The bottomup checkpoint period for the subnet
-    function initialize(
-        address hokuToken,
-        SubnetID calldata subnetId,
-        uint256 period
-    ) public initializer {
+    function initialize(address hokuToken, SubnetID calldata subnetId, uint256 period) public initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
-        _active = true;                
-        token = Hoku(hokuToken);        
-        subnet = subnetId;                
+        _active = true;
+        token = Hoku(hokuToken);
+        subnet = subnetId;
         if (period == 0) {
             revert InvalidCheckpointPeriod(period);
         }
@@ -120,11 +118,11 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
             revert SubnetMismatch(id);
         }
 
-        // Check that the caller is the subnet actor for the subnet that the validator is claiming rewards for        
+        // Check that the caller is the subnet actor for the subnet that the validator is claiming rewards for
         if (id.route[id.route.length - 1] != msg.sender) {
             revert InvalidClaimNotifier(msg.sender);
         }
-                
+
         // When the supply for the checkpoint is 0, it means that this is the first claim
         // for this checkpoint.
         // In this case we will set the supply for the checkpoint and
@@ -132,28 +130,28 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
         // Otherwise, we know the supply for the checkpoint.
         // We will calculate the rewards and transfer them to the other claimants for this checkpoint.
         uint256 supplyAtCheckpoint = checkpointToSupply[claimedCheckpointHeight];
-        if (supplyAtCheckpoint == 0) {            
-            // Check that the checkpoint height is valid.            
+        if (supplyAtCheckpoint == 0) {
+            // Check that the checkpoint height is valid.
             if (!validateCheckpointHeight(claimedCheckpointHeight)) {
                 revert InvalidCheckpointHeight(claimedCheckpointHeight);
             }
-            
+
             // Get the current supply of HOKU tokens
             uint256 currentSupply = token.totalSupply();
-            
-            // Set the supply for the checkpoint                        
+
+            // Set the supply for the checkpoint
             checkpointToSupply[claimedCheckpointHeight] = currentSupply;
             // Calculate the inflation amount for __this__ checkpoint
             uint256 supplyDelta = calculateInflationForCheckpoint(currentSupply);
             // Calculate the validator's share of the inflation for __this__ checkpoint
-            uint256 validatorShare = calculateValidatorShare(data.blocksCommitted, supplyDelta);                        
-            // Mint the supply delta minus current validator's share to the Rewarder            
-            token.mint(address(this), supplyDelta - validatorShare);            
+            uint256 validatorShare = calculateValidatorShare(data.blocksCommitted, supplyDelta);
+            // Mint the supply delta minus current validator's share to the Rewarder
+            token.mint(address(this), supplyDelta - validatorShare);
             // Mint the validator's share to the validator
             token.mint(data.validator, validatorShare);
-            // Update the latest claimable checkpoint.  
+            // Update the latest claimable checkpoint.
             latestClaimableCheckpoint = claimedCheckpointHeight;
-        } else {            
+        } else {
             // Calculate the supply delta for the checkpoint
             uint256 supplyDelta = calculateInflationForCheckpoint(supplyAtCheckpoint);
             // Calculate the validator's share of the supply delta
@@ -168,10 +166,10 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @notice The internal method to calculate the supply delta for a checkpoint
     /// @param supply The token supply at the checkpoint
     /// @return The supply delta, i.e. the amount of new tokens minted for the checkpoint
-    function calculateInflationForCheckpoint(uint256 supply) internal view returns (uint256) {        
+    function calculateInflationForCheckpoint(uint256 supply) internal view returns (uint256) {
         UD60x18 supplyFixed = ud(supply);
-        UD60x18 inflationRateFixed = ud(inflationRate);            
-        UD60x18 result = supplyFixed.mul(inflationRateFixed);                
+        UD60x18 inflationRateFixed = ud(inflationRate);
+        UD60x18 result = supplyFixed.mul(inflationRateFixed);
         return result.unwrap();
     }
 
@@ -179,15 +177,12 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @param blocksCommitted The number of blocks committed by the validator
     /// @param supplyDelta The supply delta, i.e. the amount of new tokens minted for the checkpoint
     /// @return The validator's share of the supply delta
-    function calculateValidatorShare(
-        uint256 blocksCommitted,        
-        uint256 supplyDelta
-    ) internal view returns (uint256) {        
+    function calculateValidatorShare(uint256 blocksCommitted, uint256 supplyDelta) internal view returns (uint256) {
         UD60x18 blocksFixed = ud(blocksCommitted);
         UD60x18 deltaFixed = ud(supplyDelta);
-        UD60x18 periodFixed = ud(checkpointPeriod);        
-        UD60x18 share = blocksFixed.div(periodFixed);                    
-        UD60x18 result = share.mul(deltaFixed);                    
+        UD60x18 periodFixed = ud(checkpointPeriod);
+        UD60x18 share = blocksFixed.div(periodFixed);
+        UD60x18 result = share.mul(deltaFixed);
         return result.unwrap();
     }
 
@@ -197,7 +192,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @dev When the latest claimable checkpoint is not set (0), it means that _this_ is the first ever claim.
     /// @dev In this case we need not check that the claimed checkpoint is in the future.
     /// @dev Otherwise, we must ensure that the claimed checkpoint is in the future.
-    function validateCheckpointHeight(uint64 claimedCheckpointHeight) internal view returns (bool) {        
+    function validateCheckpointHeight(uint64 claimedCheckpointHeight) internal view returns (bool) {
         if (latestClaimableCheckpoint == 0) {
             return true;
         }
