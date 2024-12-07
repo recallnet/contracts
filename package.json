@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "forge test",
-    "build": "forge build",
+    "build": "forge build --via-ir",
     "fmt": "forge fmt --check",
     "fmt:fix": "forge fmt",
     "lint": "solhint 'src/**/*.sol'",

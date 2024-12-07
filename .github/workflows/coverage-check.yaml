@@ -44,7 +44,7 @@ jobs:
         run: forge install
 
       - name: Run Coverage
-        run: forge coverage --report lcov
+        run: forge coverage --report lcov --via-ir
     # Check fails if coverage percentage falls under 80%
       - name: Check Coverage Threshold
         run: |
