@@ -44,11 +44,11 @@ jobs:
         run: forge install
 
       - name: Run Coverage
-        run: forge coverage --report lcov --via-ir
+        run: forge coverage --skip "*FFI.t.sol" --report lcov
     # Check fails if coverage percentage falls under 80%
       - name: Check Coverage Threshold
         run: |
-          COVERAGE=$(forge coverage --report summary | grep 'Total coverage:' | awk '{print $3}' | cut -d'%' -f1)
+          COVERAGE=$(forge coverage --skip "*FFI.t.sol"--report summary | grep 'Total coverage:' | awk '{print $3}' | cut -d'%' -f1)
           echo "Coverage is $COVERAGE%"
           if [ "$COVERAGE" -lt 80 ]; then
             echo "Code coverage ($COVERAGE%) is below the threshold (80%)"
