@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import {ValidatorRewarder} from "../src/ValidatorRewarder.sol";
 import {SubnetID} from "../src/structs/Subnet.sol";
-
+import {SubnetIDHelper} from "../src/lib/SubnetIDHelper.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {Options, Upgrades} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
 import {Script, console2} from "forge-std/Script.sol";
@@ -18,7 +18,12 @@ contract DeployScript is Script {
         return proxyAddress;
     }
 
-    function run(string memory network) public returns (ValidatorRewarder) {
+    function runWithParams(
+        string memory network,
+        address hokuToken,
+        SubnetID calldata subnetId,
+        uint256 period
+    ) public returns (ValidatorRewarder) {
         if (vm.envExists(PRIVATE_KEY)) {
             uint256 privateKey = vm.envUint(PRIVATE_KEY);
             vm.startBroadcast(privateKey);
@@ -28,17 +33,18 @@ contract DeployScript is Script {
             revert("PRIVATE_KEY not set in non-local environment");
         }
 
-        // Deploy as UUPS proxy
-        proxyAddress =
-            Upgrades.deployUUPSProxy("ValidatorRewarder.sol", abi.encodeCall(ValidatorRewarder.initialize, ()));
+        proxyAddress = Upgrades.deployUUPSProxy(
+            "ValidatorRewarder.sol",
+            abi.encodeCall(ValidatorRewarder.initialize, (hokuToken, subnetId, period))
+        );
+        console2.log("Proxy address: ", proxyAddress);
+        vm.stopBroadcast();
 
         // Check implementation
         address implAddr = Upgrades.getImplementationAddress(proxyAddress);
         console2.log("Implementation address: ", implAddr);
 
         ValidatorRewarder rewarder = ValidatorRewarder(proxyAddress);
-        vm.stopBroadcast();
-
         return rewarder;
     }
 }
@@ -70,5 +76,41 @@ contract UpgradeRewarderProxyScript is Script {
         console2.log("Implementation address: ", implNew);
 
         require(implOld != implNew, "Implementation address not changed");
+    }
+}
+
+contract SetInflationRateScript is Script {
+    function setUp() public {}
+
+    function run(uint256 rate) public {
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        address proxy = vm.envAddress("PROXY_ADDR");
+        
+        console2.log("Proxy address:", proxy);
+        console2.log("Inflation rate:", rate);
+
+        vm.startBroadcast(deployerPrivateKey);
+        ValidatorRewarder(proxy).setInflationRate(rate);
+        vm.stopBroadcast();
+
+        console2.log("Inflation rate set successfully");
+    }
+}
+
+contract SetActiveScript is Script {
+    function setUp() public {}
+
+    function run(bool active) public {
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        address proxy = vm.envAddress("PROXY_ADDR");
+        
+        console2.log("Proxy address:", proxy);
+        console2.log("Setting active state to:", active);
+
+        vm.startBroadcast(deployerPrivateKey);
+        ValidatorRewarder(proxy).setActive(active);
+        vm.stopBroadcast();
+
+        console2.log("Active state set successfully");
     }
 }
