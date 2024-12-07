@@ -2,8 +2,9 @@
 pragma solidity ^0.8.26;
 
 import {ValidatorRewarder} from "../src/ValidatorRewarder.sol";
-import {SubnetID} from "../src/structs/Subnet.sol";
+
 import {SubnetIDHelper} from "../src/lib/SubnetIDHelper.sol";
+import {SubnetID} from "../src/structs/Subnet.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {Options, Upgrades} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
 import {Script, console2} from "forge-std/Script.sol";
@@ -18,12 +19,10 @@ contract DeployScript is Script {
         return proxyAddress;
     }
 
-    function runWithParams(
-        string memory network,
-        address hokuToken,
-        SubnetID calldata subnetId,
-        uint256 period
-    ) public returns (ValidatorRewarder) {
+    function runWithParams(string memory network, address hokuToken, SubnetID calldata subnetId, uint256 period)
+        public
+        returns (ValidatorRewarder)
+    {
         if (vm.envExists(PRIVATE_KEY)) {
             uint256 privateKey = vm.envUint(PRIVATE_KEY);
             vm.startBroadcast(privateKey);
@@ -34,8 +33,7 @@ contract DeployScript is Script {
         }
 
         proxyAddress = Upgrades.deployUUPSProxy(
-            "ValidatorRewarder.sol",
-            abi.encodeCall(ValidatorRewarder.initialize, (hokuToken, subnetId, period))
+            "ValidatorRewarder.sol", abi.encodeCall(ValidatorRewarder.initialize, (hokuToken, subnetId, period))
         );
         console2.log("Proxy address: ", proxyAddress);
         vm.stopBroadcast();
@@ -85,7 +83,7 @@ contract SetInflationRateScript is Script {
     function run(uint256 rate) public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address proxy = vm.envAddress("PROXY_ADDR");
-        
+
         console2.log("Proxy address:", proxy);
         console2.log("Inflation rate:", rate);
 
@@ -103,7 +101,7 @@ contract SetActiveScript is Script {
     function run(bool active) public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address proxy = vm.envAddress("PROXY_ADDR");
-        
+
         console2.log("Proxy address:", proxy);
         console2.log("Setting active state to:", active);
 
