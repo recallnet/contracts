@@ -23,7 +23,6 @@ abstract contract ValidatorRewarderTestBase is Test {
     // Constants
     uint64 internal constant ROOTNET_CHAINID = 123;
     address internal constant SUBNET_ROUTE = address(101);
-    uint256 internal constant INFLATION_RATE = 928_276_004_952;
     uint256 internal constant CHECKPOINT_PERIOD = 600;
 
     function setUp() public virtual {
@@ -40,19 +39,15 @@ abstract contract ValidatorRewarderTestBase is Test {
         ValidatorRewarderDeployScript rewarderDeployer = new ValidatorRewarderDeployScript();
         rewarder = rewarderDeployer.runWithParams("local", address(token), subnet, CHECKPOINT_PERIOD);
         rewarderOwner = rewarder.owner();
-
-        // Setup inflation rate
-        vm.prank(rewarderOwner);
-        rewarder.setInflationRate(INFLATION_RATE);
-
         // Grant MINTER_ROLE to Rewarder for Hoku tokens
         vm.startPrank(token.deployer());
         token.grantRole(token.MINTER_ROLE(), address(rewarder));
         vm.stopPrank();
 
         // Mint initial supply of Hoku tokens to a random address
-        vm.prank(rewarderOwner);
+        vm.startPrank(rewarderOwner);
         token.mint(address(0x888), 1000e18);
+        vm.stopPrank();
     }
 
     // Helper function to create validator data
@@ -77,27 +72,30 @@ contract ValidatorRewarderInitialStateTest is ValidatorRewarderTestBase {
         assertTrue(rewarder.isActive());
         assertEq(rewarder.subnet(), createSubnet().root);
         assertEq(address(rewarder.token()), address(token));
-        assertEq(rewarder.inflationRate(), INFLATION_RATE);
+        assertEq(rewarder.inflationRate(), rewarder.DEFAULT_INFLATION_RATE());
     }
 }
 
 // Test contract for active/pause functionality
 contract ValidatorRewarderActiveStateTest is ValidatorRewarderTestBase {
     function testSetActiveNotOwner() public {
-        vm.prank(address(0x789));
+        vm.startPrank(address(0x789));
         vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", address(0x789)));
         rewarder.setActive(true);
+        vm.stopPrank();
     }
 
     function testSetActiveAndPauseAsOwner() public {
         assertTrue(rewarder.isActive());
 
-        vm.prank(rewarderOwner);
+        vm.startPrank(rewarderOwner);
         rewarder.setActive(false);
+        vm.stopPrank();
         assertFalse(rewarder.isActive());
 
-        vm.prank(rewarderOwner);
+        vm.startPrank(rewarderOwner);
         rewarder.setActive(true);
+        vm.stopPrank();
         assertTrue(rewarder.isActive());
     }
 }
@@ -143,26 +141,48 @@ contract ValidatorRewarderTokenTest is ValidatorRewarderTestBase {
 
 // Inflation rate management tests
 contract ValidatorRewarderInflationTest is ValidatorRewarderTestBase {
-    function testSetInflationRateNotOwner() public {
-        vm.prank(address(0x789));
+    function testSetInflationRateNotOwner() public {                
+        vm.startPrank(address(0x789));
+        uint256 newRate = rewarder.DEFAULT_INFLATION_RATE() * 2;
         vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", address(0x789)));
-        rewarder.setInflationRate(INFLATION_RATE * 2);
+        rewarder.setInflationRate(newRate);
+        vm.stopPrank();
+    }
+
+    function testSetInflationRateFromDefault() public {
+        // Verify we start with default rate
+        assertEq(rewarder.inflationRate(), rewarder.DEFAULT_INFLATION_RATE());
+
+        // Owner can change the rate
+        uint256 newRate = rewarder.DEFAULT_INFLATION_RATE() * 2;
+        vm.startPrank(rewarderOwner);
+        rewarder.setInflationRate(newRate);
+        vm.stopPrank();
+        assertEq(rewarder.inflationRate(), newRate);
     }
 
     function testSetInflationRateWhenNotActive() public {
-        vm.prank(rewarderOwner);
+        vm.startPrank(rewarderOwner);
         rewarder.setActive(false);
+        vm.stopPrank();
 
-        vm.prank(rewarderOwner);
-        rewarder.setInflationRate(INFLATION_RATE * 2);
+        vm.startPrank(rewarderOwner);
+        uint256 oldRate = rewarder.inflationRate();
+        uint256 newRate = oldRate * 2;
+        rewarder.setInflationRate(newRate);
+        vm.stopPrank();
 
-        assertEq(rewarder.inflationRate(), INFLATION_RATE);
+        // Rate should not change when rewarder is not active
+        assertEq(rewarder.inflationRate(), oldRate);
     }
 
     function testSetInflationRateAsOwner() public {
-        vm.prank(rewarderOwner);
-        rewarder.setInflationRate(INFLATION_RATE * 2);
-        assertEq(rewarder.inflationRate(), INFLATION_RATE * 2);
+        // Set new inflation rate as owner        
+        vm.startPrank(rewarderOwner);
+        uint256 newRate = rewarder.DEFAULT_INFLATION_RATE() * 2;
+        rewarder.setInflationRate(newRate);
+        vm.stopPrank();
+        assertEq(rewarder.inflationRate(), newRate);
     }
 }
 
@@ -171,8 +191,9 @@ contract ValidatorRewarderBasicClaimTest is ValidatorRewarderTestBase {
     using SubnetIDHelper for SubnetID;
 
     function testNotifyValidClaimWhenNotActive() public {
-        vm.prank(rewarderOwner);
+        vm.startPrank(rewarderOwner);
         rewarder.setActive(false);
+        vm.stopPrank();
 
         address claimant = address(0x999);
         Consensus.ValidatorData memory validatorData = createValidatorData(claimant, 100);
@@ -187,10 +208,10 @@ contract ValidatorRewarderBasicClaimTest is ValidatorRewarderTestBase {
         address claimant = address(0x999);
         Consensus.ValidatorData memory validatorData = createValidatorData(claimant, 10);
 
-        vm.prank(subnetActor);
+        vm.startPrank(subnetActor);
         vm.expectRevert(abi.encodeWithSelector(ValidatorRewarder.SubnetMismatch.selector, wrongSubnet));
         rewarder.notifyValidClaim(wrongSubnet, 10, validatorData);
-
+        vm.stopPrank();
         assertEq(token.balanceOf(claimant), 0);
     }
 
@@ -199,10 +220,10 @@ contract ValidatorRewarderBasicClaimTest is ValidatorRewarderTestBase {
         Consensus.ValidatorData memory validatorData = createValidatorData(claimant, 50);
 
         address wrongNotifier = address(0x999);
-        vm.prank(wrongNotifier);
+        vm.startPrank(wrongNotifier);
         vm.expectRevert(abi.encodeWithSelector(ValidatorRewarder.InvalidClaimNotifier.selector, wrongNotifier));
         rewarder.notifyValidClaim(createSubnet(), 600, validatorData);
-
+        vm.stopPrank();
         assertEq(token.balanceOf(claimant), 0);
     }
 }
@@ -222,8 +243,9 @@ contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
         assertEq(token.totalSupply(), initialSupply);
 
         // First claim
-        vm.prank(SUBNET_ROUTE);
+        vm.startPrank(SUBNET_ROUTE);
         rewarder.notifyValidClaim(createSubnet(), 1200, validatorData);
+        vm.stopPrank();
 
         // Verify rewards
         assertApproxEqAbs(token.balanceOf(claimant), 77356333746022, 1000);
@@ -237,9 +259,10 @@ contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
         assertEq(rewarder.latestClaimableCheckpoint(), 1200);
 
         // Test invalid next checkpoint
-        vm.prank(SUBNET_ROUTE);
+        vm.startPrank(SUBNET_ROUTE);
         vm.expectRevert(abi.encodeWithSelector(ValidatorRewarder.InvalidCheckpointHeight.selector, 2400));
         rewarder.notifyValidClaim(createSubnet(), 2400, validatorData);
+        vm.stopPrank();
     }
 
     function testNotifyValidClaimSubsequentClaims() public {
@@ -254,18 +277,21 @@ contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
         blocks[2] = 300;
 
         // First claim
-        vm.prank(SUBNET_ROUTE);
+        vm.startPrank(SUBNET_ROUTE);
         rewarder.notifyValidClaim(createSubnet(), 1200, createValidatorData(claimants[0], blocks[0]));
+        vm.stopPrank();
         assertApproxEqAbs(token.balanceOf(claimants[0]), 154712667492044, 1000);
 
         // Second claim
-        vm.prank(SUBNET_ROUTE);
+        vm.startPrank(SUBNET_ROUTE);
         rewarder.notifyValidClaim(createSubnet(), 1200, createValidatorData(claimants[1], blocks[1]));
+        vm.stopPrank();
         assertApproxEqAbs(token.balanceOf(claimants[1]), 309425334984088, 1000);
 
         // Third claim
-        vm.prank(SUBNET_ROUTE);
+        vm.startPrank(SUBNET_ROUTE);
         rewarder.notifyValidClaim(createSubnet(), 1200, createValidatorData(claimants[2], blocks[2]));
+        vm.stopPrank();
         assertApproxEqAbs(token.balanceOf(claimants[2]), 464138002476133, 1000);
 
         // Verify rewarder is drained

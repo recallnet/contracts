@@ -77,24 +77,6 @@ contract UpgradeRewarderProxyScript is Script {
     }
 }
 
-contract SetInflationRateScript is Script {
-    function setUp() public {}
-
-    function run(uint256 rate) public {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        address proxy = vm.envAddress("PROXY_ADDR");
-
-        console2.log("Proxy address:", proxy);
-        console2.log("Inflation rate:", rate);
-
-        vm.startBroadcast(deployerPrivateKey);
-        ValidatorRewarder(proxy).setInflationRate(rate);
-        vm.stopBroadcast();
-
-        console2.log("Inflation rate set successfully");
-    }
-}
-
 contract SetActiveScript is Script {
     function setUp() public {}
 

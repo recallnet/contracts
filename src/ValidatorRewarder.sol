@@ -11,11 +11,12 @@ import {SubnetID} from "./structs/Subnet.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
+
+
 /// @title ValidatorRewarder
 /// @notice This contract is responsible for distributing rewards to validators.
 /// @dev The rewarder is responsible for distributing the inflation to the validators.
 /// @dev The rewarder is called by the subnet actor when a validator claims rewards.
-
 contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgradeable {
     using SubnetIDHelper for SubnetID;
 
@@ -46,6 +47,10 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @notice The supply of HOKU tokens at each checkpoint
     mapping(uint64 => uint256) public checkpointToSupply;
 
+    /// @notice The default inflation rate for the subnet (5% APY)
+    /// @dev This is pre-calculated for a 600-second checkpoint period
+    uint256 public constant DEFAULT_INFLATION_RATE = 928_276_004_952;
+
     // ========== EVENTS & ERRORS ==========
 
     event ActiveStateChange(bool active, address account);
@@ -71,6 +76,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
             revert InvalidCheckpointPeriod(period);
         }
         checkpointPeriod = period;
+        inflationRate = DEFAULT_INFLATION_RATE;
     }
 
     // ========== PUBLIC FUNCTIONS ==========
