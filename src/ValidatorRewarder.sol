@@ -12,7 +12,6 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 
-
 /// @title ValidatorRewarder
 /// @notice This contract is responsible for distributing rewards to validators.
 /// @dev The rewarder is responsible for distributing the inflation to the validators.

@@ -141,7 +141,7 @@ contract ValidatorRewarderTokenTest is ValidatorRewarderTestBase {
 
 // Inflation rate management tests
 contract ValidatorRewarderInflationTest is ValidatorRewarderTestBase {
-    function testSetInflationRateNotOwner() public {                
+    function testSetInflationRateNotOwner() public {
         vm.startPrank(address(0x789));
         uint256 newRate = rewarder.DEFAULT_INFLATION_RATE() * 2;
         vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", address(0x789)));
@@ -177,7 +177,7 @@ contract ValidatorRewarderInflationTest is ValidatorRewarderTestBase {
     }
 
     function testSetInflationRateAsOwner() public {
-        // Set new inflation rate as owner        
+        // Set new inflation rate as owner
         vm.startPrank(rewarderOwner);
         uint256 newRate = rewarder.DEFAULT_INFLATION_RATE() * 2;
         rewarder.setInflationRate(newRate);
