@@ -59,6 +59,7 @@ contract ValidatorRewarderFFITest is ValidatorRewarderTestBase {
                 params[2] = blocksCommitted[j];
                 jsonStr = runPythonScript(PYTHON_SCRIPT, params);
                 uint256 expectedValidatorShare = vm.parseJsonUint(jsonStr, ".validator_share");
+                uint256 expectedRewarderShare = vm.parseJsonUint(jsonStr, ".rewarder_share");
 
                 // Store balances before claim
                 uint256 balanceBefore = token.balanceOf(claimants[j]);
@@ -83,7 +84,7 @@ contract ValidatorRewarderFFITest is ValidatorRewarderTestBase {
                     // After first claim, rewarder should have supply delta minus first claimant's share
                     assertApproxEqAbs(
                         token.balanceOf(address(rewarder)),
-                        expectedSupplyDelta - expectedValidatorShare,
+                        expectedRewarderShare,
                         1000,
                         string.concat(
                             "Rewarder balance mismatch on first claim at checkpoint ", vm.toString(currentCheckpoint)
@@ -115,11 +116,11 @@ contract ValidatorRewarderFFITest is ValidatorRewarderTestBase {
         // After all checkpoints are processed, verify total increase matches
         uint256 actualTotalIncrease = token.totalSupply() - initialSupply;
         // due to rounding in each checkpoint, accumulated error over 5 years is 45,773,118
-        // i.e. we print 0.000_000_000_045_773_118 HOKU more than expected!
+        // i.e. we print 0.000_000_000_045_679_254 HOKU more than expected!
         assertApproxEqAbs(
             actualTotalIncrease,
             expectedTotalIncrease,
-            45773118,
+            45679254,
             "Total increase after all checkpoints should match single calculation"
         );
 
