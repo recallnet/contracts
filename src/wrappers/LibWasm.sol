@@ -9,11 +9,11 @@ import {FilAddresses} from "@filecoin-solidity/v0.8/utils/FilAddresses.sol";
 
 import {ActorError, InvalidValue} from "../errors/WasmErrors.sol";
 import {KeyValue} from "../types/CommonTypes.sol";
-import {Base32} from "./Base32.sol";
-import {Blake2b} from "./Blake2b.sol";
-import {ByteParser} from "./solidity-cbor/ByteParser.sol";
-import {CBORDecoding} from "./solidity-cbor/CBORDecoding.sol";
-import {CBOR} from "./solidity-cbor/CBOREncoding.sol";
+import {Base32} from "../util/Base32.sol";
+import {Blake2b} from "../util/Blake2b.sol";
+import {ByteParser} from "../util/solidity-cbor/ByteParser.sol";
+import {CBORDecoding} from "../util/solidity-cbor/CBORDecoding.sol";
+import {CBOR} from "../util/solidity-cbor/CBOREncoding.sol";
 
 /// @title WASM Adapter Library
 /// @dev Utility functions for interacting with WASM actors and encoding/decoding CBOR.

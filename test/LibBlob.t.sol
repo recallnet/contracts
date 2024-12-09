@@ -14,8 +14,8 @@ import {
     Subscriber,
     Subscription
 } from "../src/types/BlobTypes.sol";
-import {LibBlob} from "../src/util/LibBlob.sol";
-import {LibWasm} from "../src/util/LibWasm.sol";
+import {LibBlob} from "../src/wrappers/LibBlob.sol";
+import {LibWasm} from "../src/wrappers/LibWasm.sol";
 
 contract LibBlobTest is Test {
     using LibBlob for bytes;

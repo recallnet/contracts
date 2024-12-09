@@ -5,7 +5,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {Script} from "forge-std/Script.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
-import {BlobManager} from "../src/BlobManager.sol";
+import {BlobManager} from "../src/wrappers/BlobManager.sol";
 
 contract DeployScript is Script {
     function run() public returns (BlobManager) {

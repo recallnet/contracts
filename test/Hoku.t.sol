@@ -6,7 +6,7 @@ import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
 import {DeployScript} from "../script/Hoku.s.sol";
-import {Hoku} from "../src/Hoku.sol";
+import {Hoku} from "../src/token/Hoku.sol";
 
 contract HokuTest is Test {
     Hoku internal token;

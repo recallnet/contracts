@@ -5,7 +5,7 @@ import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
 import {Base32} from "../src/util/Base32.sol";
-import {InvalidValue, KeyValue, LibWasm} from "../src/util/LibWasm.sol";
+import {InvalidValue, KeyValue, LibWasm} from "../src/wrappers/LibWasm.sol";
 
 contract LibWasmTest is Test {
     function testDecodeCborArray() public view {

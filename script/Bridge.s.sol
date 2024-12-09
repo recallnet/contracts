@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {Hoku} from "../src/Hoku.sol";
+import {Hoku} from "../src/token/Hoku.sol";
 import {IInterchainTokenService} from
     "@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";

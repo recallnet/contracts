@@ -2,7 +2,7 @@
 // solhint-disable-next-line one-contract-per-file
 pragma solidity ^0.8.26;
 
-import {Hoku} from "../src/Hoku.sol";
+import {Hoku} from "../src/token/Hoku.sol";
 import {IInterchainTokenService} from
     "@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol";
 import {ITokenManagerType} from "@axelar-network/interchain-token-service/contracts/interfaces/ITokenManagerType.sol";

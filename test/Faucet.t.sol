@@ -7,8 +7,8 @@ import {console2 as console} from "forge-std/console2.sol";
 
 import {DeployScript as FaucetDeployer} from "../script/Faucet.s.sol";
 import {DeployScript as TokenDeployer} from "../script/Hoku.s.sol";
-import {Faucet, TryLater} from "../src/Faucet.sol";
-import {Hoku} from "../src/Hoku.sol";
+import {Faucet, TryLater} from "../src/token/Faucet.sol";
+import {Hoku} from "../src/token/Hoku.sol";
 
 contract FaucetTest is Test {
     Faucet internal faucet;

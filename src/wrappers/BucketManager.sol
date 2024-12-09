@@ -1,12 +1,19 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {IBucketManager} from "./interfaces/IBucketManager.sol";
+import {IBucketManager} from "../interfaces/IBucketManager.sol";
 import {
-    AddObjectParams, CreateBucketParams, KeyValue, Kind, Machine, Object, Query, Value
-} from "./types/BucketTypes.sol";
-import {LibBucket} from "./util/LibBucket.sol";
-import {LibWasm} from "./util/LibWasm.sol";
+    AddObjectParams,
+    CreateBucketParams,
+    KeyValue,
+    Kind,
+    Machine,
+    Object,
+    Query,
+    Value
+} from "../types/BucketTypes.sol";
+import {LibBucket} from "./LibBucket.sol";
+import {LibWasm} from "./LibWasm.sol";
 
 /// @title Bucket Manager Contract
 /// @dev Implementation of the Hoku Bucket actor EVM interface. See {IBucketManager} for details.

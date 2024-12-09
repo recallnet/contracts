@@ -2,8 +2,8 @@
 // solhint-disable-next-line one-contract-per-file
 pragma solidity ^0.8.26;
 
-import {ValidatorGater} from "../src/ValidatorGater.sol";
-import {SubnetID} from "../src/structs/Subnet.sol";
+import {ValidatorGater} from "../src/token/ValidatorGater.sol";
+import {SubnetID} from "../src/types/CommonTypes.sol";
 
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {Options, Upgrades} from "@openzeppelin/foundry-upgrades/Upgrades.sol";

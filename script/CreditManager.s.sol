@@ -5,7 +5,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {Script} from "forge-std/Script.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
-import {CreditManager} from "../src/CreditManager.sol";
+import {CreditManager} from "../src/wrappers/CreditManager.sol";
 
 contract DeployScript is Script {
     function run() public returns (CreditManager) {

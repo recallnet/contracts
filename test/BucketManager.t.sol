@@ -6,7 +6,7 @@ import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
 import {DeployScript as BucketManagerDeployer} from "../script/BucketManager.s.sol";
-import {BucketManager} from "../src/BucketManager.sol";
+import {BucketManager} from "../src/wrappers/BucketManager.sol";
 
 // TODO: add integration tests once it's possible in CI
 contract BucketManagerTest is Test, BucketManager {

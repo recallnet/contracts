@@ -2,9 +2,10 @@
 pragma solidity ^0.8.26;
 
 import {DeployScript} from "../script/ValidatorGater.s.sol";
-import {SubnetID, ValidatorGater} from "../src/ValidatorGater.sol";
+
 import {InvalidSubnet, NotAuthorized, ValidatorPowerChangeDenied} from "../src/errors/IPCErrors.sol";
-import {SubnetIDHelper} from "../src/lib/SubnetIDHelper.sol";
+import {SubnetID, ValidatorGater} from "../src/token/ValidatorGater.sol";
+import {SubnetIDHelper} from "../src/util/SubnetIDHelper.sol";
 
 import {SubnetActorManagerFacetMock} from "./mocks/SubnetActorManagerFacetMock.sol";
 import {Test} from "forge-std/Test.sol";

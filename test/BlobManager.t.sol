@@ -6,7 +6,7 @@ import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
 import {DeployScript as BlobDeployer} from "../script/BlobManager.s.sol";
-import {BlobManager} from "../src/BlobManager.sol";
+import {BlobManager} from "../src/wrappers/BlobManager.sol";
 
 // TODO: add integration tests once it's possible in CI
 contract BlobManagerTest is Test, BlobManager {

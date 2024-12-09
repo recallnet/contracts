@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {IBlobManager} from "./interfaces/IBlobManager.sol";
-import {AddBlobParams, Blob, BlobStatus, BlobTuple, StorageStats, SubnetStats} from "./types/BlobTypes.sol";
-import {LibBlob} from "./util/LibBlob.sol";
+import {IBlobManager} from "../interfaces/IBlobManager.sol";
+import {AddBlobParams, Blob, BlobStatus, BlobTuple, StorageStats, SubnetStats} from "../types/BlobTypes.sol";
+import {LibBlob} from "./LibBlob.sol";
 
 contract BlobManager is IBlobManager {
     /// @dev See {IBlobManager-getAddedBlobs}.

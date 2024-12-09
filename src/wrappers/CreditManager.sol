@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {ICreditManager} from "./interfaces/ICreditManager.sol";
-import {Account, Balance, CreditApproval, CreditStats} from "./types/BlobTypes.sol";
-import {LibBlob} from "./util/LibBlob.sol";
+import {ICreditManager} from "../interfaces/ICreditManager.sol";
+import {Account, Balance, CreditApproval, CreditStats} from "../types/BlobTypes.sol";
+import {LibBlob} from "./LibBlob.sol";
 
 /// @title Credits Contract
 /// @dev Implementation of the Hoku Blobs actor EVM interface. See {ICredit} for details.

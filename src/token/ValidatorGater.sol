@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {InvalidSubnet, NotAuthorized, ValidatorPowerChangeDenied} from "./errors/IPCErrors.sol";
-import {IValidatorGater} from "./interfaces/IValidatorGater.sol";
+import {InvalidSubnet, NotAuthorized, ValidatorPowerChangeDenied} from "../errors/IPCErrors.sol";
+import {IValidatorGater} from "../interfaces/IValidatorGater.sol";
 
-import {SubnetIDHelper} from "./lib/SubnetIDHelper.sol";
-import {SubnetID} from "./structs/Subnet.sol";
+import {SubnetID} from "../types/CommonTypes.sol";
+import {SubnetIDHelper} from "../util/SubnetIDHelper.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 

@@ -5,7 +5,7 @@ import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
 import {Kind, Machine, Query, Value} from "../src/types/BucketTypes.sol";
-import {AddObjectParams, KeyValue, LibBucket} from "../src/util/LibBucket.sol";
+import {AddObjectParams, KeyValue, LibBucket} from "../src/wrappers/LibBucket.sol";
 
 contract LibBucketTest is Test {
     function testEncodeQueryParams() public pure {
