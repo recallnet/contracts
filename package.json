@@ -4,8 +4,8 @@
   "description": "Hoku core contracts",
   "main": "index.js",
   "scripts": {
-    "test": "forge test --ffi --via-ir",
-    "build": "forge build --via-ir",
+    "test": "forge test --ffi",
+    "build": "forge build",
     "fmt": "forge fmt --check",
     "fmt:fix": "forge fmt",
     "lint": "solhint 'src/**/*.sol'",
