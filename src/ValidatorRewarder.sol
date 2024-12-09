@@ -46,10 +46,6 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @notice The supply of HOKU tokens at each checkpoint
     mapping(uint64 => uint256) public checkpointToSupply;
 
-    /// @notice The default inflation rate for the subnet (5% APY)
-    /// @dev This is pre-calculated for a 600-second checkpoint period
-    uint256 public constant DEFAULT_INFLATION_RATE = 928_276_004_952;
-
     // ========== EVENTS & ERRORS ==========
 
     event ActiveStateChange(bool active, address account);
@@ -68,7 +64,6 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
         __UUPSUpgradeable_init();
         _active = true;
         token = Hoku(hokuToken);
-        inflationRate = DEFAULT_INFLATION_RATE;
     }
 
     /// @notice Sets the subnet and checkpoint period
