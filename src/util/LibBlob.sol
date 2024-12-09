@@ -54,7 +54,7 @@ library LibBlob {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return stats;
         stats.balance = decoded[0].decodeCborBytesToUint256();
-        stats.capacityTotal = decoded[1].decodeCborBigIntToUint256();
+        stats.capacityFree = decoded[1].decodeCborBigIntToUint256();
         stats.capacityUsed = decoded[2].decodeCborBigIntToUint256();
         stats.creditSold = decoded[3].decodeCborBigIntToUint256();
         stats.creditCommitted = decoded[4].decodeCborBigIntToUint256();
@@ -63,6 +63,9 @@ library LibBlob {
         stats.numAccounts = decoded[7].decodeCborBytesToUint64();
         stats.numBlobs = decoded[8].decodeCborBytesToUint64();
         stats.numResolving = decoded[9].decodeCborBytesToUint64();
+        stats.bytesResolving = decoded[10].decodeCborBytesToUint64();
+        stats.numAdded = decoded[11].decodeCborBytesToUint64();
+        stats.bytesAdded = decoded[12].decodeCborBytesToUint64();
     }
 
     /// @dev Helper function to decode an account from CBOR to solidity.
@@ -333,7 +336,7 @@ library LibBlob {
         pure
         returns (StorageStats memory stats)
     {
-        stats.capacityTotal = subnetStats.capacityTotal;
+        stats.capacityFree = subnetStats.capacityFree;
         stats.capacityUsed = subnetStats.capacityUsed;
         stats.numBlobs = subnetStats.numBlobs;
         stats.numResolving = subnetStats.numResolving;

@@ -22,18 +22,21 @@ contract LibBlobTest is Test {
 
     function testDecodeSubnetStats() public view {
         bytes memory data =
-            hex"8a4b000a9796f236ae8f10000082018200018201810c8201831a8f1000001a96f236ae190a97820181194a2e82018119b4ea010a0100";
+            hex"8d4b000a969d255e0cca0800008201821a4876e7fa17820181068201831aca0800001a9d255e0c190a968201811954608201811a000158b8010a0100000000";
         SubnetStats memory stats = data.decodeSubnetStats();
-        assertEq(stats.balance, 50020000000000000000000);
-        assertEq(stats.capacityTotal, 4294967296);
-        assertEq(stats.capacityUsed, 12);
-        assertEq(stats.creditSold, 50020000000000000000000);
-        assertEq(stats.creditCommitted, 18990);
-        assertEq(stats.creditDebited, 46314);
+        assertEq(stats.balance, 50002000000000000000000);
+        assertEq(stats.capacityFree, 99999999994);
+        assertEq(stats.capacityUsed, 6);
+        assertEq(stats.creditSold, 50002000000000000000000);
+        assertEq(stats.creditCommitted, 21600);
+        assertEq(stats.creditDebited, 88248);
         assertEq(stats.creditDebitRate, 1);
         assertEq(stats.numAccounts, 10);
         assertEq(stats.numBlobs, 1);
         assertEq(stats.numResolving, 0);
+        assertEq(stats.bytesResolving, 0);
+        assertEq(stats.numAdded, 0);
+        assertEq(stats.bytesAdded, 0);
     }
 
     function testDecodeAccount() public view {

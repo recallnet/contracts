@@ -56,12 +56,12 @@ struct CreditApproval {
 /// @dev The stats of the blob actor.
 /// This is the return type for the blobs actor `get_stats` method:
 /// - The `balance` is a uint256, encoded as a CBOR byte string (e.g., 0x00010f0cf064dd59200000).
-/// - The `capacityTotal`, `capacityUsed`, `creditSold`, `creditCommitted`, and `creditDebited` are
+/// - The `capacityFree`, `capacityUsed`, `creditSold`, `creditCommitted`, and `creditDebited` are
 /// WASM BigInt types: a CBOR array with a sign (assume non-negative) and array of numbers (e.g., 0x8201820001).
 /// - The `creditDebitRate`, `numAccounts`, `numBlobs`, and `numResolving` are uint64, encoded as a
 /// CBOR byte string (e.g., 0x317).
 /// @param balance (uint256): The current token balance earned by the subnet.
-/// @param capacityTotal (uint256): The total free storage capacity of the subnet.
+/// @param capacityFree (uint256): The total free storage capacity of the subnet.
 /// @param capacityUsed (uint256): The total used storage capacity of the subnet.
 /// @param creditSold (uint256): The total number of credits sold in the subnet.
 /// @param creditCommitted (uint256): The total number of credits committed to active storage in the subnet.
@@ -69,9 +69,12 @@ struct CreditApproval {
 /// @param creditDebitRate (uint64): The byte-blocks per atto token rate set at genesis.
 /// @param numAccounts (uint64): Total number of debit accounts.
 /// @param numBlobs (uint64): Total number of actively stored blobs.
+/// @param bytesResolving (uint64): Total bytes of all currently resolving blobs.
+/// @param numAdded (uint64): Total number of blobs that are not yet added to the validator's resolve pool.
+/// @param bytesAdded (uint64): Total bytes of all blobs that are not yet added to the validator's resolve pool.
 struct SubnetStats {
     uint256 balance;
-    uint256 capacityTotal;
+    uint256 capacityFree;
     uint256 capacityUsed;
     uint256 creditSold;
     uint256 creditCommitted;
@@ -80,6 +83,9 @@ struct SubnetStats {
     uint64 numAccounts;
     uint64 numBlobs;
     uint64 numResolving;
+    uint64 bytesResolving;
+    uint64 numAdded;
+    uint64 bytesAdded;
 }
 
 /// @dev Subnet-wide credit statistics.
@@ -99,12 +105,12 @@ struct CreditStats {
 }
 
 /// @dev Subnet-wide storage statistics.
-/// @param capacityTotal (uint256): The total free storage capacity of the subnet.
+/// @param capacityFree (uint256): The total free storage capacity of the subnet.
 /// @param capacityUsed (uint256): The total used storage capacity of the subnet.
 /// @param numBlobs (uint64): Total number of actively stored blobs.
 /// @param numResolving (uint64): Total number of currently resolving blobs.
 struct StorageStats {
-    uint256 capacityTotal;
+    uint256 capacityFree;
     uint256 capacityUsed;
     uint64 numBlobs;
     uint64 numResolving;
