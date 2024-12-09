@@ -37,7 +37,7 @@ abstract contract ValidatorRewarderTestBase is Test {
 
         // Deploy ValidatorRewarder with initialization params
         ValidatorRewarderDeployScript rewarderDeployer = new ValidatorRewarderDeployScript();
-        rewarder = rewarderDeployer.runWithParams("local", address(token), subnet, CHECKPOINT_PERIOD);
+        rewarder = rewarderDeployer.runWithParams("local", address(token));
         rewarderOwner = rewarder.owner();
         // Grant MINTER_ROLE to Rewarder for Hoku tokens
         vm.startPrank(token.deployer());
@@ -47,6 +47,8 @@ abstract contract ValidatorRewarderTestBase is Test {
         // Mint initial supply of Hoku tokens to a random address
         vm.startPrank(rewarderOwner);
         token.mint(address(0x888), 1000e18);
+        // Set subnet
+        rewarder.setSubnet(subnet, 600);
         vm.stopPrank();
     }
 
@@ -114,21 +116,27 @@ contract ValidatorRewarderSubnetTest is ValidatorRewarderTestBase {
         // Deploy a new instance without initialization
         ValidatorRewarder newRewarder = new ValidatorRewarder();
         SubnetID memory subnet = createSubnet();
-        // Try to initialize with invalid period
+
+        // Initialize with token
+        newRewarder.initialize(address(token));
+
+        // Try to set subnet with invalid period
         vm.expectRevert(abi.encodeWithSelector(ValidatorRewarder.InvalidCheckpointPeriod.selector, 0));
-        newRewarder.initialize(
-            address(token),
-            subnet,
-            0 // invalid period
-        );
+        newRewarder.setSubnet(subnet, 0);
+    }
+
+    function testSetSubnetNotOwner() public {
+        SubnetID memory subnet = createSubnet();
+        vm.startPrank(address(0x789));
+        vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", address(0x789)));
+        rewarder.setSubnet(subnet, CHECKPOINT_PERIOD);
+        vm.stopPrank();
     }
 
     function testCannotInitializeTwice() public {
-        SubnetID memory subnet = createSubnet();
-
         // The error is now "InvalidInitialization()" in newer OZ versions
         vm.expectRevert(abi.encodeWithSignature("InvalidInitialization()"));
-        rewarder.initialize(address(token), subnet, CHECKPOINT_PERIOD);
+        rewarder.initialize(address(token));
     }
 }
 
