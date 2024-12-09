@@ -34,23 +34,30 @@
 This project is built with [Foundry](https://book.getfoundry.sh/) and contains the core contracts
 for Hoku. It includes the following:
 
-- `Hoku.sol`: An ERC20 token implementation.
-- `Faucet.sol`: The accompanying onchain faucet (rate limiter) contract for dripping testnet funds.
-- `CreditManager.sol`: Manage subnet credit, including credit purchases, approvals/rejections, and
-  related read-only operations (uses the `LibCredit` and `LibWasm` libraries).
-- `BucketManager.sol`: Manage buckets, including creating buckets, listing buckets, querying
-  objects, and other object-related operations (uses the `LibBucket` and `LibWasm` libraries).
-- `ValidatorGater.sol`: A contract for managing validator access.
-- `interfaces/ICredit.sol`: The interface for the credit contract.
-- `types/`: Various method parameters and return types for core contracts.
-- `utils/LibCredit.sol`: A library for interacting with credits, wrapped by the `Credit` contract.
-- `utils/LibBucket.sol`: A library for interacting with buckets, wrapped by the `BucketManager`
-  contract.
-- `utils/LibWasm.sol`: A library for facilitating proxy calls to WASM contracts from Solidity.
-- `utils/solidity-cbor`: Libraries for encoding and decoding CBOR data, used in proxy WASM calls
-  (forked from [this repo](https://github.com/smartcontractkit/solidity-cborutils)).
-- `utils/Base32.sol`: Utilities for encoding and decoding base32.
-- `utils/Blake2b.sol`: Utilities for Blake2b hashing (used for WASM `t2` addresses).
+- Token contracts
+  - `Hoku.sol`: An ERC20 token implementation.
+  - `Faucet.sol`: The accompanying onchain faucet (rate limiter) contract for dripping testnet
+    funds.
+  - `ValidatorGater.sol`: A contract for managing validator access.
+- Wrapper contracts:
+  - `BlobManager.sol`: Manage blobs, including adding blobs, getting blobs, querying blobs, and
+    other storage-related operations (uses the `LibBlob` and `LibWasm` libraries).
+  - `BucketManager.sol`: Manage buckets, including creating buckets, listing buckets, querying
+    objects, and other object-related operations (uses the `LibBucket` and `LibWasm` libraries).
+  - `CreditManager.sol`: Manage subnet credit, including credit purchases, approvals/rejections, and
+    related read-only operations (uses the `LibBlob` and `LibWasm` libraries).
+  - `LibBlob.sol`: A library with internal methods for interacting with blobs and credits, wrapped
+    by the `BlobManager` contract or `CreditManager` contract to expose these externally.
+  - `LibBucket.sol`: A library with internal methods for interacting with buckets, wrapped by the
+    `BucketManager` contract to expose these externally.
+  - `LibWasm.sol`: A library for facilitating proxy calls to WASM contracts from Solidity.
+  - `interfaces/ICreditManager.sol`: The interface for the credit manager contract.
+  - `types/`: Various method parameters and return types for core contracts.
+- Utility libraries:
+  - `utils/solidity-cbor`: Libraries for encoding and decoding CBOR data, used in proxy WASM calls
+    (forked from [this repo](https://github.com/smartcontractkit/solidity-cborutils)).
+  - `utils/Base32.sol`: Utilities for encoding and decoding base32.
+  - `utils/Blake2b.sol`: Utilities for Blake2b hashing (used for WASM `t2` addresses).
 
 ### Deployments
 
@@ -167,7 +174,7 @@ tokens, owned by the deployer's account which will be transferred to the faucet 
 with 10\*\*18 decimal units).
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript --sig 'run(uint256)' 5000000000000000000000 --rpc-url localnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
+forge script script/Faucet.s.sol --tc DeployScript --sig 'run(uint256)' 5000000000000000000000 --rpc-url localnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 ##### Credit
@@ -576,7 +583,7 @@ BUCKETS=$(forge script script/BucketManager.s.sol \
 --private-key $PRIVATE_KEY \
 --broadcast \
 -g 100000 \
-| grep "0: contract BucketManager" | awk '{print $NF}')
+| grep "bucketManager: address" | awk '{print $NF}')
 ```
 
 #### Methods
@@ -881,7 +888,7 @@ BLOBS=$(forge script script/BlobManager.s.sol \
 --private-key $PRIVATE_KEY \
 --broadcast \
 -g 100000 \
-| grep "0: contract BlobManager" | awk '{print $NF}')
+| grep "blobManager: address" | awk '{print $NF}')
 ```
 
 #### Methods
@@ -948,7 +955,7 @@ struct AddBlobParams {
 }
 ```
 
-We then pass this as a single parameter to the `add` method:
+We then pass this as a single parameter to the `addBlob` method:
 
 ```sh
 cast send --rpc-url $ETH_RPC_URL $BLOBS "addBlob((address,string,string,string,string,uint64,uint64))" '(0x0000000000000000000000000000000000000000,"cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","","",6,0)' --private-key $PRIVATE_KEY

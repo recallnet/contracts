@@ -4,6 +4,8 @@ pragma solidity ^0.8.26;
 import {Account, Balance, CreditApproval, CreditStats} from "../types/BlobTypes.sol";
 
 /// @dev Hoku Blobs actor EVM interface for managing and querying information about credit.
+/// Note: This wrapper implementation **must** be a contract, and not a library like the other wrappers, due to the
+/// `payable` requirement on the `buyCredit` function.
 /// See Rust implementation for details:
 /// https://github.com/hokunet/ipc/blob/develop/fendermint/actors/blobs/src/actor.rs
 interface ICreditManager {
