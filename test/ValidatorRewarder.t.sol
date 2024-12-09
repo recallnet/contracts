@@ -24,6 +24,7 @@ abstract contract ValidatorRewarderTestBase is Test {
     uint64 internal constant ROOTNET_CHAINID = 123;
     address internal constant SUBNET_ROUTE = address(101);
     uint256 internal constant CHECKPOINT_PERIOD = 600;
+    uint256 internal constant INFLATION_RATE = 928_276_004_952;
 
     function setUp() public virtual {
         subnetActor = address(0x456);
@@ -42,6 +43,12 @@ abstract contract ValidatorRewarderTestBase is Test {
         // Grant MINTER_ROLE to Rewarder for Hoku tokens
         vm.startPrank(token.deployer());
         token.grantRole(token.MINTER_ROLE(), address(rewarder));
+        vm.stopPrank();
+
+        // Set up rewarder configuration
+        vm.startPrank(rewarderOwner);
+        rewarder.setSubnet(subnet, 600);
+        rewarder.setInflationRate(INFLATION_RATE);
         vm.stopPrank();
 
         // Mint initial supply of Hoku tokens to a random address
@@ -74,7 +81,7 @@ contract ValidatorRewarderInitialStateTest is ValidatorRewarderTestBase {
         assertTrue(rewarder.isActive());
         assertEq(rewarder.subnet(), createSubnet().root);
         assertEq(address(rewarder.token()), address(token));
-        assertEq(rewarder.inflationRate(), rewarder.DEFAULT_INFLATION_RATE());
+        assertEq(rewarder.inflationRate(), INFLATION_RATE);
     }
 }
 
@@ -151,18 +158,13 @@ contract ValidatorRewarderTokenTest is ValidatorRewarderTestBase {
 contract ValidatorRewarderInflationTest is ValidatorRewarderTestBase {
     function testSetInflationRateNotOwner() public {
         vm.startPrank(address(0x789));
-        uint256 newRate = rewarder.DEFAULT_INFLATION_RATE() * 2;
         vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", address(0x789)));
-        rewarder.setInflationRate(newRate);
+        rewarder.setInflationRate(INFLATION_RATE * 2);
         vm.stopPrank();
     }
 
-    function testSetInflationRateFromDefault() public {
-        // Verify we start with default rate
-        assertEq(rewarder.inflationRate(), rewarder.DEFAULT_INFLATION_RATE());
-
-        // Owner can change the rate
-        uint256 newRate = rewarder.DEFAULT_INFLATION_RATE() * 2;
+    function testSetInflationRateAsOwner() public {
+        uint256 newRate = INFLATION_RATE * 2;
         vm.startPrank(rewarderOwner);
         rewarder.setInflationRate(newRate);
         vm.stopPrank();
@@ -182,15 +184,6 @@ contract ValidatorRewarderInflationTest is ValidatorRewarderTestBase {
 
         // Rate should not change when rewarder is not active
         assertEq(rewarder.inflationRate(), oldRate);
-    }
-
-    function testSetInflationRateAsOwner() public {
-        // Set new inflation rate as owner
-        vm.startPrank(rewarderOwner);
-        uint256 newRate = rewarder.DEFAULT_INFLATION_RATE() * 2;
-        rewarder.setInflationRate(newRate);
-        vm.stopPrank();
-        assertEq(rewarder.inflationRate(), newRate);
     }
 }
 
