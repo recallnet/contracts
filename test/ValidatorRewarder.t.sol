@@ -238,7 +238,7 @@ contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
 
         // Check initial state
         assertTrue(rewarder.isActive());
-        assertEq(rewarder.latestClaimableCheckpoint(), 0);
+        assertEq(rewarder.latestClaimedCheckpoint(), 0);
         assertEq(token.balanceOf(address(rewarder)), 0);
         assertEq(token.totalSupply(), initialSupply);
 
@@ -256,7 +256,7 @@ contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
         assertApproxEqAbs(totalInflation, 850919671206244 + 77356333746022, 1000);
 
         // Verify checkpoint
-        assertEq(rewarder.latestClaimableCheckpoint(), 1200);
+        assertEq(rewarder.latestClaimedCheckpoint(), 1200);
 
         // Test invalid next checkpoint
         vm.startPrank(SUBNET_ROUTE);

@@ -31,7 +31,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     Hoku public token;
 
     /// @notice The latest checkpoint height that rewards can be claimed for
-    uint64 public latestClaimableCheckpoint;
+    uint64 public latestClaimedCheckpoint;
 
     /// @notice The inflation rate for the subnet
     /// @dev The rate is expressed as a decimal*1e18.
@@ -155,7 +155,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
             // Mint the validator's share to the validator
             token.mint(data.validator, validatorShare);
             // Update the latest claimable checkpoint.
-            latestClaimableCheckpoint = claimedCheckpointHeight;
+            latestClaimedCheckpoint = claimedCheckpointHeight;
         } else {
             // Calculate the supply delta for the checkpoint
             uint256 supplyDelta = calculateInflationForCheckpoint(supplyAtCheckpoint);
@@ -198,10 +198,10 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @dev In this case we need not check that the claimed checkpoint is in the future.
     /// @dev Otherwise, we must ensure that the claimed checkpoint is in the future.
     function validateCheckpointHeight(uint64 claimedCheckpointHeight) internal view returns (bool) {
-        if (latestClaimableCheckpoint == 0) {
+        if (latestClaimedCheckpoint == 0) {
             return true;
         }
-        return claimedCheckpointHeight == latestClaimableCheckpoint + checkpointPeriod;
+        return claimedCheckpointHeight == latestClaimedCheckpoint + checkpointPeriod;
     }
 
     /// @dev Function that should revert when `msg.sender` is not authorized to upgrade the contract

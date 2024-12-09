@@ -107,7 +107,7 @@ contract ValidatorRewarderFFITest is ValidatorRewarderTestBase {
 
             // Verify checkpoint is set correctly
             assertEq(
-                rewarder.latestClaimableCheckpoint(),
+                rewarder.latestClaimedCheckpoint(),
                 currentCheckpoint,
                 string.concat("Checkpoint not set correctly at checkpoint ", vm.toString(currentCheckpoint))
             );
