@@ -471,7 +471,7 @@ library LibBlob {
     function buyCredit(address recipient) external returns (bytes memory data) {
         if (msg.value == 0) revert InvalidValue("Amount must be greater than zero");
         bytes memory params = recipient.encodeCborAddress();
-        return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_BUY_CREDIT, params);
+        return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_BUY_CREDIT, params, msg.value);
     }
 
     /// @dev Approve credits for an account. This is a simplified variant when no optional fields are needed.
@@ -487,7 +487,7 @@ library LibBlob {
         returns (bytes memory data)
     {
         bytes memory params = encodeApproveCreditParams(from, receiver, requiredCaller, limit, ttl);
-        return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_APPROVE_CREDIT, params);
+        return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_APPROVE_CREDIT, params, 0);
     }
 
     /// @dev Revoke credits for an account. Includes optional fields, which if set to zero, will be encoded as null.
@@ -497,7 +497,7 @@ library LibBlob {
     function revokeCredit(address from, address receiver, address requiredCaller) external {
         bytes memory params = encodeRevokeCreditParams(from, receiver, requiredCaller);
         // Note: response bytes are always empty
-        LibWasm.writeToWasmActor(ACTOR_ID, METHOD_REVOKE_CREDIT, params);
+        LibWasm.writeToWasmActor(ACTOR_ID, METHOD_REVOKE_CREDIT, params, 0);
     }
 
     /// @dev Add a blob to the subnet.
@@ -505,7 +505,7 @@ library LibBlob {
     /// @return data The response from the actor.
     function addBlob(AddBlobParams memory params) external returns (bytes memory data) {
         bytes memory _params = encodeAddBlobParams(params);
-        return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_ADD_BLOB, _params);
+        return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_ADD_BLOB, _params, 0);
     }
 
     /// @dev Delete a blob from the subnet.
@@ -519,6 +519,6 @@ library LibBlob {
         encoded[2] = encodeSubscriptionId(subscriptionId);
         bytes memory params = encoded.encodeCborArray();
         // Note: response bytes are always empty
-        LibWasm.writeToWasmActor(ACTOR_ID, METHOD_DELETE_BLOB, params);
+        LibWasm.writeToWasmActor(ACTOR_ID, METHOD_DELETE_BLOB, params, 0);
     }
 }

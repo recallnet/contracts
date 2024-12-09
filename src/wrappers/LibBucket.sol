@@ -237,7 +237,7 @@ library LibBucket {
             metadata: metadata
         });
         bytes memory params = encodeCreateBucketParams(createParams);
-        return LibWasm.writeToWasmActor(ADM_ACTOR_ID, METHOD_CREATE_EXTERNAL, params);
+        return LibWasm.writeToWasmActor(ADM_ACTOR_ID, METHOD_CREATE_EXTERNAL, params, 0);
     }
 
     /// @dev List all buckets owned by an address.

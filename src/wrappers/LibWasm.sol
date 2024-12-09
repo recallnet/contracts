@@ -609,11 +609,14 @@ library LibWasm {
     /// @param actorId The actor ID.
     /// @param methodNum The method number.
     /// @param params The parameters.
+    /// @param value The proxied `msg.value` to send to the actor.
     /// @return data The data returned from the actor.
-    function writeToWasmActor(uint64 actorId, uint64 methodNum, bytes memory params) internal returns (bytes memory) {
+    function writeToWasmActor(uint64 actorId, uint64 methodNum, bytes memory params, uint256 value)
+        internal
+        returns (bytes memory)
+    {
         if (params.length == 0) revert InvalidValue("Params must be non-empty");
         uint64 codec = CBOR_CODEC;
-        uint256 value = msg.value > 0 ? msg.value : 0;
         (int256 exit, bytes memory data) = Actor.callByID(
             CommonTypes.FilActorId.wrap(actorId),
             methodNum,
