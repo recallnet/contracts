@@ -318,7 +318,8 @@ CREDIT=$(forge script script/CreditManager.s.sol \
 --sig 'run()' \
 --rpc-url localnet_subnet \
 --private-key $PRIVATE_KEY \
---broadcast -g 100000 \
+--broadcast \
+-g 100000 \
 | grep "0: contract CreditManager" | awk '{print $NF}')
 ```
 
@@ -574,7 +575,7 @@ BUCKETS=$(forge script script/BucketManager.s.sol \
 --rpc-url localnet_subnet \
 --private-key $PRIVATE_KEY \
 --broadcast \
--g 100000
+-g 100000 \
 | grep "0: contract BucketManager" | awk '{print $NF}')
 ```
 
@@ -815,7 +816,7 @@ Where the first array is an empty set of objects, and the second array is the co
 bucket:
 
 ```solidity
-struct QueryObjects {
+struct Query {
     Object[] objects; // Empty array if no objects
     string[] commonPrefixes; // ["hello/"]
     string nextKey; // ""
@@ -843,7 +844,7 @@ This will return the following `Query` output:
 Which maps to the following structs:
 
 ```solidity
-struct QueryObjects {
+struct Query {
     Object[] objects; // See `Object` struct below
     string[] commonPrefixes; // Empty array if no common prefixes
     string nextKey; // Null value (empty string `""`)
@@ -879,7 +880,7 @@ BLOBS=$(forge script script/BlobManager.s.sol \
 --rpc-url localnet_subnet \
 --private-key $PRIVATE_KEY \
 --broadcast \
--g 100000
+-g 100000 \
 | grep "0: contract BlobManager" | awk '{print $NF}')
 ```
 
@@ -1027,8 +1028,6 @@ struct Delegate {
 ```
 
 ##### Get blob status
-
-TODO: this always returns failed
 
 - Pass an address as the first field to represent the origin address that requested the blob.
 - Provide the `blobHash` blake3 value.

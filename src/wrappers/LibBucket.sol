@@ -7,10 +7,10 @@ import {
     KeyValue,
     Kind,
     Machine,
+    Object,
     ObjectState,
     ObjectValue,
     Query,
-    QueryObject,
     WriteAccess
 } from "../types/BucketTypes.sol";
 import {InvalidValue, LibWasm} from "./LibWasm.sol";
@@ -85,15 +85,15 @@ library LibBucket {
     /// @dev Decode a CBOR encoded array of objects.
     /// @param data The CBOR encoded array of objects.
     /// @return objects The decoded objects.
-    function decodeObjects(bytes memory data) internal view returns (QueryObject[] memory objects) {
+    function decodeObjects(bytes memory data) internal view returns (Object[] memory objects) {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return objects;
-        objects = new QueryObject[](decoded.length);
+        objects = new Object[](decoded.length);
         for (uint256 i = 0; i < decoded.length; i++) {
             bytes[] memory object = decoded[i].decodeCborArrayToBytes();
             string memory key = string(object[0].decodeCborBytesArrayToBytes());
             ObjectState memory state = decodeObjectState(object[1]);
-            objects[i] = QueryObject({key: key, state: state});
+            objects[i] = Object({key: key, state: state});
         }
         return objects;
     }

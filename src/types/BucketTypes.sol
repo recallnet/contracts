@@ -36,7 +36,7 @@ struct CreateBucketParams {
 /// @param commonPrefixes (string[]): When a delimiter is used in the list query, this contains common key prefixes.
 /// @param nextKey (string): Next key to use for paginating when there are more objects to list.
 struct Query {
-    QueryObject[] objects;
+    Object[] objects;
     string[] commonPrefixes;
     string nextKey;
 }
@@ -44,7 +44,7 @@ struct Query {
 /// @dev An object in the bucket as part of a query.
 /// @param key (string): The object key.
 /// @param value (ObjectState): The object state.
-struct QueryObject {
+struct Object {
     string key;
     ObjectState state;
 }
