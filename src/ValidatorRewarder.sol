@@ -63,19 +63,24 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
 
     /// @notice Initializes the rewarder
     /// @param hokuToken The address of the HOKU token contract
-    /// @param subnetId The subnet ID
-    /// @param period The bottomup checkpoint period for the subnet
-    function initialize(address hokuToken, SubnetID calldata subnetId, uint256 period) public initializer {
+    function initialize(address hokuToken) public initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         _active = true;
         token = Hoku(hokuToken);
-        subnet = subnetId;
+        inflationRate = DEFAULT_INFLATION_RATE;
+    }
+
+    /// @notice Sets the subnet and checkpoint period
+    /// @dev Only the owner can set the subnet and period
+    /// @param subnetId The subnet ID
+    /// @param period The bottomup checkpoint period for the subnet
+    function setSubnet(SubnetID calldata subnetId, uint256 period) external onlyOwner {
         if (period == 0) {
             revert InvalidCheckpointPeriod(period);
         }
+        subnet = subnetId;
         checkpointPeriod = period;
-        inflationRate = DEFAULT_INFLATION_RATE;
     }
 
     // ========== PUBLIC FUNCTIONS ==========

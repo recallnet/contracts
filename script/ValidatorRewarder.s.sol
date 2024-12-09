@@ -19,10 +19,7 @@ contract DeployScript is Script {
         return proxyAddress;
     }
 
-    function runWithParams(string memory network, address hokuToken, SubnetID calldata subnetId, uint256 period)
-        public
-        returns (ValidatorRewarder)
-    {
+    function runWithParams(string memory network, address hokuToken) public returns (ValidatorRewarder) {
         if (vm.envExists(PRIVATE_KEY)) {
             uint256 privateKey = vm.envUint(PRIVATE_KEY);
             vm.startBroadcast(privateKey);
@@ -31,11 +28,8 @@ contract DeployScript is Script {
         } else {
             revert("PRIVATE_KEY not set in non-local environment");
         }
-
-        proxyAddress = Upgrades.deployUUPSProxy(
-            "ValidatorRewarder.sol", abi.encodeCall(ValidatorRewarder.initialize, (hokuToken, subnetId, period))
-        );
-        console2.log("Proxy address: ", proxyAddress);
+        proxyAddress =
+            Upgrades.deployUUPSProxy("ValidatorRewarder.sol", abi.encodeCall(ValidatorRewarder.initialize, (hokuToken)));
         vm.stopBroadcast();
 
         // Check implementation
@@ -74,23 +68,5 @@ contract UpgradeRewarderProxyScript is Script {
         console2.log("Implementation address: ", implNew);
 
         require(implOld != implNew, "Implementation address not changed");
-    }
-}
-
-contract SetActiveScript is Script {
-    function setUp() public {}
-
-    function run(bool active) public {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        address proxy = vm.envAddress("PROXY_ADDR");
-
-        console2.log("Proxy address:", proxy);
-        console2.log("Setting active state to:", active);
-
-        vm.startBroadcast(deployerPrivateKey);
-        ValidatorRewarder(proxy).setActive(active);
-        vm.stopBroadcast();
-
-        console2.log("Active state set successfully");
     }
 }
