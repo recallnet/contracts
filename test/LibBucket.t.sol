@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
-import {Kind, Machine, Query, Value} from "../src/types/BucketTypes.sol";
+import {Kind, Machine, ObjectState, ObjectValue, Query} from "../src/types/BucketTypes.sol";
 import {AddObjectParams, KeyValue, LibBucket} from "../src/wrappers/LibBucket.sol";
 
 contract LibBucketTest is Test {
@@ -29,6 +29,7 @@ contract LibBucketTest is Test {
         assertEq(encoded, hex"8440412f8b18681865186c186c186f182f1877186f1872186c186400");
     }
 
+    // Note: this is the underlying decoding in `queryObjects`
     function testDecodeQuery() public view {
         // Empty objects, empty common prefixes, null next key
         Query memory query = LibBucket.decodeQuery(hex"838080f6");
@@ -54,12 +55,12 @@ contract LibBucketTest is Test {
             hex"8381828b18681865186c186c186f182f1877186f1872186c1864a364686173689820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a18996473697a6506686d65746164617461a263666f6f636261726c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d80f6"
         );
         assertEq(query.objects[0].key, "hello/world");
-        assertEq(query.objects[0].value.blobHash, "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq");
-        assertEq(query.objects[0].value.size, 6);
-        assertEq(query.objects[0].value.metadata[0].key, "foo");
-        assertEq(query.objects[0].value.metadata[0].value, "bar");
-        assertEq(query.objects[0].value.metadata[1].key, "content-type");
-        assertEq(query.objects[0].value.metadata[1].value, "application/octet-stream");
+        assertEq(query.objects[0].state.blobHash, "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq");
+        assertEq(query.objects[0].state.size, 6);
+        assertEq(query.objects[0].state.metadata[0].key, "foo");
+        assertEq(query.objects[0].state.metadata[0].value, "bar");
+        assertEq(query.objects[0].state.metadata[1].key, "content-type");
+        assertEq(query.objects[0].state.metadata[1].value, "application/octet-stream");
         assertEq(query.commonPrefixes.length, 0);
         assertEq(query.nextKey, "");
 
@@ -68,13 +69,13 @@ contract LibBucketTest is Test {
             hex"8382828b18681865186c186c186f182f1877186f1872186c1864a364686173689820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a18996473697a6506686d65746164617461a16c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d828a18681865186c186c186f182f1874186518731874a36468617368982018b618e1100c185318b918c518f218881878185e18811854187e183b18da18a60e186c182d182518f218b8185418ad184c186518bc186a183118af18b36473697a650c686d65746164617461a16c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d818c18681865186c186c186f182f1877186f1872186c1864182ff6"
         );
         assertEq(query.objects[0].key, "hello/world");
-        assertEq(query.objects[0].value.blobHash, "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq");
-        assertEq(query.objects[0].value.size, 6);
-        assertEq(query.objects[0].value.metadata.length, 1); // Always has `content-type` metadata
+        assertEq(query.objects[0].state.blobHash, "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq");
+        assertEq(query.objects[0].state.size, 6);
+        assertEq(query.objects[0].state.metadata.length, 1); // Always has `content-type` metadata
         assertEq(query.objects[1].key, "hello/test");
-        assertEq(query.objects[1].value.blobHash, "w3qradctxhc7fcdyl2avi7r33kta43bnexzlqvfnjrs3y2rrv6zq");
-        assertEq(query.objects[1].value.size, 12);
-        assertEq(query.objects[1].value.metadata.length, 1);
+        assertEq(query.objects[1].state.blobHash, "w3qradctxhc7fcdyl2avi7r33kta43bnexzlqvfnjrs3y2rrv6zq");
+        assertEq(query.objects[1].state.size, 12);
+        assertEq(query.objects[1].state.metadata.length, 1);
         assertEq(query.commonPrefixes[0], "hello/world/");
         assertEq(query.nextKey, "");
 
@@ -83,11 +84,26 @@ contract LibBucketTest is Test {
             hex"8381828a18681865186c186c186f182f1874186518731874a36468617368982018b618e1100c185318b918c518f218881878185e18811854187e183b18da18a60e186c182d182518f218b8185418ad184c186518bc186a183118af18b36473697a650c686d65746164617461a16c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d818c18681865186c186c186f182f1877186f1872186c1864182ff6"
         );
         assertEq(query.objects[0].key, "hello/test");
-        assertEq(query.objects[0].value.blobHash, "w3qradctxhc7fcdyl2avi7r33kta43bnexzlqvfnjrs3y2rrv6zq");
-        assertEq(query.objects[0].value.size, 12);
-        assertEq(query.objects[0].value.metadata.length, 1);
+        assertEq(query.objects[0].state.blobHash, "w3qradctxhc7fcdyl2avi7r33kta43bnexzlqvfnjrs3y2rrv6zq");
+        assertEq(query.objects[0].state.size, 12);
+        assertEq(query.objects[0].state.metadata.length, 1);
         assertEq(query.commonPrefixes[0], "hello/world/");
         assertEq(query.nextKey, "");
+    }
+
+    // Note: this is the underlying decoding in `getObject`
+    function testDecodeObjectValue() public view {
+        bytes memory data =
+            hex"859820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a18999820184a18d5189d1883189718f91849185318ce18ab1618d2182d18c618e718b1187018ae03187a185b188518c6189a186c18af18fc18ff18c918e318ac0306197260a263666f6f636261726c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d";
+        ObjectValue memory value = LibBucket.decodeObjectValue(data);
+        assertEq(value.blobHash, "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq");
+        assertEq(value.recoveryHash, "jlkz3a4x7fevhtvlc3jc3rxhwfyk4a32loc4ngtmv76p7spdvqbq");
+        assertEq(value.size, 6);
+        assertEq(value.expiry, 29280);
+        assertEq(value.metadata[0].key, "foo");
+        assertEq(value.metadata[0].value, "bar");
+        assertEq(value.metadata[1].key, "content-type");
+        assertEq(value.metadata[1].value, "application/octet-stream");
     }
 
     function testDecodeList() public view {

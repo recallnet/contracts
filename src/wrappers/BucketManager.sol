@@ -2,16 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {IBucketManager} from "../interfaces/IBucketManager.sol";
-import {
-    AddObjectParams,
-    CreateBucketParams,
-    KeyValue,
-    Kind,
-    Machine,
-    Object,
-    Query,
-    Value
-} from "../types/BucketTypes.sol";
+import {AddObjectParams, KeyValue, Machine, ObjectValue, Query} from "../types/BucketTypes.sol";
 import {LibBucket} from "./LibBucket.sol";
 import {LibWasm} from "./LibWasm.sol";
 
@@ -84,7 +75,7 @@ contract BucketManager is IBucketManager {
     }
 
     /// @dev See {IBucketManager-getObject}.
-    function getObject(string memory bucket, string memory key) external view returns (Value memory) {
+    function getObject(string memory bucket, string memory key) external view returns (ObjectValue memory) {
         return LibBucket.getObject(bucket, key);
     }
 

@@ -7,9 +7,10 @@ import {
     KeyValue,
     Kind,
     Machine,
-    Object,
+    ObjectState,
+    ObjectValue,
     Query,
-    Value,
+    QueryObject,
     WriteAccess
 } from "../types/BucketTypes.sol";
 import {InvalidValue, LibWasm} from "./LibWasm.sol";
@@ -84,33 +85,44 @@ library LibBucket {
     /// @dev Decode a CBOR encoded array of objects.
     /// @param data The CBOR encoded array of objects.
     /// @return objects The decoded objects.
-    function decodeObjects(bytes memory data) internal view returns (Object[] memory objects) {
+    function decodeObjects(bytes memory data) internal view returns (QueryObject[] memory objects) {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return objects;
-        objects = new Object[](decoded.length);
+        objects = new QueryObject[](decoded.length);
         for (uint256 i = 0; i < decoded.length; i++) {
             bytes[] memory object = decoded[i].decodeCborArrayToBytes();
             string memory key = string(object[0].decodeCborBytesArrayToBytes());
-            Value memory value = decodeValue(object[1]);
-            objects[i] = Object({key: key, value: value});
+            ObjectState memory state = decodeObjectState(object[1]);
+            objects[i] = QueryObject({key: key, state: state});
         }
         return objects;
     }
 
-    /// @dev Decode a CBOR encoded value.
+    /// @dev Decode a CBOR encoded object state for `queryObjects`, which is represented as a mapping.
     /// @param data The CBOR encoded value.
     /// @return value The decoded value.
-    function decodeValue(bytes memory data) internal view returns (Value memory value) {
+    function decodeObjectState(bytes memory data) internal view returns (ObjectState memory value) {
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
         if (decoded.length == 0) return value;
-        // The object's value is encoded in a mapping with the following structure:
-        // [1] => blobHash value (with preceding key `hash`)
-        // [3] => size value (with preceding key `size`)
-        // [5] => metadata value (with preceding key `metadata`)
-        value = Value({
+        value = ObjectState({
             blobHash: string(decoded[0][1].decodeCborBlobHashOrNodeId()),
             size: decoded[1][1].decodeCborBytesToUint64(),
             metadata: decodeMetadata(decoded[2][1])
+        });
+    }
+
+    /// @dev Decode a CBOR encoded object value for `getObject`, which is represented as an array.
+    /// @param data The CBOR encoded value.
+    /// @return value The decoded value.
+    function decodeObjectValue(bytes memory data) internal view returns (ObjectValue memory value) {
+        bytes[] memory decoded = data.decodeCborArrayToBytes();
+        if (decoded.length == 0) return value;
+        value = ObjectValue({
+            blobHash: string(decoded[0].decodeCborBlobHashOrNodeId()),
+            recoveryHash: string(decoded[1].decodeCborBlobHashOrNodeId()),
+            size: decoded[2].decodeCborBytesToUint64(),
+            expiry: decoded[3].decodeCborBytesToUint64(),
+            metadata: decodeMetadata(decoded[4])
         });
     }
 
@@ -262,11 +274,11 @@ library LibBucket {
     /// @param bucket The bucket.
     /// @param key The object key.
     /// @return Object's value. See {Value} for more details.
-    function getObject(string memory bucket, string memory key) external view returns (Value memory) {
+    function getObject(string memory bucket, string memory key) external view returns (ObjectValue memory) {
         bytes memory bucketAddr = bucket.encodeCborActorAddress();
         bytes memory params = key.encodeCborBytes();
         bytes memory data = LibWasm.readFromWasmActorByAddress(bucketAddr, METHOD_GET_OBJECT, params);
-        return decodeValue(data);
+        return decodeObjectValue(data);
     }
 
     /// @dev Query the bucket.

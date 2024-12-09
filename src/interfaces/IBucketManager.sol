@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {AddObjectParams, KeyValue, Machine, Query, Value} from "../types/BucketTypes.sol";
+import {AddObjectParams, KeyValue, Machine, ObjectValue, Query} from "../types/BucketTypes.sol";
 
 /// @dev Hoku Bucket actor EVM interface for managing objects, and querying object or storage stats.
 /// See Rust implementation for details:
@@ -74,8 +74,8 @@ interface IBucketManager {
     /// @dev Get an object from a bucket.
     /// @param bucket The bucket.
     /// @param key The key.
-    /// @return value Object's value. See {Value} for more details.
-    function getObject(string memory bucket, string memory key) external view returns (Value memory);
+    /// @return value Object's value. See {ObjectValue} for more details.
+    function getObject(string memory bucket, string memory key) external view returns (ObjectValue memory);
 
     /// @dev Query the bucket.
     /// @param bucket The bucket.

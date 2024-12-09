@@ -770,24 +770,24 @@ Getting a single object is similar to the response of `query`, except only a sin
 returned. Thus, the response simply includes a single value. The `BUCKET_ADDR` is the same one from
 above.
 
-TODO
-
 ```sh
-cast abi-decode "getObject(string,string)((string,uint64,(string,string)[]))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "getObject(string,string)" $BUCKET_ADDR "hello/world")
+cast abi-decode "getObject(string,string)((string,string,uint64,uint64,(string,string)[]))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "getObject(string,string)" $BUCKET_ADDR "hello/world")
 ```
 
 This will return the following response:
 
 ```sh
-("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", 6, [("foo","bar")])
+("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", 6, 103381 [1.033e5], [("foo","bar")])
 ```
 
 Which maps to the `Value` struct:
 
 ```solidity
-struct Value {
+struct ObjectValue {
     string blobHash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
+    string recoveryHash; // "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq"
     uint64 size; // 6
+    uint64 expiry; // 103381
     KeyValue[] metadata; // See `KeyValue` struct below
 }
 
@@ -815,7 +815,7 @@ Where the first array is an empty set of objects, and the second array is the co
 bucket:
 
 ```solidity
-struct Query {
+struct QueryObjects {
     Object[] objects; // Empty array if no objects
     string[] commonPrefixes; // ["hello/"]
     string nextKey; // ""
@@ -843,7 +843,7 @@ This will return the following `Query` output:
 Which maps to the following structs:
 
 ```solidity
-struct Query {
+struct QueryObjects {
     Object[] objects; // See `Object` struct below
     string[] commonPrefixes; // Empty array if no common prefixes
     string nextKey; // Null value (empty string `""`)
@@ -851,10 +851,10 @@ struct Query {
 
 struct Object {
     string key; // "hello/world"
-    Value value; // See `Value` struct below
+    ObjectState state; // See `ObjectState` struct below
 }
 
-struct Value {
+struct ObjectState {
     string blobHash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
     uint64 size; // 6
     KeyValue[] metadata; // See `KeyValue` struct below
