@@ -234,6 +234,62 @@ contract ValidatorRewarderBasicClaimTest is ValidatorRewarderTestBase {
         vm.stopPrank();
         assertEq(token.balanceOf(claimant), 0);
     }
+
+    function testNotifyValidClaimWhenTokenPaused() public {
+        // Setup test data
+        address claimant = address(0x999);
+        Consensus.ValidatorData memory validatorData = createValidatorData(claimant, 100);
+        uint256 initialSupply = token.totalSupply();
+        uint256 initialRewarderBalance = token.balanceOf(address(rewarder));
+        uint256 initialClaimantBalance = token.balanceOf(claimant);
+
+        // Pause the token
+        vm.startPrank(token.deployer());
+        token.pause();
+        vm.stopPrank();
+
+        // Try to claim rewards
+        vm.startPrank(SUBNET_ROUTE);
+        vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
+        rewarder.notifyValidClaim(createSubnet(), 600, validatorData);
+        vm.stopPrank();
+
+        // Verify no tokens were minted or transferred
+        assertEq(token.totalSupply(), initialSupply, "Total supply should not change");
+        assertEq(token.balanceOf(address(rewarder)), initialRewarderBalance, "Rewarder balance should not change");
+        assertEq(token.balanceOf(claimant), initialClaimantBalance, "Claimant balance should not change");
+    }
+
+    function testNotifyValidClaimWhenTokenPausedSubsequentClaim() public {
+        // First make a successful claim while token is not paused
+        address claimant = address(0x999);
+        Consensus.ValidatorData memory validatorData = createValidatorData(claimant, 100);
+
+        vm.startPrank(SUBNET_ROUTE);
+        rewarder.notifyValidClaim(createSubnet(), 600, validatorData);
+        vm.stopPrank();
+
+        // Record balances before pausing
+        uint256 supplyBeforePause = token.totalSupply();
+        uint256 rewarderBalanceBeforePause = token.balanceOf(address(rewarder));
+        uint256 claimantBalanceBeforePause = token.balanceOf(claimant);
+
+        // Pause the token
+        vm.startPrank(token.deployer());
+        token.pause();
+        vm.stopPrank();
+
+        // Try to make another claim
+        vm.startPrank(SUBNET_ROUTE);
+        vm.expectRevert(abi.encodeWithSignature("EnforcedPause()"));
+        rewarder.notifyValidClaim(createSubnet(), 1200, validatorData);
+        vm.stopPrank();
+
+        // Verify no tokens were transferred
+        assertEq(token.totalSupply(), supplyBeforePause, "Total supply should not change");
+        assertEq(token.balanceOf(address(rewarder)), rewarderBalanceBeforePause, "Rewarder balance should not change");
+        assertEq(token.balanceOf(claimant), claimantBalanceBeforePause, "Claimant balance should not change");
+    }
 }
 
 // Complex claim notification tests
