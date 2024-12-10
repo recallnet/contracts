@@ -12,6 +12,8 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 
+import {console2} from "forge-std/console2.sol";
+
 /// @title ValidatorRewarder
 /// @notice This contract is responsible for distributing rewards to validators.
 /// @dev The rewarder is responsible for distributing the inflation to the validators.
@@ -118,13 +120,16 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
         uint64 claimedCheckpointHeight,
         Consensus.ValidatorData calldata data
     ) external override whenActive {
+        console2.log("::: notifyValidClaim", claimedCheckpointHeight);
         // Check that the rewarder is responsible for the subnet that the validator is claiming rewards for
         if (keccak256(abi.encode(id)) != keccak256(abi.encode(subnet))) {
+            console2.log("::: SubnetMismatch");
             revert SubnetMismatch(id);
         }
 
         // Check that the caller is the subnet actor for the subnet that the validator is claiming rewards for
         if (id.route[id.route.length - 1] != msg.sender) {
+            console2.log("::: InvalidClaimNotifier");
             revert InvalidClaimNotifier(msg.sender);
         }
 
@@ -136,8 +141,10 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
         // We will calculate the rewards and transfer them to the other claimants for this checkpoint.
         uint256 supplyAtCheckpoint = checkpointToSupply[claimedCheckpointHeight];
         if (supplyAtCheckpoint == 0) {
+            console2.log("::: First claim");
             // Check that the checkpoint height is valid.
             if (!validateCheckpointHeight(claimedCheckpointHeight)) {
+                console2.log("::: InvalidCheckpointHeight");
                 revert InvalidCheckpointHeight(claimedCheckpointHeight);
             }
 
@@ -157,6 +164,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
             // Update the latest claimable checkpoint.
             latestClaimedCheckpoint = claimedCheckpointHeight;
         } else {
+            console2.log("::: Not first claim");
             // Calculate the supply delta for the checkpoint
             uint256 supplyDelta = calculateInflationForCheckpoint(supplyAtCheckpoint);
             // Calculate the validator's share of the supply delta
