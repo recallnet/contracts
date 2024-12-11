@@ -10,8 +10,7 @@ import {
     Object,
     ObjectState,
     ObjectValue,
-    Query,
-    WriteAccess
+    Query
 } from "../types/BucketTypes.sol";
 import {InvalidValue, LibWasm} from "./LibWasm.sol";
 
@@ -145,8 +144,7 @@ library LibBucket {
         bytes[] memory encoded = new bytes[](4);
         encoded[0] = params.owner.encodeCborAddress();
         encoded[1] = kindToString(params.kind).encodeCborString();
-        encoded[2] = writeAccessToString(params.writeAccess).encodeCborString();
-        encoded[3] = params.metadata.encodeCborKeyValueMap();
+        encoded[2] = params.metadata.encodeCborKeyValueMap();
         return encoded.encodeCborArray();
     }
 
@@ -214,28 +212,12 @@ library LibBucket {
         revert InvalidValue("Invalid machine kind");
     }
 
-    /// @dev Convert a write access to a string.
-    /// @param writeAccess The write access.
-    /// @return string The string representation of the write access.
-    // TODO: we'll eventually remove this since credit approvals handle access control
-    function writeAccessToString(WriteAccess writeAccess) internal pure returns (string memory) {
-        if (writeAccess == WriteAccess.OnlyOwner) {
-            return "OnlyOwner";
-        } else {
-            return "Public";
-        }
-    }
-
     /// @dev Create a bucket.
     /// @param owner The owner.
     /// @param metadata The metadata.
     function createBucket(address owner, KeyValue[] memory metadata) external returns (bytes memory) {
-        CreateBucketParams memory createParams = CreateBucketParams({
-            owner: owner,
-            kind: Kind.Bucket,
-            writeAccess: WriteAccess.OnlyOwner, // Bucket access control always uses credit approvals
-            metadata: metadata
-        });
+        CreateBucketParams memory createParams =
+            CreateBucketParams({owner: owner, kind: Kind.Bucket, metadata: metadata});
         bytes memory params = encodeCreateBucketParams(createParams);
         return LibWasm.writeToWasmActor(ADM_ACTOR_ID, METHOD_CREATE_EXTERNAL, params);
     }

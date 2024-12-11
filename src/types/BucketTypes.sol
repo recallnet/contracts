@@ -11,23 +11,13 @@ enum Kind {
     Timehub
 }
 
-/// @dev The write access of the machine.
-/// @param OnlyOwner: Only the owner can write to the machine.
-/// @param Public: Any valid account can write to the machine.
-enum WriteAccess {
-    OnlyOwner,
-    Public
-}
-
 /// @dev Parameters for creating a bucket.
 /// @param owner (address): The owner of the bucket.
 /// @param kind (Kind): The kind of the bucket.
-/// @param writeAccess (WriteAccess): The write access of the bucket. Always `WriteAccess.OnlyOwner`.
 /// @param metadata (KeyValue[]): The metadata of the bucket.
 struct CreateBucketParams {
     address owner;
     Kind kind;
-    WriteAccess writeAccess;
     KeyValue[] metadata;
 }
 
