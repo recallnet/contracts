@@ -3,11 +3,11 @@ pragma solidity ^0.8.26;
 
 import {DeployScript as HokuDeployScript} from "../script/Hoku.s.sol";
 import {DeployScript as ValidatorRewarderDeployScript} from "../script/ValidatorRewarder.s.sol";
-import {Hoku} from "../src/Hoku.sol";
-import {ValidatorRewarder} from "../src/ValidatorRewarder.sol";
-import {SubnetIDHelper} from "../src/lib/SubnetIDHelper.sol";
-import {Consensus} from "../src/structs/Activity.sol";
-import {SubnetID} from "../src/structs/Subnet.sol";
+import {Hoku} from "../src/token/Hoku.sol";
+import {ValidatorRewarder} from "../src/token/ValidatorRewarder.sol";
+
+import {Consensus, SubnetID} from "../src/types/CommonTypes.sol";
+import {SubnetIDHelper} from "../src/util/SubnetIDHelper.sol";
 import {Test} from "forge-std/Test.sol";
 import {console2} from "forge-std/console2.sol";
 

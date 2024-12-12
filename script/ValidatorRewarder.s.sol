@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {ValidatorRewarder} from "../src/ValidatorRewarder.sol";
+import {ValidatorRewarder} from "../src/token/ValidatorRewarder.sol";
 
-import {SubnetIDHelper} from "../src/lib/SubnetIDHelper.sol";
-import {SubnetID} from "../src/structs/Subnet.sol";
+import {SubnetID} from "../src/types/CommonTypes.sol";
+import {SubnetIDHelper} from "../src/util/SubnetIDHelper.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {Options, Upgrades} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
 import {Script, console2} from "forge-std/Script.sol";
@@ -20,14 +20,7 @@ contract DeployScript is Script {
     }
 
     function runWithParams(string memory network, address hokuToken) public returns (ValidatorRewarder) {
-        if (vm.envExists(PRIVATE_KEY)) {
-            uint256 privateKey = vm.envUint(PRIVATE_KEY);
-            vm.startBroadcast(privateKey);
-        } else if (Strings.equal(network, "local")) {
-            vm.startBroadcast();
-        } else {
-            revert("PRIVATE_KEY not set in non-local environment");
-        }
+        vm.startBroadcast();
         proxyAddress =
             Upgrades.deployUUPSProxy("ValidatorRewarder.sol", abi.encodeCall(ValidatorRewarder.initialize, (hokuToken)));
         vm.stopBroadcast();
