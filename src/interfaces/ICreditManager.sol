@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {
-    Account, Balance, CreditApproval, CreditStats, StorageStats, SubnetStats, Usage
-} from "../types/CreditTypes.sol";
+import {Account, Balance, CreditApproval, CreditStats} from "../types/BlobTypes.sol";
 
-/// @dev Hoku Blobs actor EVM interface for managing credits, and querying credit or storage stats.
+/// @dev Hoku Blobs actor EVM interface for managing and querying information about credit.
 /// See Rust implementation for details:
 /// https://github.com/hokunet/ipc/blob/develop/fendermint/actors/blobs/src/actor.rs
-interface ICredit {
+interface ICreditManager {
     /// @dev Emitted when an account buys credits.
     event BuyCredit(address indexed addr, uint256 amount);
 
@@ -20,23 +18,10 @@ interface ICredit {
     /// @dev Emitted when an account revokes credits.
     event RevokeCredit(address indexed from, address indexed receiver, address indexed requiredCaller);
 
-    /// @dev Get the subnet stats.
-    /// @return stats The subnet stats.
-    function getSubnetStats() external view returns (SubnetStats memory stats);
-
     /// @dev Get the credit account for an address.
     /// @param addr The address of the account.
     /// @return account The credit account for the address.
     function getAccount(address addr) external view returns (Account memory account);
-
-    /// @dev Get the storage usage for an account.
-    /// @param addr The address of the account.
-    /// @return usage The storage usage for the account.
-    function getStorageUsage(address addr) external view returns (Usage memory usage);
-
-    /// @dev Get the storage stats for the subnet.
-    /// @return stats The storage stats for the subnet.
-    function getStorageStats() external view returns (StorageStats memory stats);
 
     /// @dev Get the subnet-wide credit statistics.
     /// @return stats The subnet-wide credit statistics.
@@ -46,13 +31,6 @@ interface ICredit {
     /// @param addr The address of the account.
     /// @return balance The credit balance of the account.
     function getCreditBalance(address addr) external view returns (Balance memory balance);
-
-    /// @dev Buy credits for `msg.sender` with a `msg.value` for number of native currency to spend on credits.
-    function buyCredit() external payable;
-
-    /// @dev Buy credits for a specified account with a `msg.value` for number of native currency to spend on credits.
-    /// @param recipient The address of the account.
-    function buyCredit(address recipient) external payable;
 
     /// @dev Approve credits for an account. Assumes `msg.sender` is the owner of the credits, and no optional fields.
     /// @param receiver The address of the account to approve credits for.
@@ -85,6 +63,13 @@ interface ICredit {
     /// unused, indicating a null value.
     function approveCredit(address from, address receiver, address requiredCaller, uint256 limit, uint64 ttl)
         external;
+
+    /// @dev Buy credits for `msg.sender` with a `msg.value` for number of native currency to spend on credits.
+    function buyCredit() external payable;
+
+    /// @dev Buy credits for a specified account with a `msg.value` for number of native currency to spend on credits.
+    /// @param recipient The address of the account.
+    function buyCredit(address recipient) external payable;
 
     /// @dev Revoke credits for an account. Assumes `msg.sender` is the owner of the credits.
     /// @param receiver The address of the account to revoke credits for.

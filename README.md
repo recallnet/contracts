@@ -17,7 +17,7 @@
     - [Devnet](#devnet)
     - [Mainnet](#mainnet)
 - [Development](#development)
-- [Scripts](#scripts)
+  - [Scripts](#scripts)
   - [Examples usage](#examples-usage)
   - [Credit contract](#credit-contract)
     - [Methods](#methods)
@@ -26,6 +26,8 @@
     - [Methods](#methods-1)
     - [Examples](#examples-1)
     - [Query objects](#query-objects)
+  - [Blobs contract](#blobs-contract)
+    - [Methods](#methods-2)
 
 ## Background
 
@@ -34,8 +36,8 @@ for Hoku. It includes the following:
 
 - `Hoku.sol`: An ERC20 token implementation.
 - `Faucet.sol`: The accompanying onchain faucet (rate limiter) contract for dripping testnet funds.
-- `Credit.sol`: Manage subnet credit, including credit purchases, approvals/rejections, and related
-  read-only operations (uses the `LibCredit` and `LibWasm` libraries).
+- `CreditManager.sol`: Manage subnet credit, including credit purchases, approvals/rejections, and
+  related read-only operations (uses the `LibCredit` and `LibWasm` libraries).
 - `BucketManager.sol`: Manage buckets, including creating buckets, listing buckets, querying
   objects, and other object-related operations (uses the `LibBucket` and `LibWasm` libraries).
 - `ValidatorGater.sol`: A contract for managing validator access.
@@ -59,8 +61,9 @@ subnet):
 | -------------- | ----------- | -------------------------------------------- |
 | Hoku (ERC20)   | Calibration | `0x20d8a696091153c4d4816ba1fdefe113f71e0905` |
 | Faucet         | Subnet      | `0x7Aff9112A46D98A455f4d4F93c0e3D2438716A44` |
-| Credit         | Subnet      | `0xAfC2973fbc4213DA7007A6b9459003A89c9C5b0E` |
-| BucketManager  | Subnet      | `0x314512a8692245cf507ac6E9d0eB805EA820d9a8` |
+| CreditManager  | Subnet      | `0xTODO`                                     |
+| BlobManager    | Subnet      | `0xTODO`                                     |
+| BucketManager  | Subnet      | `0xTODO`                                     |
 | ValidatorGater | Subnet      | `0x880126f3134EdFBa4f1a65827D5870f021bb7124` |
 
 To get testnet tokens, visit: [https://faucet.hoku.sh](https://faucet.hoku.sh). Also, you can check
@@ -100,7 +103,8 @@ The scripts for deploying contracts are in `script/` directory:
 - `Hoku.s.sol`: Deploy the Hoku ERC20 contract.
 - `Faucet.s.sol`: Deploy the faucet contract.
 - `ValidatorGater.s.sol`: Deploy the validator gater contract.
-- `Credit.s.sol`: Deploy the credit contract.
+- `CreditManager.s.sol`: Deploy the credit contract.
+- `BlobManager.s.sol`: Deploy the blobs contract.
 - `BucketManager.s.sol`: Deploy the Bucket Manager contract.
 - `Bridge.s.sol`: Deploy the bridge contract—relevant for the Hoku ERC20 on live chains.
 
@@ -108,8 +112,8 @@ The scripts for deploying contracts are in `script/` directory:
 > (significantly) bump the gas estimation multiplier by adding a `-g 100000` flag to the
 > `forge script` command.
 
-Each script expects the `PRIVATE_KEY` (hex prefixed) private key of the account to deploy the
-contract:
+Each script uses the `--private-key` flag, and the script examples below demonstrate its usage with
+a `PRIVATE_KEY` (hex prefixed) environment variable for the account that deploy the contract:
 
 ```sh
 export PRIVATE_KEY=<0x...>
@@ -153,7 +157,7 @@ Deploy the Hoku ERC20 contract to the localnet parent chain (i.e., `http://local
 the `-g` flag is not used here since the gas estimate is sufficiently low on Anvil.
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url localnet_parent --broadcast -vv
+forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url localnet_parent --private-key $PRIVATE_KEY --broadcast -vv
 ```
 
 ##### Faucet
@@ -163,7 +167,7 @@ tokens, owned by the deployer's account which will be transferred to the faucet 
 with 10\*\*18 decimal units).
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript --sig 'run(string,uint256)' local 5000000000000000000000 --rpc-url localnet_subnet --broadcast -g 100000 -vv
+PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript --sig 'run(uint256)' 5000000000000000000000 --rpc-url localnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 ##### Credit
@@ -171,7 +175,7 @@ PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript --sig 'ru
 Deploy the Credit contract to the localnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url localnet_subnet --broadcast -g 100000 -vv
+forge script script/CreditManager.s.sol --tc DeployScript --sig 'run()' --rpc-url localnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 ##### Buckets
@@ -179,7 +183,15 @@ PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript --sig 'ru
 Deploy the Bucket Manager contract to the localnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/BucketManager.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url localnet_subnet --broadcast -g 100000 -vv
+forge script script/BucketManager.s.sol --tc DeployScript --sig 'run()' --rpc-url localnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
+```
+
+##### Blobs
+
+Deploy the Blob Manager contract to the localnet subnet:
+
+```shell
+forge script script/BlobManager.s.sol --tc DeployScript --sig 'run()' --rpc-url localnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 #### Testnet
@@ -190,7 +202,7 @@ Deploy the Hoku ERC20 contract to the testnet parent chain. Note the `-g` flag _
 differs from the localnet setup above since we're deploying to Filecoin Calibration);
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_parent --broadcast -g 100000 -vv
+forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_parent --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 ##### Faucet
@@ -200,15 +212,15 @@ tokens, owned by the deployer's account which will be transferred to the faucet 
 with 10\*\*18 decimal units).
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript --sig 'run(string,uint256)' testnet 5000000000000000000000 --rpc-url testnet_subnet --broadcast -g 100000 -vv
+forge script script/Faucet.s.sol --tc DeployScript --sig 'run(uint256)' 5000000000000000000000 --rpc-url testnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 ##### Credit
 
-Deploy the Credit contract to the testnet subnet:
+Deploy the Credit Manager contract to the testnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_subnet --broadcast -g 100000 -vv
+forge script script/CreditManager.s.sol --tc DeployScript --sig 'run()' --rpc-url testnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 ##### Buckets
@@ -216,7 +228,15 @@ PRIVATE_KEY=<0x...> forge script script/Credit.s.sol --tc DeployScript --sig 'ru
 Deploy the Bucket Manager contract to the testnet subnet:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/BucketManager.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_subnet --broadcast -g 100000 -vv
+forge script script/BucketManager.s.sol --tc DeployScript --sig 'run()' --rpc-url testnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
+```
+
+##### Blobs
+
+Deploy the Blob Manager contract to the testnet subnet:
+
+```shell
+forge script script/BlobManager.s.sol --tc DeployScript --sig 'run()' --rpc-url testnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 #### Devnet
@@ -228,7 +248,7 @@ If you're trying to simply deploy to an Anvil node (i.e., `http://localhost:8545
 same pattern, or just explicitly set the RPC URL:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url http://localhost:8545 --broadcast -vv
+forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url http://localhost:8545 --private-key $PRIVATE_KEY --broadcast -vv
 ```
 
 #### Mainnet
@@ -244,18 +264,18 @@ use the following. Note these will enable behavior for the Axelar Interchain Tok
 Deploy to Ethereum:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' ethereum --broadcast -vv --rpc-url https://eth.merkle.io
+forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' ethereum --rpc-url https://eth.merkle.io --private-key $PRIVATE_KEY --broadcast -vv
 ```
 
 And for Filecoin:
 
 ```shell
-PRIVATE_KEY=<0x...> forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' filecoin --broadcast -vv -g 100000 --rpc-url https://api.node.glif.io/rpc/v1
+forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' filecoin --rpc-url https://api.node.glif.io/rpc/v1 --private-key $PRIVATE_KEY --broadcast -vv
 ```
 
 ## Development
 
-## Scripts
+### Scripts
 
 Deployment scripts are described above. Additional `pnpm` scripts are available in `package.json`:
 
@@ -277,11 +297,11 @@ export EVM_ADDRESS=0x90f79bf6eb2c4f870365e785982e1f101e93b906
 ```
 
 The `--rpc-url` flag can use the same RPC URLs as the deployments scripts, as defined in
-`foundry.toml`. For simplicity sake, we'll define an environment variable `EVM_RPC_URL` set to one
+`foundry.toml`. For simplicity sake, we'll define an environment variable `ETH_RPC_URL` set to one
 of these RPC URLs so these examples can be run as-is:
 
 ```sh
-export EVM_RPC_URL=testnet_subnet
+export ETH_RPC_URL=testnet_subnet
 ```
 
 The subsequent sections will define other environment variables as needed.
@@ -293,12 +313,14 @@ working on `localnet`, you'll have to deploy this yourself. Here's a quick one-l
 setting the `CREDIT` environment variable to the deployed address:
 
 ```
-CREDIT=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/Credit.s.sol \
+CREDIT=$(forge script script/CreditManager.s.sol \
 --tc DeployScript \
---sig 'run(string)' local \
+--sig 'run()' \
 --rpc-url localnet_subnet \
---broadcast -g 100000 \
-| grep "0: contract Credit" | awk '{print $NF}')
+--private-key $PRIVATE_KEY \
+--broadcast \
+-g 100000 \
+| grep "0: contract CreditManager" | awk '{print $NF}')
 ```
 
 #### Methods
@@ -306,14 +328,11 @@ CREDIT=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/Credit.s.sol \
 The following methods are available on the credit contract, shown with their function signatures.
 Note that overloads are available for some methods, primarily, where the underlying WASM contract
 accepts "optional" arguments. All of the method parameters and return types can be found in
-`util/Types.sol`.
+`util/CreditTypes.sol`.
 
-- `getSubnetStats()`: Get subnet stats.
-- `getCreditStats()`: Get credit stats.
-- `getStorageStats()`: Get storage stats.
 - `getAccount(address)`: Get credit account info for an address.
+- `getCreditStats()`: Get credit stats.
 - `getCreditBalance(address)`: Get credit balance for an address.
-- `getStorageUsage(address)`: Get storage usage for an address.
 - `buyCredit()`: Buy credit for the `msg.sender`.
 - `buyCredit(address)`: Buy credit for the given address.
 - `approveCredit(address)`: Approve credit for an address (`receiver`), assuming `msg.sender` is the
@@ -345,7 +364,7 @@ null values when encoded in WASM calls.
 
 #### Examples
 
-Make sure you've already set the `PRIVATE_KEY`, `EVM_ADDRESS`, and `EVM_RPC_URL` environment
+Make sure you've already set the `PRIVATE_KEY`, `EVM_ADDRESS`, and `ETH_RPC_URL` environment
 variables. Then, define a `CREDIT` environment variable, which points to the credit contract
 deployment address. For example:
 
@@ -360,96 +379,13 @@ address we'll be approving and revoking credit for. For example:
 export RECEIVER_ADDR=0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
 ```
 
-##### Get subnet stats
-
-We can fetch the overall subnet stats with the following command:
-
-```sh
-cast abi-decode "getSubnetStats()((uint256,uint256,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getSubnetStats()")
-```
-
-This will return the following values:
-
-```
-(50000000000000000000000 [5e22], 4294967296 [4.294e9], 0, 50000000000000000000000 [5e22], 0, 0, 1, 10, 0, 0)
-```
-
-Which maps to the `SubnetStats` struct:
-
-```solidity
-struct SubnetStats {
-    uint256 balance; // 50000000000000000000000
-    uint256 capacityFree; // 4294967296
-    uint256 capacityUsed; // 0
-    uint256 creditSold; // 50000000000000000000000
-    uint256 creditCommitted; // 0
-    uint256 creditDebited; // 0
-    uint64 creditDebitRate; // 1
-    uint64 numAccounts; // 10
-    uint64 numBlobs; // 0
-    uint64 numResolving; // 0
-}
-```
-
-##### Get credit stats
-
-We can fetch the overall credit stats for the subnet with the following command:
-
-```sh
-cast abi-decode "getCreditStats()((uint256,uint256,uint256,uint256,uint64,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getCreditStats()")
-```
-
-This will return the following values:
-
-```
-(50000000000000000000000 [5e22], 50000000000000000000000 [5e22], 0, 0, 1, 10)
-```
-
-Which maps to the `CreditStats` struct:
-
-```solidity
-struct CreditStats {
-    uint256 balance; // 50000000000000000000000
-    uint256 creditSold; // 50000000000000000000000
-    uint256 creditCommitted; // 0
-    uint256 creditDebited; // 0
-    uint64 creditDebitRate; // 1
-    uint64 numAccounts; // 10
-}
-```
-
-##### Get storage stats
-
-We can fetch the overall storage stats for the subnet with the following command:
-
-```sh
-cast abi-decode "getStorageStats()((uint256,uint256,uint64,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getStorageStats()")
-```
-
-This will return the following values:
-
-```
-(4294967296 [4.294e9], 0, 0, 0)
-```
-
-Which maps to the `StorageStats` struct:
-
-```solidity
-StorageStats {
-    uint256 capacityFree; // 4294967296
-    uint256 capacityUsed; // 0
-    uint64 numBlobs; // 0
-    uint64 numResolving; // 0
-}
-```
-
-##### Get credit account info
+##### Get account info
 
 We can get the credit account info for the address at `EVM_ADDRESS` (the variable we set above), or
 you could provide any account's EVM public key that exists in the subnet.
 
-```solidity
-cast abi-decode "getAccount(address)((uint256,uint256,uint256,uint64,(address,(address,(uint256,uint256,uint64))[])[]))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)
+```sh
+cast abi-decode "getAccount(address)((uint256,uint256,uint256,uint64,(address,(address,(uint256,uint256,uint64))[])[]))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)
 ```
 
 This will return the following values:
@@ -495,12 +431,39 @@ Due to intricacies with optional arguments in WASM being used in Solidity, you c
 values as null values in the structs above. That is, the example address has no restrictions on the
 `limit` or `expiry` with using the delegated/approved credit from the owner's account.
 
+##### Get credit stats
+
+We can fetch the overall credit stats for the subnet with the following command:
+
+```sh
+cast abi-decode "getCreditStats()((uint256,uint256,uint256,uint256,uint64,uint64))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditStats()")
+```
+
+This will return the following values:
+
+```
+(50000000000000000000000 [5e22], 50000000000000000000000 [5e22], 0, 0, 1, 10)
+```
+
+Which maps to the `CreditStats` struct:
+
+```solidity
+struct CreditStats {
+    uint256 balance; // 50000000000000000000000
+    uint256 creditSold; // 50000000000000000000000
+    uint256 creditCommitted; // 0
+    uint256 creditDebited; // 0
+    uint64 creditDebitRate; // 1
+    uint64 numAccounts; // 10
+}
+```
+
 ##### Get credit balance for an account
 
 Fetch the credit balance for the address at `EVM_ADDRESS`:
 
 ```sh
-cast abi-decode "getCreditBalance(address)((uint256,uint256,uint64))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getCreditBalance(address)" $EVM_ADDRESS)
+cast abi-decode "getCreditBalance(address)((uint256,uint256,uint64))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditBalance(address)" $EVM_ADDRESS)
 ```
 
 This will return the following values:
@@ -519,41 +482,19 @@ struct Balance {
 }
 ```
 
-##### Get storage usage for an account
-
-Fetch the storage usage for the address at `EVM_ADDRESS`:
-
-```sh
-cast abi-decode "getStorageUsage(address)((uint256))" $(cast call --rpc-url $EVM_RPC_URL $CREDIT "getStorageUsage(address)" $EVM_ADDRESS)
-```
-
-This will return the following values:
-
-```
-(0)
-```
-
-Which maps to the `Usage` struct:
-
-```solidity
-struct Usage {
-    uint256 capacityUsed; // 0
-}
-```
-
 ##### Buy credit for an address
 
 You can buy credit for your address with the following command, which will buy credit equivalent to
 1 native subnet token (via `msg.value`) for the `msg.sender`:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $CREDIT "buyCredit()" --value 1ether --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $CREDIT "buyCredit()" --value 1ether --private-key $PRIVATE_KEY
 ```
 
 Or, you can buy credit for a specific EVM address with the following command:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $CREDIT "buyCredit(address)" $EVM_ADDRESS --value 1ether --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $CREDIT "buyCredit(address)" $EVM_ADDRESS --value 1ether --private-key $PRIVATE_KEY
 ```
 
 ##### Approve credit for an address
@@ -564,7 +505,7 @@ address is the `receiver` we want to approve credit for (defined as
 `0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65` above).
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $CREDIT "approveCredit(address)" $RECEIVER_ADDR --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address)" $RECEIVER_ADDR --private-key $PRIVATE_KEY
 ```
 
 There also exists `approveCredit(address,address)` and `approveCredit(address,address,address)`,
@@ -573,14 +514,14 @@ addresses is `from`, `receiver`, and `requiredCaller` (for the latter variation)
 using the latter variation, effectively the same as the former due to the use of the zero address:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $CREDIT "approveCredit(address,address,address)" $EVM_ADDRESS $RECEIVER_ADDR 0x0000000000000000000000000000000000000000 --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address,address,address)" $EVM_ADDRESS $RECEIVER_ADDR 0x0000000000000000000000000000000000000000 --private-key $PRIVATE_KEY
 ```
 
 If, instead, we wanted to also restrict how the `receiver` can use the credit, we would set the
 `requiredCaller` (e.g., a contract address at `0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc`):
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $CREDIT "approveCredit(address,address,address)" $EVM_ADDRESS $RECEIVER_ADDR 0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address,address,address)" $EVM_ADDRESS $RECEIVER_ADDR 0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc --private-key $PRIVATE_KEY
 ```
 
 This would restrict the `receiver` to only be able to use the approved `from` address at the
@@ -594,7 +535,7 @@ This would restrict the `receiver` to only be able to use the approved `from` ad
 Lastly, if we want to include all of the optional fields, we can use the following command:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $CREDIT "approveCredit(address,address,address,uint256,uint64)" $EVM_ADDRESS $RECEIVER_ADDR 0x0000000000000000000000000000000000000000 100 3600 --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address,address,address,uint256,uint64)" $EVM_ADDRESS $RECEIVER_ADDR 0x0000000000000000000000000000000000000000 100 3600 --private-key $PRIVATE_KEY
 ```
 
 This includes the `limit` field set to `100` credit, and the `ttl` set to `3600` seconds (`1` hour).
@@ -607,7 +548,7 @@ is revoking credit for the address defining in the call (`receiver`), which assu
 is the owner of the credit.
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $CREDIT "revokeCredit(address)" $RECEIVER_ADDR --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $CREDIT "revokeCredit(address)" $RECEIVER_ADDR --private-key $PRIVATE_KEY
 ```
 
 The other variants are `revokeCredit(address,address)` and `revokeCredit(address,address,address)`.
@@ -615,7 +556,7 @@ Just like `approveCredit`, the order is: `from`, `receiver`, and `requiredCaller
 using the latter variation:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $CREDIT "revokeCredit(address,address,address)" $EVM_ADDRESS $RECEIVER_ADDR 0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $CREDIT "revokeCredit(address,address,address)" $EVM_ADDRESS $RECEIVER_ADDR 0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc --private-key $PRIVATE_KEY
 ```
 
 This would revoke the `receiver`'s ability to use the `from` address at the `requiredCaller`
@@ -628,44 +569,48 @@ working on `localnet`, you'll have to deploy this yourself. Here's a quick one-l
 setting the `BUCKETS` environment variable to the deployed address:
 
 ```
-BUCKETS=$(PRIVATE_KEY=$PRIVATE_KEY forge script script/BucketManager.s.sol \
+BUCKETS=$(forge script script/BucketManager.s.sol \
 --tc DeployScript \
---sig 'run(string)' local \
+--sig 'run()' \
 --rpc-url localnet_subnet \
---broadcast -g 100000 \
-| grep "0: contract Bucket" | awk '{print $NF}')
+--private-key $PRIVATE_KEY \
+--broadcast \
+-g 100000 \
+| grep "0: contract BucketManager" | awk '{print $NF}')
 ```
 
 #### Methods
 
 The following methods are available on the credit contract, shown with their function signatures.
 
-- `create()`: Create a bucket for the sender.
-- `create(address)`: Create a bucket for the specified address.
-- `create(address,(string,string)[])`: Create a bucket for the specified address with metadata.
-- `list()`: List all buckets for the sender.
-- `list(address)`: List all buckets for the specified address.
-- `add(string,string,string,string,uint64)`: Add an object to a bucket and associated object upload
-  parameters. The first value is the bucket address, the subsequent values are all of the "required"
-  values in `AddParams` (`source` node ID, `key`, `blobHash`, and `size`).
-- `add(string,(string,string,string,string,uint64,uint64,(string,string)[],bool))`: Add an object to
-  a bucket (first value) and associated object upload parameters (second value) as the `AddParams`
-  struct, described in more detail below.
-- `remove(string,string)`: Remove an object from a bucket.
-- `get(string,string)`: Get an object from a bucket.
-- `query(string)`: Query the bucket (`t2...` string address) with no prefix (defaults to `/`
+- `createBucket()`: Create a bucket for the sender.
+- `createBucket(address)`: Create a bucket for the specified address.
+- `createBucket(address,(string,string)[])`: Create a bucket for the specified address with
+  metadata.
+- `listBuckets()`: List all buckets for the sender.
+- `listBuckets(address)`: List all buckets for the specified address.
+- `addObject(string,string,string,string,uint64)`: Add an object to a bucket and associated object
+  upload parameters. The first value is the bucket address, the subsequent values are all of the
+  "required" values in `AddObjectParams` (`source` node ID, `key`, `blobHash`, and `size`).
+- `addObject(string,(string,string,string,string,uint64,uint64,(string,string)[],bool))`: Add an
+  object to a bucket (first value) and associated object upload parameters (second value) as the
+  `AddObjectParams` struct, described in more detail below.
+- `deleteObject((string,string)`: Remove an object from a bucket.
+- `getObject(string,string)`: Get an object from a bucket.
+- `queryObjects(string)`: Query the bucket (`t2...` string address) with no prefix (defaults to `/`
   delimiter and the default offset and limit in the underlying WASM layer).
-- `query(string,string)`: Query the bucket with a prefix (e.g., `<prefix>/` string value), but no
-  delimiter, offset, or limit.
-- `query(string,string,string)`: Query the bucket with a custom delimiter (e.g., something besides
-  the default `/` delimeter value), but default offset and limit.
-- `query(string,string,string,uint64)`: Query the bucket with a prefix and delimiter, but no limit.
-- `query(string,string,string,uint64,uint64)`: Query the bucket with a prefix, delimiter, offset,
-  and limit.
+- `queryObjects(string,string)`: Query the bucket with a prefix (e.g., `<prefix>/` string value),
+  but no delimiter, offset, or limit.
+- `queryObjects(string,string,string)`: Query the bucket with a custom delimiter (e.g., something
+  besides the default `/` delimeter value), but default offset and limit.
+- `queryObjects(string,string,string,uint64)`: Query the bucket with a prefix and delimiter, but no
+  limit.
+- `queryObjects(string,string,string,uint64,uint64)`: Query the bucket with a prefix, delimiter,
+  offset, and limit.
 
 #### Examples
 
-Make sure you've already set the `PRIVATE_KEY`, `EVM_ADDRESS`, and `EVM_RPC_URL` environment
+Make sure you've already set the `PRIVATE_KEY`, `EVM_ADDRESS`, and `ETH_RPC_URL` environment
 variables. Then, define a `BUCKETS` environment variable, which points to the bucket contract
 deployment address. For example:
 
@@ -689,30 +634,30 @@ Creating a bucket will cost native HOKU tokens, and writing to it will cost cred
 To create a bucket, you can use the following command:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "create(address)" $EVM_ADDRESS --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $BUCKETS "createBucket(address)" $EVM_ADDRESS --private-key $PRIVATE_KEY
 ```
 
 This will execute an onchain transaction to create a bucket for the provided address. Alternatively,
 you can create a bucket for the sender with the following command:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "create()" --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $BUCKETS "createBucket()" --private-key $PRIVATE_KEY
 ```
 
 To create a bucket with metadata, you can use the following command, where each metadata value is a
 `KeyValue` (a pair of strings) within an array—something like `[("alias","foo")]`:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "create(address,(string,string)[])" $EVM_ADDRESS '[("alias","foo")]' --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $BUCKETS "createBucket(address,(string,string)[])" $EVM_ADDRESS '[("alias","foo")]' --private-key $PRIVATE_KEY
 ```
 
 ##### List buckets
 
 You can list buckets for a specific address with the following command. Note you can use the
-overloaded `list()` to list buckets for the sender.
+overloaded `listBuckets()` to list buckets for the sender.
 
 ```sh
-cast abi-decode "list(address)((uint8,string,(string,string)[])[])" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "list(address)" $EVM_ADDRESS)
+cast abi-decode "listBuckets(address)((uint8,string,(string,string)[])[])" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "listBuckets(address)" $EVM_ADDRESS)
 ```
 
 This will return the following output:
@@ -772,10 +717,10 @@ We also include custom parameters for the bucket key, metadata, TTL, and overwri
 - `metadata`: The metadata to assign to the object in the bucket (`[("foo","bar")]`).
 - `overwrite`: The overwrite flag to assign to the object in the bucket (`false`).
 
-This all gets passed as a single `AddParams` struct to the `add` method:
+This all gets passed as a single `AddObjectParams` struct to the `add` method:
 
 ```solidity
-struct AddParams {
+struct AddObjectParams {
     string source; // cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq
     string key; // hello/world
     string blobHash; // rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq
@@ -790,14 +735,14 @@ struct AddParams {
 We then pass this as a single parameter to the `add` method:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "add(string,(string,string,string,string,uint64,uint64,(string,string)[],bool))" $BUCKET_ADDR '("cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq","hello/world","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","",6,0,[("foo","bar")],false)' --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $BUCKETS "addObject(string,(string,string,string,string,uint64,uint64,(string,string)[],bool))" $BUCKET_ADDR '("cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq","hello/world","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","",6,0,[("foo","bar")],false)' --private-key $PRIVATE_KEY
 ```
 
 Alternatively, to use the overloaded `add` method that has default values for the `ttl`, `metadata`,
 and `overwrite`, you can do the following:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "add(string,string,string,string,string,uint64)" $BUCKET_ADDR "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq" "hello/world" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" "" 6 --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $BUCKETS "addObject(string,string,string,string,string,uint64)" $BUCKET_ADDR "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq" "hello/world" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" "" 6 --private-key $PRIVATE_KEY
 ```
 
 If you're wondering where to get the `source` storage bucket's node ID (the example's
@@ -809,7 +754,7 @@ curl http://localhost:8001/v1/node | jq '.node_id'
 ```
 
 Or on testnet, you'd replace the URL with public bucket API endpoint
-`https://object-api.n1.hoku.sh`.
+`https://object-api-ignition-0.hoku.sh`.
 
 ##### Delete an object
 
@@ -817,7 +762,7 @@ Similar to [getting an object](#get-an-object), you can delete an object with th
 specifying the bucket and key for the mutating transaction:
 
 ```sh
-cast send --rpc-url $EVM_RPC_URL $BUCKETS "remove(string,string)" $BUCKET_ADDR "hello/world" --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $BUCKETS "deleteObject(string,string)" $BUCKET_ADDR "hello/world" --private-key $PRIVATE_KEY
 ```
 
 ##### Get an object
@@ -827,10 +772,10 @@ returned. Thus, the response simply includes a single value. The `BUCKET_ADDR` i
 above.
 
 ```sh
-cast abi-decode "get(string,string)((string,string,uint64,uint64,(string,string)[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "get(string,string)" $BUCKET_ADDR "hello/world")
+cast abi-decode "getObject(string,string)((string,string,uint64,uint64,(string,string)[]))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "getObject(string,string)" $BUCKET_ADDR "hello/world")
 ```
 
-This will the following response:
+This will return the following response:
 
 ```sh
 ("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", 6, 103381 [1.033e5], [("foo","bar")])
@@ -839,7 +784,7 @@ This will the following response:
 Which maps to the `Value` struct:
 
 ```solidity
-struct Value {
+struct ObjectValue {
     string blobHash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
     string recoveryHash; // "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq"
     uint64 size; // 6
@@ -858,13 +803,13 @@ struct KeyValue {
 We'll continue using the same `BUCKET_ADDR` from the previous examples.
 
 ```sh
-cast abi-decode "query(string)(((string,(string,string,uint64,uint64,(string,string)[]))[],string[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "query(string)" $BUCKET_ADDR)
+cast abi-decode "queryObjects(string)(((string,(string,uint64,(string,string)[]))[],string[],string))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(string)" $BUCKET_ADDR)
 ```
 
 This will return the following `Query` output:
 
 ```
-([], ["hello/"])
+([], ["hello/"], "")
 ```
 
 Where the first array is an empty set of objects, and the second array is the common prefixes in the
@@ -874,6 +819,7 @@ bucket:
 struct Query {
     Object[] objects; // Empty array if no objects
     string[] commonPrefixes; // ["hello/"]
+    string nextKey; // ""
 }
 ```
 
@@ -886,13 +832,13 @@ export PREFIX="hello/"
 Now, we can query for these objects with the following command:
 
 ```sh
-cast abi-decode "query(string,string)(((string,(string,string,uint64,uint64,(string,string)[]))[],string[]))" $(cast call --rpc-url $EVM_RPC_URL $BUCKETS "query(string,string)" $BUCKET_ADDR $PREFIX)
+cast abi-decode "queryObjects(string,string)(((string,(string,uint64,(string,string)[]))[],string[],string))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(string,string)" $BUCKET_ADDR $PREFIX)
 ```
 
 This will return the following `Query` output:
 
 ```
-([("hello/world", ("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", 6, 103381 [1.033e5], [("foo", "bar")]))], [])
+([("hello/world", ("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", 6, [("foo", "bar")]))], [], "")
 ```
 
 Which maps to the following structs:
@@ -901,18 +847,17 @@ Which maps to the following structs:
 struct Query {
     Object[] objects; // See `Object` struct below
     string[] commonPrefixes; // Empty array if no common prefixes
+    string nextKey; // Null value (empty string `""`)
 }
 
 struct Object {
     string key; // "hello/world"
-    Value value; // See `Value` struct below
+    ObjectState state; // See `ObjectState` struct below
 }
 
-struct Value {
+struct ObjectState {
     string blobHash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
-    string recoveryHash; // "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq"
     uint64 size; // 6
-    uint64 expiry; // 103381
     KeyValue[] metadata; // See `KeyValue` struct below
 }
 
@@ -920,4 +865,344 @@ struct KeyValue {
     string key; // "foo"
     string value; // "bar"
 }
+```
+
+### Blobs contract
+
+You can interact with the existing blobs contract on the testnet via the address above. If you're
+working on `localnet`, you'll have to deploy this yourself. Here's a quick one-liner to do so—also
+setting the `BLOBS` environment variable to the deployed address:
+
+```
+BLOBS=$(forge script script/BlobManager.s.sol \
+--tc DeployScript \
+--sig 'run()' \
+--rpc-url localnet_subnet \
+--private-key $PRIVATE_KEY \
+--broadcast \
+-g 100000 \
+| grep "0: contract BlobManager" | awk '{print $NF}')
+```
+
+#### Methods
+
+The following methods are available on the credit contract, shown with their function signatures.
+Note that overloads are available for some methods, primarily, where the underlying WASM contract
+accepts "optional" arguments. All of the method parameters and return types can be found in
+`util/CreditTypes.sol`.
+
+- `addBlob(AddBlobParams memory params)`: Store a blob directly on the network. This is described in
+  more detail below, and it involves a two-step approach with first staging data with the blob
+  storage node, and then passing related values onchain.
+- `deleteBlob(address,string,string)`: Delete a blob from the network, passing the sponsor's
+  address, the blob hash, and the subscription ID (either `""` if none was originally provided, or
+  the string that was chosen during `addBlob`).
+- `getBlob(string)`: Get information about a specific blob at its blake3 hash.
+- `getBlobStatus(address,string,string)`: Get a blob's status, providing its credit sponsor (i.e.,
+  the account's `address`, or `address(0)` if null), its blake3 blob hash (the first `string`
+  parameter), and its blob hash key (an empty string `""` to indicate the default, or the key used
+  upon creating the blob).
+- `getPendingBlobs()`: Get the values of pending blobs across the network.
+- `getPendingBlobsCount(uint32)`: Get the number of pending blobs across the network, up to a limit.
+- `getPendingBytesCount()`: Get the total number of pending bytes across the network.
+- `getStorageStats()`: Get storage stats.
+- `getStorageUsage(address)`: Get storage usage for an address.
+- `getSubnetStats()`: Get subnet stats.
+
+##### Add a blob
+
+Adding a blob is a bit involved. You need to stage data offchain to a `source` blob storage node ID
+address, which will return the hashed value (`blobHash`) of the staged data and its corresponding
+`size` in bytes. You then pass all of these as parameters when you add an object to the bucket.
+
+In the example below, we've already staged this data offchain and are using the following:
+
+- `sponsor`: Optional sponsor address. E.g., if you have credits, you don't need to pass this, but
+  if someone has approve for you to use credits, you can specify the credit sponsor here.
+- `source`: The storage node ID address (e.g.,
+  `cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq`).
+- `blobHash`: The blake3 hash of the staged data (e.g.,
+  `rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq` is the base32 encoded blake3 hashed value
+  of our file contents, which contains the string `hello`).
+- `metadataHash`: Blake3 hash of the metadata to use for blob recovery (hardcoded, so you can pass
+  an empty string value here).
+- `subscriptionId`: Identifier used to differentiate blob additions for the same subscriber. You can
+  pass an empty string, indicating the default value (`Default`). Or, passing a string value, which
+  under the hood, will use this key value (`Key(Vec<u8>)`) for the hashmap key.
+- `size`: The size of the data in bytes (e.g., `6`, which is the number of bytes in the `hello`
+  string).
+- `ttl`: Blob time-to-live epochs. If specified as `0`, the auto-debitor maintains about one hour of
+  credits as an ongoing commitment.
+
+This all gets passed as a single `AddBlobParams` struct to the `addBlob` method:
+
+```solidity
+struct AddBlobParams {
+    address sponsor; // `address(0)` for default/null, or the credit sponsor's address
+    string source; // cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq
+    string blobHash; // rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq
+    string metadataHash; // (note: this is currently hardcoded to an empty string)
+    string subscriptionId; // use `""` for the default, or pass a string value
+    uint64 size; // 6
+    uint64 ttl; // 0 (which is interpreted as null)
+}
+```
+
+We then pass this as a single parameter to the `add` method:
+
+```sh
+cast send --rpc-url $ETH_RPC_URL $BLOBS "addBlob((address,string,string,string,string,uint64,uint64))" '(0x0000000000000000000000000000000000000000,"cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","","",6,0)' --private-key $PRIVATE_KEY
+```
+
+To include a custom subscription ID, you would replace the empty string (which indicates `Default`)
+in the call above, like so: `(...,"rzgh...","","my_custom_id",6,0)`.
+
+If you're wondering where to get the `source` storage bucket's node ID (the example's
+`cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq`), you can find it with a `curl` request. On
+localnet, this looks like the following:
+
+```sh
+curl http://localhost:8001/v1/node | jq '.node_id'
+```
+
+Or on testnet, you'd replace the URL with public bucket API endpoint
+`https://object-api-ignition-0.hoku.sh`.
+
+###### Delete a blob
+
+You can a delete a blob you've created with the following, passing the sponsor's address (zero
+address if null), the blob's blake3 hash, and the subscription ID (either the default empty string
+`""` or the string you passed during `addBlob`).
+
+```sh
+cast send --rpc-url $ETH_RPC_URL $BLOBS "deleteBlob(address,string,string)" 0x0000000000000000000000000000000000000000 "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" "" --private-key $PRIVATE_KEY
+```
+
+This will emit a `DeleteBlob` event and delete the blob from the network.
+
+##### Get a blob
+
+```sh
+cast abi-decode "getBlob(string)((uint64,string,(address,(string,(uint64,uint64,bool,string,(address,address),bool))[])[],uint8))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
+```
+
+This will return the following response:
+
+```sh
+(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, [("foo", (5279, 8879, true, "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq", (0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000), false))])], 2)
+```
+
+Which maps to the `Blob` struct:
+
+```solidity
+struct Blob {
+    uint64 size; // 6
+    string metadataHash; // "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq"
+    Subscriber[] subscribers; // See `Subscriber` struct below
+    BlobStatus status; // 2 (Resolved)
+}
+
+struct Subscriber {
+    address subscriber; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
+    SubscriptionGroup[] subscriptionGroup; // See `SubscriptionGroup` struct below
+}
+
+struct SubscriptionGroup {
+    string subscriptionId; // "foo"
+    Subscription subscription; // See `Subscription` struct below
+}
+
+struct Subscription {
+    uint64 added; // 5279
+    uint64 expiry; // 8879
+    bool autoRenew; // true
+    string source; // "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq"
+    Delegate delegate; // See `Delegate` struct below
+    bool failed; // false
+}
+
+struct Delegate {
+    address origin; // Null value (0x0000000000000000000000000000000000000000)
+    address caller; // Null value (0x0000000000000000000000000000000000000000)
+}
+```
+
+##### Get blob status
+
+- Pass an address as the first field to represent the origin address that requested the blob.
+- Provide the `blobHash` blake3 value.
+- Also give the `subscriptionId`, which uses the default empty value if you provide an empty string
+  `""`, or it can take the string that matches the blob's `subscriptionId` upon creation.
+
+```sh
+cast abi-decode "getBlobStatus(address,string,string)(uint8)" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getBlobStatus(address,string,string)" $EVM_ADDRESS "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" "")
+```
+
+This will return the following response (either a `0` for `Added`, `1` for `Pending`, `2` for
+`Resolved`, or `3` for `Failed`):
+
+```sh
+2
+```
+
+Which maps to the `BlobStatus` enum:
+
+```solidity
+enum BlobStatus {
+    Added, // 0
+    Pending, // 1
+    Resolved, // 2 -- the value above
+    Failed // 3
+}
+```
+
+##### Get added blobs
+
+```sh
+cast abi-decode "getAddedBlobs(uint32)((string,(address,string,string)[])[])" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getAddedBlobs(uint32)" 1)
+```
+
+This returns the values of added blobs, up to the `size` passed as the parameter:
+
+```sh
+[("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, "Default", "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq")])]
+```
+
+Which maps to an array of the `BlobTuple` struct:
+
+```solidity
+struct BlobTuple {
+    string blobHash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
+    BlobSourceInfo[] sourceInfo; // See `Subscriber` struct below
+}
+
+struct BlobSourceInfo {
+    address subscriber; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
+    string subscriptionId; // "Default"
+    string source; // "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq"
+}
+```
+
+##### Get pending blobs
+
+```sh
+cast abi-decode "getPendingBlobs(uint32)((string,(address,string,string)[])[])" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getPendingBlobs(uint32)" 1)
+```
+
+This returns the values of pending blobs, up to the `size` passed as the parameter:
+
+```sh
+[("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, "Default", "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq")])]
+```
+
+Which maps to an array of the `BlobTuple` struct:
+
+```solidity
+struct BlobTuple {
+    string blobHash; // "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
+    BlobSourceInfo[] sourceInfo; // See `Subscriber` struct below
+}
+
+struct BlobSourceInfo {
+    address subscriber; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
+    string subscriptionId; // "Default"
+    string source; // "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq"
+}
+```
+
+##### Get pending blobs count
+
+```sh
+cast abi-decode "getPendingBlobsCount()(uint64)" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getPendingBlobsCount()")
+```
+
+This returns the number of pending blobs:
+
+```sh
+123
+```
+
+##### Get pending bytes count
+
+```sh
+cast abi-decode "getPendingBytesCount()(uint64)" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getPendingBytesCount()")
+```
+
+This returns the total number of bytes that are pending network resolution:
+
+```sh
+987654321
+```
+
+##### Get subnet stats
+
+We can fetch the overall subnet stats with the following command:
+
+```sh
+cast abi-decode "getSubnetStats()((uint256,uint256,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint64,uint64,uint64,uint64))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getSubnetStats()")
+```
+
+This will return the following values:
+
+```
+(50000000000000000000000 [5e22], 4294967296 [4.294e9], 0, 50000000000000000000000 [5e22], 0, 0, 1, 10, 0, 0)
+```
+
+Which maps to the `SubnetStats` struct:
+
+```solidity
+struct SubnetStats {
+    uint256 balance; // 50000000000000000000000
+    uint256 capacityFree; // 4294967296
+    uint256 capacityUsed; // 0
+    uint256 creditSold; // 50000000000000000000000
+    uint256 creditCommitted; // 0
+    uint256 creditDebited; // 0
+    uint64 creditDebitRate; // 1
+    uint64 numAccounts; // 10
+    uint64 numBlobs; // 0
+    uint64 numResolving; // 0
+    uint64 bytesResolving; // 0
+    uint64 numAdded; // 0
+    uint64 bytesAdded; // 0
+}
+```
+
+##### Get storage stats
+
+We can fetch the overall storage stats for the subnet with the following command:
+
+```sh
+cast abi-decode "getStorageStats()((uint256,uint256,uint64,uint64))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getStorageStats()")
+```
+
+This will return the following values:
+
+```
+(4294967296 [4.294e9], 0, 0, 0)
+```
+
+Which maps to the `StorageStats` struct:
+
+```solidity
+StorageStats {
+    uint256 capacityFree; // 4294967296
+    uint256 capacityUsed; // 0
+    uint64 numBlobs; // 0
+    uint64 numResolving; // 0
+}
+```
+
+##### Get storage usage for an account
+
+Fetch the storage usage for the address at `EVM_ADDRESS`:
+
+```sh
+cast abi-decode "getStorageUsage(address)(uint256)" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getStorageUsage(address)" $EVM_ADDRESS)
+```
+
+This will return the following values:
+
+```
+123
 ```

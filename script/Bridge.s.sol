@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {Hoku} from "../src/Hoku.sol";
+import {Hoku} from "../src/token/Hoku.sol";
 import {IInterchainTokenService} from
     "@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
@@ -50,8 +50,6 @@ you want to transfer 1 token, use 1000000000000000000.*/
 contract BridgeOps is Script {
     using Strings for string;
 
-    function setUp() public {}
-
     function isMinter(address proxyAddress, address addressToCheck) public view {
         console.log("Proxy address: ", proxyAddress);
 
@@ -72,6 +70,7 @@ contract BridgeOps is Script {
         Hoku hoku = Hoku(proxyAddress);
         vm.startBroadcast();
         // Ensure the caller has the MINTER_ROLE
+        // solhint-disable-next-line custom-errors
         require(hoku.hasRole(hoku.MINTER_ROLE(), msg.sender), "Caller is not a minter");
 
         // Mint tokens to the recipient

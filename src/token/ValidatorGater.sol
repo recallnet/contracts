@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {InvalidSubnet, NotAuthorized, ValidatorPowerChangeDenied} from "./errors/IPCErrors.sol";
-import {IValidatorGater} from "./interfaces/IValidatorGater.sol";
+import {InvalidSubnet, NotAuthorized, ValidatorPowerChangeDenied} from "../errors/IPCErrors.sol";
+import {IValidatorGater} from "../interfaces/IValidatorGater.sol";
 
-import {SubnetIDHelper} from "./lib/SubnetIDHelper.sol";
-import {SubnetID} from "./structs/Subnet.sol";
+import {SubnetID} from "../types/CommonTypes.sol";
+import {SubnetIDHelper} from "../util/SubnetIDHelper.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
@@ -56,9 +56,9 @@ contract ValidatorGater is IValidatorGater, UUPSUpgradeable, OwnableUpgradeable 
         subnet = id;
     }
 
-    function isAllow(address validator, uint256 power) public view whenActive returns (bool) {
+    function isAllow(address validator, uint256 power) public view whenActive returns (bool isAllowed) {
         PowerRange memory range = allowed[validator];
-        return range.min <= power && power <= range.max;
+        isAllowed = range.min <= power && power <= range.max;
     }
 
     /// Only owner can approve the validator join request

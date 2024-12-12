@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {SubnetID} from "../structs/Subnet.sol";
+import {SubnetID} from "../types/CommonTypes.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 /// @title Helper library for manipulating SubnetID struct

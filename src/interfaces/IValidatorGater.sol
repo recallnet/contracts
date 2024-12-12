@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {SubnetID} from "../structs/Subnet.sol";
+import {SubnetID} from "../types/CommonTypes.sol";
 
 /// @title Validator Gater interface
 /// This interface introduces the ability to intercept validator power updates before it's executed. Power updates could

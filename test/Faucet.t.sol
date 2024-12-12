@@ -7,42 +7,42 @@ import {console2 as console} from "forge-std/console2.sol";
 
 import {DeployScript as FaucetDeployer} from "../script/Faucet.s.sol";
 import {DeployScript as TokenDeployer} from "../script/Hoku.s.sol";
-import {Faucet, TryLater} from "../src/Faucet.sol";
-import {Hoku} from "../src/Hoku.sol";
+import {Faucet, TryLater} from "../src/token/Faucet.sol";
+import {Hoku} from "../src/token/Hoku.sol";
 
 contract FaucetTest is Test {
     Faucet internal faucet;
     Vm.Wallet internal wallet;
     Vm.Wallet internal chain;
-    address constant tester = address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
-    uint256 constant mintAmount = 1000 * 10 ** 18;
+    address internal constant TESTER = address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
+    uint256 internal constant MINT_AMOUNT = 1000 * 10 ** 18;
 
     function setUp() public virtual {
         chain = vm.createWallet("chain");
-        vm.deal(chain.addr, mintAmount);
+        vm.deal(chain.addr, MINT_AMOUNT);
         wallet = vm.createWallet("user");
         FaucetDeployer faucetDeployer = new FaucetDeployer();
-        faucet = faucetDeployer.run("local", mintAmount / 2);
-        assertEq(faucet.supply(), mintAmount / 2);
+        faucet = faucetDeployer.run(MINT_AMOUNT / 2);
+        assertEq(faucet.supply(), MINT_AMOUNT / 2);
     }
 
-    function test_DripTransfer() public {
+    function testDripTransfer() public {
         assertEq(wallet.addr.balance, 0);
 
         faucet.drip(payable(wallet.addr));
 
-        assertEq(faucet.supply(), mintAmount / 2 - faucet.dripAmount());
+        assertEq(faucet.supply(), MINT_AMOUNT / 2 - faucet.dripAmount());
         assertEq(wallet.addr.balance, faucet.dripAmount());
     }
 
-    function test_DripTransferNoDelayFail() public {
+    function testDripTransferNoDelayFail() public {
         faucet.drip(payable(wallet.addr));
 
         vm.expectRevert(TryLater.selector);
         faucet.drip(payable(wallet.addr));
     }
 
-    function test_DripTransferDelay() public {
+    function testDripTransferDelay() public {
         faucet.drip(payable(wallet.addr));
 
         vm.warp(block.timestamp + (5 minutes));
@@ -52,10 +52,10 @@ contract FaucetTest is Test {
         assertEq(wallet.addr.balance, 2 * faucet.dripAmount());
     }
 
-    function test_FundFaucet() public {
+    function testFundFaucet() public {
         vm.prank(chain.addr);
         faucet.fund{value: 100}();
 
-        assertEq(faucet.supply(), mintAmount / 2 + 100);
+        assertEq(faucet.supply(), MINT_AMOUNT / 2 + 100);
     }
 }

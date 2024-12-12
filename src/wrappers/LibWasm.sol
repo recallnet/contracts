@@ -9,11 +9,11 @@ import {FilAddresses} from "@filecoin-solidity/v0.8/utils/FilAddresses.sol";
 
 import {ActorError, InvalidValue} from "../errors/WasmErrors.sol";
 import {KeyValue} from "../types/CommonTypes.sol";
-import {Base32} from "./Base32.sol";
-import {Blake2b} from "./Blake2b.sol";
-import {ByteParser} from "./solidity-cbor/ByteParser.sol";
-import {CBORDecoding} from "./solidity-cbor/CBORDecoding.sol";
-import {CBOR} from "./solidity-cbor/CBOREncoding.sol";
+import {Base32} from "../util/Base32.sol";
+import {Blake2b} from "../util/Blake2b.sol";
+import {ByteParser} from "../util/solidity-cbor/ByteParser.sol";
+import {CBORDecoding} from "../util/solidity-cbor/CBORDecoding.sol";
+import {CBOR} from "../util/solidity-cbor/CBOREncoding.sol";
 
 /// @title WASM Adapter Library
 /// @dev Utility functions for interacting with WASM actors and encoding/decoding CBOR.
@@ -33,18 +33,32 @@ library LibWasm {
         return CBORDecoding.decodeArray(data);
     }
 
-    /// @dev Decode CBOR encoded bytes array to underlying bytes string (e.g., a serialized Rust `Vec<u8>`).
+    /// @dev Decode CBOR encoded bytes array to underlying bytes string (e.g., a serialized Rust `Vec<u8>`). Handles up
+    /// to 255 bytes.
     /// @param data The encoded CBOR bytes (e.g., 0x8618681865...).
     /// @return result The decoded bytes.
     function decodeCborBytesArrayToBytes(bytes memory data) internal pure returns (bytes memory) {
-        if (uint8(data[0]) < 0x80 || uint8(data[0]) > 0x97) revert InvalidValue("Invalid fixed array indicator");
-        // Initial data is a CBOR array (0x8<length>) of single byte values (0x18<byte>18<byte>)
-        uint8 length = uint8(data[0]) - 0x80;
+        if (uint8(data[0]) < 0x80 || uint8(data[0]) > 0x98) {
+            revert InvalidValue("Invalid fixed array indicator or length exceeds max size of 255");
+        }
+        // Initial data is a CBOR array (0x<indicator>(<length>)) of single byte values (0x18<byte>18<byte>)
+        uint8 length = data[0] > 0x97 ? uint8(data[1]) : uint8(data[0]) - 0x80;
         bytes memory result = new bytes(length);
-        // Skip first byte (indicator + length) and the second byte (first instance of 0x18 indicator)
-        // Then, get every other byte since this is the raw value (skipping the 0x18 indicator)
-        for (uint8 i = 0; i < length; i++) {
-            result[i] = data[2 * i + 2];
+
+        // Track if we skip the only first byte (indicator + length), or also the second byte (if > 23 length)
+        // Anything greater than 23 length is a fixed array with 0x98 indicator (i.e., max length of 255)
+        uint16 resultIndex = data[0] > 0x97 ? 2 : 1;
+        // Skip first and, possibly, second byte (indicator + length); then, every other byte is the raw value, with a
+        // 0x18 indicator preceding it (i.e., `0x<array_indicator>18<byte>18<byte>`)
+        for (uint16 i = 0; i < length; i++) {
+            if (data[resultIndex] == 0x18) {
+                result[i] = data[resultIndex + 1];
+                resultIndex += 2;
+            } else {
+                // Assume that if the value has no byte prefix (i.e., 0x18), it's the direct value (0x00..0x17)
+                result[i] = data[resultIndex];
+                resultIndex += 1;
+            }
         }
         return result;
     }
@@ -56,15 +70,15 @@ library LibWasm {
         if (data[0] != 0x98) revert InvalidValue("Invalid fixed array indicator");
         uint8 length = uint8(data[1]);
         bytes memory result = new bytes(length);
-        uint256 index = 2; // Start at the third byte (i.e., the first instance of 0x18 or 0x00 to 0x17)
-        for (uint8 i = 0; i < length; i++) {
-            if (data[index] == 0x18) {
-                result[i] = data[index + 1];
-                index += 2;
+        uint16 resultIndex = 2; // Start at the third byte (i.e., the first instance of 0x18 or 0x00 to 0x17)
+        for (uint16 i = 0; i < length; i++) {
+            if (data[resultIndex] == 0x18) {
+                result[i] = data[resultIndex + 1];
+                resultIndex += 2;
             } else {
-                // Assume that if the value is not a single byte (i.e., 0x18), it's the direct value (0x00..0x17)
-                result[i] = data[index];
-                index += 1;
+                // Assume that if the value has no byte prefix (i.e., 0x18), it's the direct value (0x00..0x17)
+                result[i] = data[resultIndex];
+                resultIndex += 1;
             }
         }
         return result;
@@ -81,7 +95,7 @@ library LibWasm {
     /// @dev Decode a CBOR encoded string to bytes.
     /// @param data The encoded CBOR string.
     /// @return decoded The decoded CBOR string.
-    function decodeStringToBytes(bytes memory data) internal view returns (bytes memory) {
+    function decodeCborStringToBytes(bytes memory data) internal view returns (bytes memory) {
         return CBORDecoding.decodePrimitive(data);
     }
 
@@ -99,12 +113,22 @@ library LibWasm {
         return ByteParser.bytesToBigNumber(data);
     }
 
+    /// @dev Decode CBOR encoded boolean.
+    /// @param data The encoded CBOR boolean.
+    /// @return result The decoded boolean.
+    function decodeCborBool(bytes memory data) internal pure returns (bool) {
+        // In CBOR, `0xf5` is true, `0xf4` is false; in practice, it may decode to `0x01` for true and `0x00` for false
+        // This happens when `decodeCborArrayToBytes` is used to unpack a boolean value, so we need to handle both.
+        return data[0] == 0x01 || data[0] == 0xf5;
+    }
+
     /// @dev Decode CBOR encoded Filecoin address bytes to an Ethereum address.
     /// @param addr The encoded CBOR Filecoin address. Example: 0x040a15d34aaf54267db7d7c367839aaf71a00a2c6a65
-    /// @return result The decoded Ethereum address.
+    /// @return result The decoded Ethereum address. Example: 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
     // TODO: we need to figure out handling `t2` addresses. For example `t2yxnetcwoaljcrctdk5bm3v3bcmg6o7kzxol4zwi` will
     // get interpreted as `0xda498aCe02D2288A635742cdd761130De77D5900`, which is not valid since a `t2` address does not
-    // have an EVM address counterpart(?).
+    // have an EVM address counterpart. But, this will be resolved with the issue below, so we can ignore, for now.
+    // See: https://github.com/hokunet/rust-hoku/issues/39
     function decodeCborAddress(bytes memory addr) internal pure returns (address) {
         address result;
         assembly {
@@ -251,7 +275,7 @@ library LibWasm {
     /// @dev Decode a CBOR encoded blob hash to a string (a Rust Iroh hash value `Hash(pub [u8; 32])`).
     /// @param value The encoded CBOR blob hash (e.g,. `0x9820188e184c...`)
     /// @return result The decoded blob hash as base32 encoded bytes.
-    function decodeBlobHash(bytes memory value) internal pure returns (bytes memory) {
+    function decodeCborBlobHashOrNodeId(bytes memory value) internal pure returns (bytes memory) {
         bytes memory decoded = decodeCborFixedArrayToBytes(value);
         return Base32.encode(decoded);
     }
@@ -329,6 +353,15 @@ library LibWasm {
     /// @return params The serialized address as CBOR bytes.
     function encodeCborNull() internal pure returns (bytes memory) {
         return hex"f6";
+    }
+
+    /// @dev Check if a CBOR encoded value is null. Note that `0xf6` is the CBOR encoded null value, but depending on
+    /// if a CBOR encoded value has been decomposed into its constituent bytes (e.g., after calling
+    /// `decodeCborArrayToBytes`), it may be `0x00` (empty bytes).
+    /// @param value The CBOR encoded value.
+    /// @return isNull True if the value is null, false otherwise.
+    function isCborNull(bytes memory value) internal pure returns (bool) {
+        return value.length == 1 && (value[0] == 0x00 || value[0] == 0xf6);
     }
 
     /// @dev Prepare address parameter for a method call by serializing it.
@@ -437,12 +470,15 @@ library LibWasm {
         return CBOR.data(buf);
     }
 
-    /// @dev Encode a bytes array to a CBOR encoded fixed array/slice (e.g., a serialized Rust slice `[u8; N]`).
+    /// @dev Encode a bytes array to a CBOR encoded fixed array/slice (e.g., a serialized Rust slice `[u8; N]`; bytes =>
+    /// 98<length>...).
     /// @param value The bytes array to encode.
     /// @return encoded The CBOR encoded fixed array.
     function encodeCborFixedArray(bytes memory value) internal pure returns (bytes memory) {
+        // Check if length exceeds 255 (i.e., we only handle 0x98 array indicators)
+        if (value.length > 255) revert InvalidValue("Length exceeds max size of 255");
         uint8 length = uint8(value.length);
-        bytes memory result = new bytes(2 + length * 2); // Max possible length
+        bytes memory result = new bytes(2 + uint16(length) * 2); // Max possible length
         result[0] = 0x98; // Fixed array indicator
         result[1] = bytes1(length); // Length indicator
 
@@ -463,6 +499,44 @@ library LibWasm {
             mstore(result, resultIndex)
         }
 
+        return result;
+    }
+
+    /// @dev Encode CBOR encoded bytes to bytes array, wrapping the values in an array (e.g., serialize to a Rust
+    /// `Vec<u8>` tuple struct; bytes("foo") => 0x831866186F186F).
+    /// @param value The bytes to encode to a bytes array. All values encoded with `0x18` preceding it.
+    /// @return result The bytes array.
+    function encodeCborBytesArray(bytes memory value) internal pure returns (bytes memory) {
+        // Check if length exceeds 255 (i.e., we only handle 0x80..0x98 array indicators)
+        if (value.length > 0xFF) revert InvalidValue("Length exceeds max size of 255");
+        uint8 length = uint8(value.length);
+        bytes memory result;
+
+        // Track if we skip the only first byte (indicator + length), or also the second byte (if > 23 length)
+        uint16 resultIndex = 1;
+        // Anything greater than 23 length is a fixed array with 0x98 indicator (i.e., max length of 255)
+        if (length > 0x17) {
+            result = new bytes(2 + uint16(length) * 2);
+            result[0] = 0x98; // Fixed array indicator
+            result[1] = bytes1(length); // Length indicator
+            resultIndex += 1;
+        } else {
+            result = new bytes(1 + length * 2);
+            result[0] = bytes1(length + 0x80); // Array indicator with length included
+        }
+        // Skip first and, possibly, second byte (indicator + length); then, every other byte is the raw value, with a
+        // 0x18 indicator preceding it (i.e., `0x<array_indicator>18<byte>18<byte>`)
+        for (uint8 i = 0; i < length; i++) {
+            uint8 val = uint8(value[i]);
+            if (val <= 0x17) {
+                result[resultIndex] = bytes1(val);
+                resultIndex++;
+            } else {
+                result[resultIndex] = 0x18;
+                result[resultIndex + 1] = bytes1(val);
+                resultIndex += 2;
+            }
+        }
         return result;
     }
 

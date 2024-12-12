@@ -34,26 +34,38 @@ struct CreateBucketParams {
 /// @dev The result of a bucket query.
 /// @param objects (Object[]): The list of key-values matching the list query.
 /// @param commonPrefixes (string[]): When a delimiter is used in the list query, this contains common key prefixes.
+/// @param nextKey (string): Next key to use for paginating when there are more objects to list.
 struct Query {
     Object[] objects;
     string[] commonPrefixes;
+    string nextKey;
 }
 
-/// @dev An object in the bucket.
+/// @dev An object in the bucket as part of a query.
 /// @param key (string): The object key.
-/// @param value (Value): The object value.
+/// @param value (ObjectState): The object state.
 struct Object {
     string key;
-    Value value;
+    ObjectState state;
 }
 
-/// @dev The value of an object.
+/// @dev The state of an object.
+/// @param blobHash (string): The object blake3 hash.
+/// @param size (uint64): The object size.
+/// @param metadata (KeyValue[]): The user-defined object metadata (e.g., last modified timestamp, etc.).
+struct ObjectState {
+    string blobHash;
+    uint64 size;
+    KeyValue[] metadata;
+}
+
+/// @dev The value of an object when getting an object.
 /// @param blobHash (string): The object blake3 hash.
 /// @param recoveryHash (string): Blake3 hash of the metadata to use for object recovery.
 /// @param size (uint64): The object size.
 /// @param expiry (uint64): The expiry block.
 /// @param metadata (KeyValue[]): The user-defined object metadata (e.g., last modified timestamp, etc.).
-struct Value {
+struct ObjectValue {
     string blobHash;
     string recoveryHash;
     uint64 size;
@@ -80,7 +92,7 @@ struct Machine {
 /// @param ttl (uint64): The object time-to-live epochs.
 /// @param metadata (KeyValue[]): The object metadata.
 /// @param overwrite (bool): Whether to overwrite a key if it already exists.
-struct AddParams {
+struct AddObjectParams {
     string source;
     string key;
     string blobHash;

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
+// solhint-disable-next-line one-contract-per-file
 pragma solidity ^0.8.26;
 
-import {Hoku} from "../src/Hoku.sol";
+import {Hoku} from "../src/token/Hoku.sol";
 import {IInterchainTokenService} from
     "@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol";
 import {ITokenManagerType} from "@axelar-network/interchain-token-service/contracts/interfaces/ITokenManagerType.sol";
@@ -12,24 +13,14 @@ import {Script, console} from "forge-std/Script.sol";
 address constant INTERCHAIN_TOKEN_SERVICE = 0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C;
 
 contract DeployScript is Script {
-    string constant PRIVATE_KEY = "PRIVATE_KEY";
     address public proxyAddress;
-
-    function setUp() public {}
 
     function proxy() public view returns (address) {
         return proxyAddress;
     }
 
     function run(string memory network) public returns (Hoku) {
-        if (vm.envExists(PRIVATE_KEY)) {
-            uint256 privateKey = vm.envUint(PRIVATE_KEY);
-            vm.startBroadcast(privateKey);
-        } else if (Strings.equal(network, "local")) {
-            vm.startBroadcast();
-        } else {
-            revert("PRIVATE_KEY not set in non-local environment");
-        }
+        vm.startBroadcast();
 
         string memory prefix = "";
         if (Strings.equal(network, "local")) {
@@ -37,6 +28,7 @@ contract DeployScript is Script {
         } else if (Strings.equal(network, "testnet")) {
             prefix = "t";
         } else if (!Strings.equal(network, "ethereum") && !Strings.equal(network, "filecoin")) {
+            // solhint-disable-next-line custom-errors
             revert("Unsupported network.");
         }
 
@@ -74,8 +66,6 @@ contract DeployScript is Script {
 }
 
 contract UpgradeProxyScript is Script {
-    function setUp() public {}
-
     function run() public {
         // Get proxy owner account
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
@@ -99,6 +89,7 @@ contract UpgradeProxyScript is Script {
         address implNew = Upgrades.getImplementationAddress(proxy);
         console.log("Implementation address: ", implNew);
 
-        require(implOld != implNew, "Implementation address not changed");
+        // solhint-disable-next-line custom-errors
+        require(implOld != implNew, "Implementation address unchanged");
     }
 }

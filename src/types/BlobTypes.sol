@@ -46,11 +46,11 @@ struct Balance {
 /// @dev A credit approval from one account to another.
 /// @param limit (uint256): Optional credit approval limit.
 /// @param expiry (uint64): Optional credit approval time-to-live epochs.
-/// @param committed (uint256): Counter for how much credit has been committed via this approval.
+/// @param used (uint256): Counter for how much credit has been committed via this approval.
 struct CreditApproval {
     uint256 limit;
     uint64 expiry;
-    uint256 committed;
+    uint256 used;
 }
 
 /// @dev The stats of the blob actor.
@@ -69,6 +69,9 @@ struct CreditApproval {
 /// @param creditDebitRate (uint64): The byte-blocks per atto token rate set at genesis.
 /// @param numAccounts (uint64): Total number of debit accounts.
 /// @param numBlobs (uint64): Total number of actively stored blobs.
+/// @param bytesResolving (uint64): Total bytes of all currently resolving blobs.
+/// @param numAdded (uint64): Total number of blobs that are not yet added to the validator's resolve pool.
+/// @param bytesAdded (uint64): Total bytes of all blobs that are not yet added to the validator's resolve pool.
 struct SubnetStats {
     uint256 balance;
     uint256 capacityFree;
@@ -80,6 +83,9 @@ struct SubnetStats {
     uint64 numAccounts;
     uint64 numBlobs;
     uint64 numResolving;
+    uint64 bytesResolving;
+    uint64 numAdded;
+    uint64 bytesAdded;
 }
 
 /// @dev Subnet-wide credit statistics.
@@ -110,8 +116,109 @@ struct StorageStats {
     uint64 numResolving;
 }
 
-/// @dev Storage usage stats for an account.
-/// @param capacityUsed (uint256): Total size of all blobs managed by the account.
-struct Usage {
-    uint256 capacityUsed;
+/// @dev Parameters for adding a raw blob.
+/// @param sponsor  Optional sponsor address.
+/// @param source Source Iroh node ID used for ingestion.
+/// @param blobHash Blob blake3 hash.
+/// @param metadataHash  Blake3 hash of the metadata to use for blob recovery.
+/// @param subscriptionId Identifier used to differentiate blob additions for the same subscriber.
+/// @param size Blob size.
+/// @param ttl Blob time-to-live epochs. If not specified, the auto-debitor maintains about one hour of credits as an
+/// ongoing commitment.
+struct AddBlobParams {
+    address sponsor;
+    string source;
+    string blobHash;
+    string metadataHash;
+    string subscriptionId;
+    uint64 size;
+    uint64 ttl;
+}
+
+/// @dev Blob information and status.
+/// @param size (uint64): The size of the blob content in bytes.
+/// @param metadataHash (string): Blob metadata hash that contains information for block recovery.
+/// @param subscribers (bytes): Active subscribers (accounts) that are paying for the blob, encoded as HashMap<Address,
+/// SubscriptionGroup>.
+/// @param status (bytes): Current status of the blob.
+struct Blob {
+    uint64 size;
+    string metadataHash;
+    Subscriber[] subscribers;
+    BlobStatus status;
+}
+
+/// @dev Status of a blob in the system.
+/// @param Added Blob was added to the network.
+/// @param Pending Blob is pending resolve.
+/// @param Resolved Blob was successfully resolved.
+/// @param Failed Blob resolution failed.
+enum BlobStatus {
+    Added,
+    Pending,
+    Resolved,
+    Failed
+}
+
+/// @dev A subscriber and their subscription groups.
+/// @param subscriber (address): The subscriber address.
+/// @param subscriptionGroup (SubscriptionGroup[]): The subscription groups. See {SubscriptionGroup} for more details.
+struct Subscriber {
+    address subscriber;
+    SubscriptionGroup[] subscriptionGroup;
+}
+
+/// @dev Pending subscription information.
+/// @param subscriptionId (string): The subscription ID.
+/// @param publicKey (bytes): The public key.
+struct SubscriptionGroup {
+    // TODO: the blobs solidity logic assumes a string key. But, a blob added when pushing to a bucket will serialize
+    // the key as the blake3(Vec<bucket_address + object_key>). We should probably make this value a bytes type, but all
+    // of the encoding/decoding logic works...except you might see odd decoding with a bucket-backed blob, like a
+    // subscription ID of `��0������䣱p�V�%���?��:\u{8}4T�~��V`.
+    string subscriptionId;
+    Subscription subscription;
+}
+
+/// @dev A subscription to a blob.
+/// @param added (uint64): The block number when the subscription was added.
+/// @param expiry (uint64): The block number when the subscription will expire.
+/// @param autoRenew (bool): Whether the subscription will automatically renew.
+/// @param source (string): The source Iroh node ID used for ingestion.
+/// @param delegate (Delegate): The delegate origin and caller that may have created the subscription via a credit
+/// approval.
+/// @param failed (bool): Whether the subscription failed due to an issue resolving the target blob.
+struct Subscription {
+    uint64 added;
+    uint64 expiry;
+    bool autoRenew;
+    string source;
+    Delegate delegate;
+    bool failed;
+}
+
+/// @dev The delegate origin and caller that may have created the subscription via a credit approval.
+/// @param origin (address): The delegate origin.
+/// @param caller (address): The caller address.
+struct Delegate {
+    address origin;
+    address caller;
+}
+
+/// @dev Pending blob information. Represents a Rust `(Hash, HashSet<(Address, SubscriptionId, PublicKey)>)`
+/// @param blobHash (string): The blob hash.
+/// @param sourceInfo (BlobSourceInfo[]): The source information for the blob.
+struct BlobTuple {
+    string blobHash;
+    BlobSourceInfo[] sourceInfo;
+}
+
+/// @dev Source information for a blob.
+/// @param subscriber (address): The subscriber address.
+/// @param subscriptionId (string): The subscription ID.
+/// @param source (string): The source Iroh node ID used for ingestion.
+struct BlobSourceInfo {
+    address subscriber;
+    string subscriptionId;
+    string source;
 }
