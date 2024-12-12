@@ -38,7 +38,7 @@ abstract contract ValidatorRewarderTestBase is Test {
 
         // Deploy ValidatorRewarder with initialization params
         ValidatorRewarderDeployScript rewarderDeployer = new ValidatorRewarderDeployScript();
-        rewarder = rewarderDeployer.runWithParams("local", address(token));
+        rewarder = rewarderDeployer.run(address(token));
         rewarderOwner = rewarder.owner();
         // Grant MINTER_ROLE to Rewarder for Hoku tokens
         vm.startPrank(token.deployer());

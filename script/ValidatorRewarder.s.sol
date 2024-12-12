@@ -19,7 +19,7 @@ contract DeployScript is Script {
         return proxyAddress;
     }
 
-    function runWithParams(string memory network, address hokuToken) public returns (ValidatorRewarder) {
+    function run(address hokuToken) public returns (ValidatorRewarder) {
         vm.startBroadcast();
         proxyAddress =
             Upgrades.deployUUPSProxy("ValidatorRewarder.sol", abi.encodeCall(ValidatorRewarder.initialize, (hokuToken)));
