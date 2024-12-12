@@ -194,12 +194,14 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @param claimedCheckpointHeight The height of the checkpoint that the validator is claiming for
     /// @return True if the checkpoint height is valid, false otherwise
     /// @dev When the latest claimable checkpoint is not set (0), it means that _this_ is the first ever claim.
-    /// @dev In this case we need not check that the claimed checkpoint is in the future.
-    /// @dev Otherwise, we must ensure that the claimed checkpoint is in the future.
+    /// @dev In this case, we need to ensure the first claim is at the first checkpoint period.
+    /// @dev Otherwise, we must ensure that the claimed checkpoint is the next expected checkpoint.
     function validateCheckpointHeight(uint64 claimedCheckpointHeight) internal view returns (bool) {
         if (latestClaimedCheckpoint == 0) {
-            return true;
+            // First claim must be at the first checkpoint period
+            return claimedCheckpointHeight == checkpointPeriod;
         }
+        // Subsequent claims must be at the next checkpoint
         return claimedCheckpointHeight == latestClaimedCheckpoint + checkpointPeriod;
     }
 

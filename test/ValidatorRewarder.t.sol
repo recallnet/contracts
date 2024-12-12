@@ -299,9 +299,9 @@ contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
         assertEq(token.balanceOf(address(rewarder)), 0);
         assertEq(token.totalSupply(), initialSupply);
 
-        // First claim
+        // First claim: should be at checkpoint 600 (checkpoint period)
         vm.startPrank(SUBNET_ROUTE);
-        rewarder.notifyValidClaim(createSubnet(), 1200, validatorData);
+        rewarder.notifyValidClaim(createSubnet(), 600, validatorData);
         vm.stopPrank();
 
         // Verify rewards
@@ -313,7 +313,7 @@ contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
         assertApproxEqAbs(totalInflation, 850919671206244 + 77356333746022, 1000);
 
         // Verify checkpoint
-        assertEq(rewarder.latestClaimedCheckpoint(), 1200);
+        assertEq(rewarder.latestClaimedCheckpoint(), 600);
 
         // Test invalid next checkpoint
         vm.startPrank(SUBNET_ROUTE);
@@ -333,21 +333,21 @@ contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
         blocks[1] = 200;
         blocks[2] = 300;
 
-        // First claim
+        // First claim: should be at checkpoint 600 (checkpoint period)
         vm.startPrank(SUBNET_ROUTE);
-        rewarder.notifyValidClaim(createSubnet(), 1200, createValidatorData(claimants[0], blocks[0]));
+        rewarder.notifyValidClaim(createSubnet(), 600, createValidatorData(claimants[0], blocks[0]));
         vm.stopPrank();
         assertApproxEqAbs(token.balanceOf(claimants[0]), 154712667492044, 1000);
 
         // Second claim
         vm.startPrank(SUBNET_ROUTE);
-        rewarder.notifyValidClaim(createSubnet(), 1200, createValidatorData(claimants[1], blocks[1]));
+        rewarder.notifyValidClaim(createSubnet(), 600, createValidatorData(claimants[1], blocks[1]));
         vm.stopPrank();
         assertApproxEqAbs(token.balanceOf(claimants[1]), 309425334984088, 1000);
 
         // Third claim
         vm.startPrank(SUBNET_ROUTE);
-        rewarder.notifyValidClaim(createSubnet(), 1200, createValidatorData(claimants[2], blocks[2]));
+        rewarder.notifyValidClaim(createSubnet(), 600, createValidatorData(claimants[2], blocks[2]));
         vm.stopPrank();
         assertApproxEqAbs(token.balanceOf(claimants[2]), 464138002476133, 1000);
 
@@ -411,5 +411,32 @@ contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
 
         // Verify rewarder has no remaining balance
         assertApproxEqAbs(token.balanceOf(address(rewarder)), 0, 1000);
+    }
+
+    function testNotifyValidClaimMustBeSequential() public {
+        address claimant = address(0x999);
+        Consensus.ValidatorData memory validatorData = createValidatorData(claimant, 50);
+
+        // Try to claim for checkpoint 1200 before 600
+        vm.startPrank(SUBNET_ROUTE);
+        vm.expectRevert(abi.encodeWithSelector(ValidatorRewarder.InvalidCheckpointHeight.selector, 1200));
+        rewarder.notifyValidClaim(createSubnet(), 1200, validatorData);
+        vm.stopPrank();
+
+        // First claim must be at checkpoint 600
+        vm.startPrank(SUBNET_ROUTE);
+        vm.expectRevert(abi.encodeWithSelector(ValidatorRewarder.InvalidCheckpointHeight.selector, 300));
+        rewarder.notifyValidClaim(createSubnet(), 300, validatorData);
+        vm.stopPrank();
+
+        // Correct sequence: first claim at 600
+        vm.startPrank(SUBNET_ROUTE);
+        rewarder.notifyValidClaim(createSubnet(), 600, validatorData);
+        assertEq(rewarder.latestClaimedCheckpoint(), 600);
+
+        // Then claim at 1200
+        rewarder.notifyValidClaim(createSubnet(), 1200, validatorData);
+        assertEq(rewarder.latestClaimedCheckpoint(), 1200);
+        vm.stopPrank();
     }
 }
