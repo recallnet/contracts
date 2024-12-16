@@ -4,7 +4,7 @@
   "description": "Hoku core contracts",
   "main": "index.js",
   "scripts": {
-    "test": "forge test",
+    "test": "forge test --ffi",
     "build": "forge build",
     "fmt": "forge fmt --check",
     "fmt:fix": "forge fmt",

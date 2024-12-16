@@ -37,3 +37,14 @@ struct SubnetID {
     uint64 root;
     address[] route;
 }
+
+/// Namespace for consensus-level activity summaries.
+library Consensus {
+    struct ValidatorData {
+        /// @dev The validator whose activity we're reporting about, identified by the Ethereum address corresponding
+        /// to its secp256k1 pubkey.
+        address validator;
+        /// @dev The number of blocks committed by this validator during the summarised period.
+        uint64 blocksCommitted;
+    }
+}
