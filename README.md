@@ -962,7 +962,7 @@ struct AddBlobParams {
 We then pass this as a single parameter to the `add` method:
 
 ```sh
-cast send --rpc-url $ETH_RPC_URL $BLOBS "addBlob((address,string,string,string,string,uint64,uint64))" '(0x0000000000000000000000000000000000000000,"cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","","",6,0)' --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $BLOBS "addBlob((address,string,string,string,string,uint64,uint64))" '(0x0000000000000000000000000000000000000000,"osbjobsz6j4bszvio3c42lvg3z5gfjk7rvxwmphh6cfi3gcknvfq","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","","",6,0)' --private-key $PRIVATE_KEY
 ```
 
 To include a custom subscription ID, you would replace the empty string (which indicates `Default`)
@@ -1156,7 +1156,7 @@ cast abi-decode "getSubnetStats()((uint256,uint256,uint256,uint256,uint256,uint2
 This will return the following values:
 
 ```
-(50000000000000000000000 [5e22], 4294967296 [4.294e9], 0, 50000000000000000000000 [5e22], 0, 0, 1, 10, 0, 0)
+(50000999974650615604884 [5e22], 10995116277754 [1.099e13], 6, 50001000000000000000000 [5e22], 21156 [2.115e4], 25349384457000 [2.534e13], 1, 10, 1, 0, 0, 0, 0)
 ```
 
 Which maps to the `SubnetStats` struct:
@@ -1164,14 +1164,14 @@ Which maps to the `SubnetStats` struct:
 ```solidity
 struct SubnetStats {
     uint256 balance; // 50000000000000000000000
-    uint256 capacityFree; // 4294967296
-    uint256 capacityUsed; // 0
-    uint256 creditSold; // 50000000000000000000000
-    uint256 creditCommitted; // 0
-    uint256 creditDebited; // 0
+    uint256 capacityFree; // 10995116277754
+    uint256 capacityUsed; // 6
+    uint256 creditSold; // 50001000000000000000000
+    uint256 creditCommitted; // 21156
+    uint256 creditDebited; // 25349384457000
     uint64 blobCreditsPerByteBlock; // 1
     uint64 numAccounts; // 10
-    uint64 numBlobs; // 0
+    uint64 numBlobs; // 1
     uint64 numResolving; // 0
     uint64 bytesResolving; // 0
     uint64 numAdded; // 0
@@ -1190,16 +1190,16 @@ cast abi-decode "getStorageStats()((uint256,uint256,uint64,uint64))" $(cast call
 This will return the following values:
 
 ```
-(4294967296 [4.294e9], 0, 0, 0)
+(10995116277754 [1.099e13], 6, 1, 0)
 ```
 
 Which maps to the `StorageStats` struct:
 
 ```solidity
-StorageStats {
-    uint256 capacityFree; // 4294967296
-    uint256 capacityUsed; // 0
-    uint64 numBlobs; // 0
+struct StorageStats {
+    uint256 capacityFree; // 10995116277754
+    uint256 capacityUsed; // 6
+    uint64 numBlobs; // 1
     uint64 numResolving; // 0
 }
 ```

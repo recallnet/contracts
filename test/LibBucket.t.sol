@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
-import {Kind, Machine, ObjectState, ObjectValue, Query} from "../src/types/BucketTypes.sol";
+import {CreateBucketParams, Kind, Machine, ObjectState, ObjectValue, Query} from "../src/types/BucketTypes.sol";
 import {AddObjectParams, KeyValue, LibBucket} from "../src/wrappers/LibBucket.sol";
 
 contract LibBucketTest is Test {
@@ -154,5 +154,15 @@ contract LibBucketTest is Test {
             encoded,
             hex"889820160618a818c918670a18791827184118ef18c818bd18ea1879187918b518cc189b18181827181a18ee18cc100718c418f308189f18dd188418d34b68656c6c6f2f776f726c649820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a18999820000000000000000000000000000000000000000000000000000000000000000006f6a16c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616df4"
         );
+    }
+
+    function testEncodeCreateBucketParams() public pure {
+        CreateBucketParams memory params = CreateBucketParams({
+            owner: 0x90F79bf6EB2c4f870365E785982E1f101E93b906,
+            kind: Kind.Bucket,
+            metadata: new KeyValue[](0)
+        });
+        bytes memory encoded = LibBucket.encodeCreateBucketParams(params);
+        assertEq(encoded, hex"8356040a90f79bf6eb2c4f870365e785982e1f101e93b906664275636b6574a0");
     }
 }
