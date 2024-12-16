@@ -5,7 +5,6 @@ import {
     Account,
     AddBlobParams,
     Approval,
-    Approvals,
     Balance,
     Blob,
     BlobSourceInfo,
@@ -59,7 +58,7 @@ library LibBlob {
         stats.creditSold = decoded[3].decodeCborBigIntToUint256();
         stats.creditCommitted = decoded[4].decodeCborBigIntToUint256();
         stats.creditDebited = decoded[5].decodeCborBigIntToUint256();
-        stats.creditDebitRate = decoded[6].decodeCborBytesToUint64();
+        stats.blobCreditsPerByteBlock = decoded[6].decodeCborBytesToUint64();
         stats.numAccounts = decoded[7].decodeCborBytesToUint64();
         stats.numBlobs = decoded[8].decodeCborBytesToUint64();
         stats.numResolving = decoded[9].decodeCborBytesToUint64();
@@ -77,8 +76,10 @@ library LibBlob {
         account.capacityUsed = decoded[0].decodeCborBigIntToUint256();
         account.creditFree = decoded[1].decodeCborBigIntToUint256();
         account.creditCommitted = decoded[2].decodeCborBigIntToUint256();
-        account.lastDebitEpoch = decoded[3].decodeCborBytesToUint64();
-        account.approvals = decodeApprovals(decoded[4]);
+        account.creditSponsor = decoded[3][0] == 0x00 ? address(0) : decoded[3].decodeCborAddress();
+        account.lastDebitEpoch = decoded[4].decodeCborBytesToUint64();
+        account.approvals = decodeApprovals(decoded[5]);
+        account.maxTtlEpochs = decoded[6].decodeCborBytesToUint64();
     }
 
     /// @dev Helper function to decode a credit approval from CBOR to solidity.
@@ -92,23 +93,25 @@ library LibBlob {
         approval.limit = decoded[0].decodeCborBigIntToUint256();
         approval.expiry = decoded[1].decodeCborBytesToUint64();
         approval.used = decoded[2].decodeCborBigIntToUint256();
+        // TODO: we assume the allowlist addresses are EVM addresses, but in reality, they can be FVM addresses.
+        bytes[] memory callerAllowlist = decoded[3].decodeCborArrayToBytes();
+        approval.callerAllowlist = new address[](callerAllowlist.length);
+        for (uint256 i = 0; i < callerAllowlist.length; i++) {
+            approval.callerAllowlist[i] = callerAllowlist[i].decodeCborAddress();
+        }
     }
 
     /// @dev Helper function to decode approvals from CBOR to solidity.
     /// @param data The encoded CBOR mapping of approvals. This is a `HashMap<Address, HashMap<Address,
     /// <CreditApproval>>>` in Rust.
     /// @return approvals The decoded approvals, represented as a nested {Approvals} array.
-    function decodeApprovals(bytes memory data) internal view returns (Approvals[] memory approvals) {
+    function decodeApprovals(bytes memory data) internal view returns (Approval[] memory approvals) {
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
-        approvals = new Approvals[](decoded.length);
+        approvals = new Approval[](decoded.length);
         for (uint256 i = 0; i < decoded.length; i++) {
-            approvals[i].receiver = decoded[i][0].decodeCborAddress();
-            bytes[2][] memory approvalBytes = decoded[i][1].decodeCborMappingToBytes();
-            approvals[i].approval = new Approval[](approvalBytes.length);
-            for (uint256 j = 0; j < approvalBytes.length; j++) {
-                approvals[i].approval[j].requiredCaller = approvalBytes[j][0].decodeCborAddress();
-                approvals[i].approval[j].approval = decodeCreditApproval(approvalBytes[j][1]);
-            }
+            // TODO: this address (string) value is mainnet prefixed with `f` instead of `t`
+            approvals[i].to = string(decoded[i][0]);
+            approvals[i].approval = decodeCreditApproval(decoded[i][1]);
         }
     }
 
@@ -239,24 +242,22 @@ library LibBlob {
 
     /// @dev Helper function to encode approve credit params.
     /// @param from (address): Account address that is approving the credit.
-    /// @param receiver (address): Account address that is receiving the approval.
-    /// @param requiredCaller (address): Optional restriction on caller address, e.g., an object store. Use zero address
+    /// @param to (address): Account address that is receiving the approval.
+    /// @param caller (address): Optional restriction on caller address, e.g., an object store. Use zero address
     /// if unused, indicating a null value.
     /// @param limit (uint256): Optional credit approval limit. Use zero if unused, indicating a null value.
     /// @param ttl (uint64): Optional credit approval time-to-live epochs. Minimum value is 3600 (1 hour). Use zero if
     /// unused, indicating a null value.
     /// @return encoded The encoded params.
-    function encodeApproveCreditParams(
-        address from,
-        address receiver,
-        address requiredCaller,
-        uint256 limit,
-        uint64 ttl
-    ) internal pure returns (bytes memory) {
+    function encodeApproveCreditParams(address from, address to, address[] memory caller, uint256 limit, uint64 ttl)
+        internal
+        pure
+        returns (bytes memory)
+    {
         bytes[] memory encoded = new bytes[](5);
         encoded[0] = from.encodeCborAddress();
-        encoded[1] = receiver.encodeCborAddress();
-        encoded[2] = requiredCaller == address(0) ? LibWasm.encodeCborNull() : requiredCaller.encodeCborAddress();
+        encoded[1] = to.encodeCborAddress();
+        encoded[2] = encodeCallerAllowlist(caller);
         // Note: `limit` is encoded as a BigUInt (single array with no sign bit and values) when writing data, but it
         // gets encoded as a BigInt (array with sign bit and nested array of values) when reading data.
         encoded[3] = limit == 0 ? LibWasm.encodeCborNull() : limit.encodeCborBigUint();
@@ -265,21 +266,29 @@ library LibBlob {
         return encoded.encodeCborArray();
     }
 
+    /// @dev Helper function to encode caller allowlist.
+    /// @param caller The caller allowlist.
+    /// @return encoded The encoded caller allowlist.
+    function encodeCallerAllowlist(address[] memory caller) internal pure returns (bytes memory) {
+        if (caller.length == 0) return LibWasm.encodeCborNull();
+        bytes[] memory encoded = new bytes[](caller.length);
+        for (uint256 i = 0; i < caller.length; i++) {
+            encoded[i] = caller[i].encodeCborAddress();
+        }
+        return encoded.encodeCborArray();
+    }
+
     /// @dev Helper function to encode revoke credit params.
     /// @param from The address of the account that is revoking the credit.
-    /// @param receiver The address of the account that is receiving the credit.
-    /// @param requiredCaller The address of the account that is required to call this method. Use zero address
+    /// @param to The address of the account that is receiving the credit.
+    /// @param caller The address of the account that is required to call this method. Use zero address
     /// if unused, indicating a null value.
     /// @return encoded The encoded params.
-    function encodeRevokeCreditParams(address from, address receiver, address requiredCaller)
-        internal
-        pure
-        returns (bytes memory)
-    {
+    function encodeRevokeCreditParams(address from, address to, address caller) internal pure returns (bytes memory) {
         bytes[] memory encoded = new bytes[](3);
         encoded[0] = from.encodeCborAddress();
-        encoded[1] = receiver.encodeCborAddress();
-        encoded[2] = requiredCaller == address(0) ? LibWasm.encodeCborNull() : requiredCaller.encodeCborAddress();
+        encoded[1] = to.encodeCborAddress();
+        encoded[2] = caller == address(0) ? LibWasm.encodeCborNull() : caller.encodeCborAddress();
 
         return encoded.encodeCborArray();
     }
@@ -325,7 +334,9 @@ library LibBlob {
     function accountToBalance(Account memory account) internal pure returns (Balance memory balance) {
         balance.creditFree = account.creditFree;
         balance.creditCommitted = account.creditCommitted;
+        balance.creditSponsor = account.creditSponsor;
         balance.lastDebitEpoch = account.lastDebitEpoch;
+        balance.approvals = account.approvals;
     }
 
     /// @dev Helper function to convert subnet stats to storage stats.
@@ -354,7 +365,7 @@ library LibBlob {
         stats.creditSold = subnetStats.creditSold;
         stats.creditCommitted = subnetStats.creditCommitted;
         stats.creditDebited = subnetStats.creditDebited;
-        stats.creditDebitRate = subnetStats.creditDebitRate;
+        stats.blobCreditsPerByteBlock = subnetStats.blobCreditsPerByteBlock;
         stats.numAccounts = subnetStats.numAccounts;
     }
 
@@ -476,26 +487,26 @@ library LibBlob {
 
     /// @dev Approve credits for an account. This is a simplified variant when no optional fields are needed.
     /// @param from The address of the account that owns the credits.
-    /// @param receiver The address of the account to approve credits for.
-    /// @param requiredCaller Optional restriction on caller address, e.g., an object store. Use zero address if unused.
+    /// @param to The address of the account to approve credits for.
+    /// @param caller Optional restriction on caller address, e.g., an object store. Use zero address if unused.
     /// @param limit Optional credit approval limit. Use zero if unused, indicating a null value.
     /// @param ttl Optional credit approval time-to-live epochs. Minimum value is 3600 (1 hour). Use zero if
     /// unused, indicating a null value.
     /// @return data The credit approval (`CreditApproval`) response as bytes.
-    function approveCredit(address from, address receiver, address requiredCaller, uint256 limit, uint64 ttl)
+    function approveCredit(address from, address to, address[] memory caller, uint256 limit, uint64 ttl)
         external
         returns (bytes memory data)
     {
-        bytes memory params = encodeApproveCreditParams(from, receiver, requiredCaller, limit, ttl);
+        bytes memory params = encodeApproveCreditParams(from, to, caller, limit, ttl);
         return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_APPROVE_CREDIT, params);
     }
 
     /// @dev Revoke credits for an account. Includes optional fields, which if set to zero, will be encoded as null.
     /// @param from The address of the account that owns the credits.
-    /// @param receiver The address of the account to revoke credits for.
-    /// @param requiredCaller Optional restriction on caller address, e.g., an object store.
-    function revokeCredit(address from, address receiver, address requiredCaller) external {
-        bytes memory params = encodeRevokeCreditParams(from, receiver, requiredCaller);
+    /// @param to The address of the account to revoke credits for.
+    /// @param caller Optional restriction on caller address, e.g., an object store.
+    function revokeCredit(address from, address to, address caller) external {
+        bytes memory params = encodeRevokeCreditParams(from, to, caller);
         // Note: response bytes are always empty
         LibWasm.writeToWasmActor(ACTOR_ID, METHOD_REVOKE_CREDIT, params);
     }

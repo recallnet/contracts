@@ -7,9 +7,10 @@ import {console2 as console} from "forge-std/console2.sol";
 import {
     Account as CreditAccount,
     AddBlobParams,
-    Approvals,
+    Approval,
     BlobStatus,
     BlobTuple,
+    CreditApproval,
     SubnetStats,
     Subscriber,
     Subscription
@@ -30,7 +31,7 @@ contract LibBlobTest is Test {
         assertEq(stats.creditSold, 50002000000000000000000);
         assertEq(stats.creditCommitted, 21600);
         assertEq(stats.creditDebited, 88248);
-        assertEq(stats.creditDebitRate, 1);
+        assertEq(stats.blobCreditsPerByteBlock, 1);
         assertEq(stats.numAccounts, 10);
         assertEq(stats.numBlobs, 1);
         assertEq(stats.numResolving, 0);
@@ -40,55 +41,93 @@ contract LibBlobTest is Test {
     }
 
     function testDecodeAccount() public view {
-        bytes memory data = hex"85820181068201831ab33939da1ab8bbcad019021d8201811a6b49d2001a00010769a0";
+        // With approvals to two different accounts and multiple caller allowlists
+        bytes memory data =
+            hex"87820181068201831aad5c0b401a1ad10cd319010f820181195460f6193840a2782c663431306663786a75766c3275657a3633707636646d36627a766c33727561666379327466766264617a706984f6f68200808256040a976ea74026e726554db657fa54763abd0c3a0aa956040a14dc79964da2c08b23698b3d3cc7ca32193d9955782c66343130667335786b6f716267343474666b746e776b37356669357232787567647563766a64797736686d7184f6f68200808156040aa0ee7a142d267c1f36714e4a8f75612f20a797201a00015180";
         CreditAccount memory account = data.decodeAccount();
-        assertEq(account.creditFree, 9992999999998199937498);
-        assertEq(account.creditCommitted, 1800000000);
-        assertEq(account.lastDebitEpoch, 67433);
+        assertEq(account.capacityUsed, 6);
+        assertEq(account.creditFree, 5000999983793693264704);
+        assertEq(account.creditCommitted, 21600);
+        assertEq(account.creditSponsor, address(0));
+        assertEq(account.lastDebitEpoch, 14400);
+        assertEq(account.approvals[0].to, "f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi");
+        assertEq(account.approvals[0].approval.limit, 0);
+        assertEq(account.approvals[0].approval.expiry, 0);
+        assertEq(account.approvals[0].approval.used, 0);
+        assertEq(account.approvals[0].approval.callerAllowlist[0], 0x976EA74026E726554dB657fA54763abd0C3a0aa9);
+        assertEq(account.approvals[0].approval.callerAllowlist[1], 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955);
+        assertEq(account.approvals[1].to, "f410fs5xkoqbg44tfktnwk75fi5r2xugducvjdyw6hmq");
+        assertEq(account.approvals[1].approval.limit, 0);
+        assertEq(account.approvals[1].approval.expiry, 0);
+        assertEq(account.approvals[1].approval.used, 0);
+        assertEq(account.approvals[1].approval.callerAllowlist[0], 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720);
+        assertEq(account.maxTtlEpochs, 86400);
+
+        // No approvals
+        data = hex"87820181068201831a862266e01a1ad1084719010f820181195460f6194650a01a00015180";
+        account = data.decodeAccount();
+        assertEq(account.capacityUsed, 6);
+        assertEq(account.creditFree, 5000999978793693243104);
+        assertEq(account.creditCommitted, 21600);
+        assertEq(account.creditSponsor, address(0));
+        assertEq(account.lastDebitEpoch, 18000);
+        assertEq(account.approvals.length, 0);
+        assertEq(account.maxTtlEpochs, 86400);
     }
 
-    function testDecodeApprovals() public view {
+    function testDecodeApproval() public view {
         bytes memory data =
-            hex"a156040a15d34aaf54267db7d7c367839aaf71a00a2c6a65a156040a23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f83f6f6820080";
-        Approvals[] memory approvals = data.decodeApprovals();
-        assertEq(approvals[0].receiver, 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
-        assertEq(approvals[0].approval[0].requiredCaller, 0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f);
-        assertEq(approvals[0].approval[0].approval.limit, 0);
-        assertEq(approvals[0].approval[0].approval.expiry, 0);
-        assertEq(approvals[0].approval[0].approval.used, 0);
+            hex"a2782c663431306663786a75766c3275657a3633707636646d36627a766c33727561666379327466766264617a706984f6f68200808156040a976ea74026e726554db657fa54763abd0c3a0aa9782c66343130667335786b6f716267343474666b746e776b37356669357232787567647563766a64797736686d7184f6f68200808156040aa0ee7a142d267c1f36714e4a8f75612f20a79720";
+        Approval[] memory approval = data.decodeApprovals();
+        assertEq(approval[0].to, "f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi");
+        assertEq(approval[0].approval.limit, 0);
+        assertEq(approval[0].approval.expiry, 0);
+        assertEq(approval[0].approval.used, 0);
+        assertEq(approval[0].approval.callerAllowlist[0], 0x976EA74026E726554dB657fA54763abd0C3a0aa9);
+        assertEq(approval[1].to, "f410fs5xkoqbg44tfktnwk75fi5r2xugducvjdyw6hmq");
+        assertEq(approval[1].approval.limit, 0);
+        assertEq(approval[1].approval.expiry, 0);
+        assertEq(approval[1].approval.used, 0);
+        assertEq(approval[1].approval.callerAllowlist[0], 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720);
+    }
 
-        data =
-            hex"a156040a15d34aaf54267db7d7c367839aaf71a00a2c6a65a256040a23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f83f6f682008056040a9965507d1a55bcc2695c58ba16fb37d819b0a4dc83f619edf7820080";
-        approvals = data.decodeApprovals();
-        assertEq(approvals[0].receiver, 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
-        assertEq(approvals[0].approval[0].requiredCaller, 0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f);
-        assertEq(approvals[0].approval[0].approval.limit, 0);
-        assertEq(approvals[0].approval[0].approval.expiry, 0);
-        assertEq(approvals[0].approval[0].approval.used, 0);
-        assertEq(approvals[0].approval[1].requiredCaller, 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc);
-        assertEq(approvals[0].approval[1].approval.limit, 0);
-        assertEq(approvals[0].approval[1].approval.expiry, 60919);
-        assertEq(approvals[0].approval[1].approval.used, 0);
+    function testDecodeCreditApproval() public view {
+        bytes memory data =
+            hex"848201811903e8194dbe8200808256040a976ea74026e726554db657fa54763abd0c3a0aa956040a14dc79964da2c08b23698b3d3cc7ca32193d9955";
+        CreditApproval memory approval = data.decodeCreditApproval();
+        assertEq(approval.limit, 1000);
+        assertEq(approval.expiry, 19902);
+        assertEq(approval.used, 0);
+        assertEq(approval.callerAllowlist[0], 0x976EA74026E726554dB657fA54763abd0C3a0aa9);
+
+        data = hex"84f6f6820080f6";
+        approval = data.decodeCreditApproval();
+        assertEq(approval.limit, 0);
+        assertEq(approval.expiry, 0);
+        assertEq(approval.used, 0);
+        assertEq(approval.callerAllowlist.length, 0);
     }
 
     function testEncodeApproveCreditParams() public pure {
         address from = 0x90F79bf6EB2c4f870365E785982E1f101E93b906;
-        address receiver = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
-        address requiredCaller = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
+        address to = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
+        address[] memory caller = new address[](2);
+        caller[0] = 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955;
+        caller[1] = 0x976EA74026E726554dB657fA54763abd0C3a0aa9;
         uint256 limit = 1000;
         uint64 ttl = 3600;
-        bytes memory params = LibBlob.encodeApproveCreditParams(from, receiver, requiredCaller, limit, ttl);
+        bytes memory params = LibBlob.encodeApproveCreditParams(from, to, caller, limit, ttl);
         assertEq(
             params,
-            hex"8556040a90f79bf6eb2c4f870365e785982e1f101e93b90656040a15d34aaf54267db7d7c367839aaf71a00a2c6a6556040a15d34aaf54267db7d7c367839aaf71a00a2c6a65811903e8190e10"
+            hex"8556040a90f79bf6eb2c4f870365e785982e1f101e93b90656040a15d34aaf54267db7d7c367839aaf71a00a2c6a658256040a14dc79964da2c08b23698b3d3cc7ca32193d995556040a976ea74026e726554db657fa54763abd0c3a0aa9811903e8190e10"
         );
     }
 
     function testEncodeRevokeCreditParams() public pure {
         address from = 0x90F79bf6EB2c4f870365E785982E1f101E93b906;
-        address receiver = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
-        address requiredCaller = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
-        bytes memory params = LibBlob.encodeRevokeCreditParams(from, receiver, requiredCaller);
+        address to = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
+        address caller = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
+        bytes memory params = LibBlob.encodeRevokeCreditParams(from, to, caller);
         assertEq(
             params,
             hex"8356040a90f79bf6eb2c4f870365e785982e1f101e93b90656040a15d34aaf54267db7d7c367839aaf71a00a2c6a6556040a15d34aaf54267db7d7c367839aaf71a00a2c6a65"
