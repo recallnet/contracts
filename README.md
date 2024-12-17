@@ -379,8 +379,6 @@ export RECEIVER_ADDR=0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
 
 ##### Get account info
 
-TODO
-
 We can get the credit account info for the address at `EVM_ADDRESS` (the variable we set above), or
 you could provide any account's EVM public key that exists in the subnet.
 
@@ -962,7 +960,7 @@ struct AddBlobParams {
 We then pass this as a single parameter to the `add` method:
 
 ```sh
-cast send --rpc-url $ETH_RPC_URL $BLOBS "addBlob((address,string,string,string,string,uint64,uint64))" '(0x0000000000000000000000000000000000000000,"osbjobsz6j4bszvio3c42lvg3z5gfjk7rvxwmphh6cfi3gcknvfq","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","","",6,0)' --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $BLOBS "addBlob((address,string,string,string,string,uint64,uint64))" '(0x0000000000000000000000000000000000000000,"cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","","",6,0)' --private-key $PRIVATE_KEY
 ```
 
 To include a custom subscription ID, you would replace the empty string (which indicates `Default`)
