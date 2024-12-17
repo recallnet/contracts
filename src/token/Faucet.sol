@@ -71,7 +71,7 @@ contract Faucet is Ownable {
             revert FaucetEmpty();
         }
         for (uint256 i = 0; i < keysLength; i++) {
-            _nextRequestAt[keys[i]] = block.timestamp + (5 minutes);
+            _nextRequestAt[keys[i]] = block.timestamp + (60 minutes);
         }
         recipient.transfer(amount);
     }
