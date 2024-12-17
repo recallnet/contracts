@@ -52,8 +52,8 @@ contract FaucetTest is Test {
         vm.startPrank(owner);
         faucet.drip(payable(wallet.addr), KEYS);
 
-        vm.warp(block.timestamp + (5 minutes));
-        
+        vm.warp(block.timestamp + (60 minutes));
+
         faucet.drip(payable(wallet.addr), KEYS);
         vm.stopPrank();
 
