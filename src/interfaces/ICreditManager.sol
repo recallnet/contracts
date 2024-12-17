@@ -7,11 +7,14 @@ import {Account, Balance, CreditApproval, CreditStats} from "../types/BlobTypes.
 /// See Rust implementation for details:
 /// https://github.com/hokunet/ipc/blob/develop/fendermint/actors/blobs/src/actor.rs
 interface ICreditManager {
+    /// @dev Emitted when an account approves credits.
+    event ApproveCredit(address indexed from, address indexed to, address[] indexed caller, uint256 limit, uint64 ttl);
+
     /// @dev Emitted when an account buys credits.
     event BuyCredit(address indexed addr, uint256 amount);
 
-    /// @dev Emitted when an account approves credits.
-    event ApproveCredit(address indexed from, address indexed to, address[] indexed caller, uint256 limit, uint64 ttl);
+    /// @dev Emitted when an account sets the credit sponsor.
+    event SetCreditSponsor(address indexed from, address indexed sponsor);
 
     /// @dev Emitted when an account revokes credits.
     event RevokeCredit(address indexed from, address indexed to, address indexed caller);
@@ -67,6 +70,11 @@ interface ICreditManager {
     /// @dev Buy credits for a specified account with a `msg.value` for number of native currency to spend on credits.
     /// @param recipient The address of the account.
     function buyCredit(address recipient) external payable;
+
+    /// @dev Set the credit sponsor for an account.
+    /// @param from The address of the account.
+    /// @param sponsor The address of the sponsor. Use zero address if unused.
+    function setCreditSponsor(address from, address sponsor) external;
 
     /// @dev Revoke credits for an account. Assumes `msg.sender` is the owner of the credits.
     /// @param to The address of the account to revoke credits for.

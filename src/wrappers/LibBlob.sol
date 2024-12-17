@@ -35,6 +35,7 @@ library LibBlob {
     // Credit methods
     uint64 internal constant METHOD_APPROVE_CREDIT = 2276438360;
     uint64 internal constant METHOD_BUY_CREDIT = 1035900737;
+    uint64 internal constant METHOD_SET_CREDIT_SPONSOR = 866259733;
     uint64 internal constant METHOD_REVOKE_CREDIT = 37550845;
     // Blob methods
     uint64 internal constant METHOD_ADD_BLOB = 913855558;
@@ -278,6 +279,17 @@ library LibBlob {
         return encoded.encodeCborArray();
     }
 
+    /// @dev Helper function to encode set credit sponsor params.
+    /// @param from The address of the account.
+    /// @param sponsor The address of the sponsor. Use zero address if unused.
+    /// @return encoded The encoded params.
+    function encodeSetCreditSponsorParams(address from, address sponsor) internal pure returns (bytes memory) {
+        bytes[] memory encoded = new bytes[](2);
+        encoded[0] = from.encodeCborAddress();
+        encoded[1] = sponsor == address(0) ? LibWasm.encodeCborNull() : sponsor.encodeCborAddress();
+        return encoded.encodeCborArray();
+    }
+
     /// @dev Helper function to encode revoke credit params.
     /// @param from The address of the account that is revoking the credit.
     /// @param to The address of the account that is receiving the credit.
@@ -499,6 +511,14 @@ library LibBlob {
     {
         bytes memory params = encodeApproveCreditParams(from, to, caller, limit, ttl);
         return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_APPROVE_CREDIT, params);
+    }
+
+    /// @dev Set the credit sponsor for an account.
+    /// @param from The address of the account.
+    /// @param sponsor The address of the sponsor. Use zero address if unused.
+    function setCreditSponsor(address from, address sponsor) external returns (bytes memory data) {
+        bytes memory params = encodeSetCreditSponsorParams(from, sponsor);
+        return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_SET_CREDIT_SPONSOR, params);
     }
 
     /// @dev Revoke credits for an account. Includes optional fields, which if set to zero, will be encoded as null.

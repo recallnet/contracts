@@ -65,6 +65,12 @@ contract CreditManager is ICreditManager {
         emit BuyCredit(recipient, msg.value);
     }
 
+    /// @dev See {ICreditManager-setCreditSponsor}.
+    function setCreditSponsor(address from, address sponsor) external {
+        LibBlob.setCreditSponsor(from, sponsor);
+        emit SetCreditSponsor(from, sponsor);
+    }
+
     /// @dev See {ICreditManager-revokeCredit}.
     function revokeCredit(address to) external {
         LibBlob.revokeCredit(msg.sender, to, address(0));

@@ -61,9 +61,9 @@ subnet):
 | -------------- | ----------- | -------------------------------------------- |
 | Hoku (ERC20)   | Calibration | `0x20d8a696091153c4d4816ba1fdefe113f71e0905` |
 | Faucet         | Subnet      | `0x7Aff9112A46D98A455f4d4F93c0e3D2438716A44` |
-| CreditManager  | Subnet      | `0xTODO`                                     |
 | BlobManager    | Subnet      | `0xTODO`                                     |
 | BucketManager  | Subnet      | `0xTODO`                                     |
+| CreditManager  | Subnet      | `0xTODO`                                     |
 | ValidatorGater | Subnet      | `0x880126f3134EdFBa4f1a65827D5870f021bb7124` |
 
 To get testnet tokens, visit: [https://faucet.hoku.sh](https://faucet.hoku.sh). Also, you can check
@@ -348,6 +348,8 @@ accepts "optional" arguments. All of the method parameters and return types can 
 - `approveCredit(address,address,address[],uint256,uint64)`: Approve credit for the credit owner
   (`from`) for an address (`to`), providing all of the optional fields (`caller`, `limit`, and
   `ttl`).
+- `setCreditSponsor(address,address)`: Set the credit sponsor for an address (`from`) to an address
+  (`sponsor`, use zero address if unused).
 - `revokeCredit(address)`: Revoke credit for an address (`to`), assuming `msg.sender` is the owner
   of the credit (inferred as `from` in underlying logic).
 - `revokeCredit(address,address)`: Revoke credit for the credit owner (`from`) for an address
@@ -550,6 +552,14 @@ cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address,address,address[
 
 This includes the `limit` field set to `100` credit, and the `ttl` set to `3600` seconds (`1` hour).
 If either of these should instead be null, just set them to `0`.
+
+##### Set credit sponsor for an address
+
+```sh
+cast send --rpc-url $ETH_RPC_URL $CREDIT "setCreditSponsor(address,address)" $EVM_ADDRESS $RECEIVER_ADDR --private-key $PRIVATE_KEY
+```
+
+This will set the credit sponsor for the `from` address to the `sponsor` address.
 
 ##### Revoke credit for an address
 
