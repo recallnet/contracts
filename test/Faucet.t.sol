@@ -16,8 +16,8 @@ contract FaucetTest is Test {
     Vm.Wallet internal chain;
     address internal owner;
     address internal constant TESTER = address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
-    string[] internal KEYS = ["test1", "test2"];
     uint256 internal constant MINT_AMOUNT = 1000 * 10 ** 18;
+    string[] internal keys = ["test1", "test2"];
 
     function setUp() public virtual {
         chain = vm.createWallet("chain");
@@ -33,7 +33,7 @@ contract FaucetTest is Test {
         assertEq(wallet.addr.balance, 0);
 
         vm.prank(owner);
-        faucet.drip(payable(wallet.addr), KEYS);
+        faucet.drip(payable(wallet.addr), keys);
 
         assertEq(faucet.supply(), MINT_AMOUNT / 2 - faucet.dripAmount());
         assertEq(wallet.addr.balance, faucet.dripAmount());
@@ -41,20 +41,20 @@ contract FaucetTest is Test {
 
     function testDripTransferNoDelayFail() public {
         vm.prank(owner);
-        faucet.drip(payable(wallet.addr), KEYS);
+        faucet.drip(payable(wallet.addr), keys);
 
         vm.expectRevert(TryLater.selector);
         vm.prank(owner);
-        faucet.drip(payable(wallet.addr), KEYS);
+        faucet.drip(payable(wallet.addr), keys);
     }
 
     function testDripTransferDelay() public {
         vm.startPrank(owner);
-        faucet.drip(payable(wallet.addr), KEYS);
+        faucet.drip(payable(wallet.addr), keys);
 
-        vm.warp(block.timestamp + (60 minutes));
+        vm.warp(block.timestamp + (12 hours));
 
-        faucet.drip(payable(wallet.addr), KEYS);
+        faucet.drip(payable(wallet.addr), keys);
         vm.stopPrank();
 
         assertEq(wallet.addr.balance, 2 * faucet.dripAmount());

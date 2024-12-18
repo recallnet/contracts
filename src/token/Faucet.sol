@@ -27,7 +27,7 @@ contract Faucet is Ownable {
     mapping(string => uint256) internal _nextRequestAt;
 
     /// @dev Amount of tokens to drip per request
-    uint256 internal _dripAmount = 100;
+    uint256 internal _dripAmount = 18;
 
     /// @dev Initializes the Faucet contract
     /// @dev Sets the contract deployer as the initial owner
@@ -71,7 +71,7 @@ contract Faucet is Ownable {
             revert FaucetEmpty();
         }
         for (uint256 i = 0; i < keysLength; i++) {
-            _nextRequestAt[keys[i]] = block.timestamp + (60 minutes);
+            _nextRequestAt[keys[i]] = block.timestamp + (12 hours);
         }
         recipient.transfer(amount);
     }
