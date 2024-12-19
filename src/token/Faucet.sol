@@ -23,11 +23,11 @@ event Funding(address indexed from, uint256 value);
 /// @title Faucet Contract
 /// @dev A simple faucet contract for distributing tokens
 contract Faucet is Ownable {
-    /// @dev Mapping to store the next allowed request time for each address
-    mapping(address => uint256) internal _nextRequestAt;
+    /// @dev Mapping to store the next allowed request time for each key
+    mapping(string => uint256) internal _nextRequestAt;
 
     /// @dev Amount of tokens to drip per request
-    uint256 internal _dripAmount = 100;
+    uint256 internal _dripAmount = 18;
 
     /// @dev Initializes the Faucet contract
     /// @dev Sets the contract deployer as the initial owner
@@ -58,16 +58,22 @@ contract Faucet is Ownable {
     /// @dev Distributes tokens to the specified recipient
     /// @dev Reverts if the recipient has requested tokens too recently
     /// @param recipient The address to receive the tokens
-    function drip(address payable recipient) external {
-        if (_nextRequestAt[recipient] > block.timestamp) {
-            revert TryLater();
+    /// @param keys Array of keys to identify the recipient used in the _nextRequestAt mapping
+    function drip(address payable recipient, string[] calldata keys) external onlyOwner {
+        uint256 keysLength = keys.length;
+        uint256 amount = _dripAmount;
+        for (uint256 i = 0; i < keysLength; i++) {
+            if (_nextRequestAt[keys[i]] > block.timestamp) {
+                revert TryLater();
+            }
         }
-        if (address(this).balance < _dripAmount) {
+        if (address(this).balance < amount) {
             revert FaucetEmpty();
         }
-
-        _nextRequestAt[recipient] = block.timestamp + (5 minutes);
-        recipient.transfer(_dripAmount);
+        for (uint256 i = 0; i < keysLength; i++) {
+            _nextRequestAt[keys[i]] = block.timestamp + (12 hours);
+        }
+        recipient.transfer(amount);
     }
 
     /// @dev Sets the amount of tokens to distribute per request
