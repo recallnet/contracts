@@ -5,52 +5,72 @@ pragma solidity ^0.8.26;
 /// @param capacityUsed (uint256): Total size of all blobs managed by the account.
 /// @param creditFree (uint256): Current free credit in byte-blocks that can be used for new commitments.
 /// @param creditCommitted (uint256): Current committed credit in byte-blocks that will be used for debits.
+/// @param creditSponsor (address): Optional default sponsor account address.
 /// @param lastDebitEpoch (uint64): The chain epoch of the last debit.
-/// @param approvals (Approvals[]): Credit approvals to other accounts, keyed by receiver, keyed by caller.
+/// @param approvals (Approvals[]): Credit approvals to other accounts, keyed by receiver, keyed by caller,
+/// which could be the receiver or a specific contract, like a bucket.
+/// This allows for limiting approvals to interactions from a specific contract.
+/// For example, an approval for Alice might be valid for any contract caller, so long as
+/// the origin is Alice.
+/// An approval for Bob might be valid from only one contract caller, so long as
+/// the origin is Bob.
+/// @param maxTtl (uint64): The maximum allowed TTL for actor's blobs.
 struct Account {
-    uint256 capacityUsed;
+    uint64 capacityUsed;
     uint256 creditFree;
     uint256 creditCommitted;
+    address creditSponsor;
     uint64 lastDebitEpoch;
-    // Note: this is a nested array that emulates a Rust `Hashmap<Address, Hashmap<Address, CreditApproval>>`
-    Approvals[] approvals;
-}
-
-/// @dev Credit approvals to other accounts, keyed by receiver, keyed by caller.
-/// @param receiver (address): The receiver address.
-/// @param approval (Approval[]): The list of approvals. See {Approval} for more details.
-struct Approvals {
-    address receiver;
-    Approval[] approval;
+    // Note: this is a nested array that emulates a Rust `HashMap<String, CreditApproval>`
+    Approval[] approvals;
+    uint64 maxTtl;
+    uint256 gasAllowance;
 }
 
 /// @dev Credit approval from one account to another.
-/// @param requiredCaller (address): Optional restriction on caller address, e.g., an object store. Use zero address if
+/// @param to (string): Optional restriction on caller address, e.g., an object store. Use zero address if
 /// unused, indicating a null value.
 /// @param approval (CreditApproval): The credit approval. See {CreditApproval} for more details.
 struct Approval {
-    address requiredCaller;
+    string to;
     CreditApproval approval;
 }
 
 /// @dev Credit balance for an account.
 /// @param creditFree (uint256): Current free credit in byte-blocks that can be used for new commitments.
 /// @param creditCommitted (uint256): Current committed credit in byte-blocks that will be used for debits.
+/// @param creditSponsor (address): Optional default sponsor account address.
 /// @param lastDebitEpoch (uint64): The chain epoch of the last debit.
+/// @param approvals (Approvals[]): Credit approvals to other accounts, keyed by receiver, keyed by caller,
+/// which could be the receiver or a specific contract, like a bucket.
+/// This allows for limiting approvals to interactions from a specific contract.
+/// For example, an approval for Alice might be valid for any contract caller, so long as
+/// the origin is Alice.
+/// An approval for Bob might be valid from only one contract caller, so long as
+/// the origin is Bob.
 struct Balance {
     uint256 creditFree;
     uint256 creditCommitted;
+    address creditSponsor;
     uint64 lastDebitEpoch;
+    Approval[] approvals;
 }
 
 /// @dev A credit approval from one account to another.
-/// @param limit (uint256): Optional credit approval limit.
-/// @param expiry (uint64): Optional credit approval time-to-live epochs.
-/// @param used (uint256): Counter for how much credit has been committed via this approval.
+/// @param creditLimit (uint256): Optional credit approval limit.
+/// @param gasFeeLimit (uint256): Optional gas fee limit. Used to limit gas fee delegation.
+/// @param expiry (uint64): Optional credit approval expiry epoch.
+/// @param creditUsed (uint256): Counter for how much credit has been committed via this approval.
+/// @param gasFeeUsed (uint256): Used to track gas fees paid for by the delegation
+/// @param callerAllowlist (string[]): Optional restriction on caller addresses, e.g., a bucket. The receiver will only
+/// be able to use the approval via an allowlisted caller. If not present, any caller is allowed.
 struct CreditApproval {
-    uint256 limit;
+    uint256 creditLimit;
+    uint256 gasFeeLimit;
     uint64 expiry;
-    uint256 used;
+    uint256 creditUsed;
+    uint256 gasFeeUsed;
+    address[] callerAllowlist;
 }
 
 /// @dev The stats of the blob actor.
@@ -58,15 +78,15 @@ struct CreditApproval {
 /// - The `balance` is a uint256, encoded as a CBOR byte string (e.g., 0x00010f0cf064dd59200000).
 /// - The `capacityFree`, `capacityUsed`, `creditSold`, `creditCommitted`, and `creditDebited` are
 /// WASM BigInt types: a CBOR array with a sign (assume non-negative) and array of numbers (e.g., 0x8201820001).
-/// - The `creditDebitRate`, `numAccounts`, `numBlobs`, and `numResolving` are uint64, encoded as a
+/// - The `blobCreditsPerByteBlock`, `numAccounts`, `numBlobs`, and `numResolving` are uint64, encoded as a
 /// CBOR byte string (e.g., 0x317).
 /// @param balance (uint256): The current token balance earned by the subnet.
-/// @param capacityFree (uint256): The total free storage capacity of the subnet.
-/// @param capacityUsed (uint256): The total used storage capacity of the subnet.
+/// @param capacityFree (uint64): The total free storage capacity of the subnet.
+/// @param capacityUsed (uint64): The total used storage capacity of the subnet.
 /// @param creditSold (uint256): The total number of credits sold in the subnet.
 /// @param creditCommitted (uint256): The total number of credits committed to active storage in the subnet.
 /// @param creditDebited (uint256): The total number of credits debited in the subnet.
-/// @param creditDebitRate (uint64): The byte-blocks per atto token rate set at genesis.
+/// @param blobCreditsPerByteBlock (uint64): The current byte-blocks per atto token rate.
 /// @param numAccounts (uint64): Total number of debit accounts.
 /// @param numBlobs (uint64): Total number of actively stored blobs.
 /// @param bytesResolving (uint64): Total bytes of all currently resolving blobs.
@@ -74,12 +94,12 @@ struct CreditApproval {
 /// @param bytesAdded (uint64): Total bytes of all blobs that are not yet added to the validator's resolve pool.
 struct SubnetStats {
     uint256 balance;
-    uint256 capacityFree;
-    uint256 capacityUsed;
+    uint64 capacityFree;
+    uint64 capacityUsed;
     uint256 creditSold;
     uint256 creditCommitted;
     uint256 creditDebited;
-    uint64 creditDebitRate;
+    uint256 tokenCreditRate;
     uint64 numAccounts;
     uint64 numBlobs;
     uint64 numResolving;
@@ -93,27 +113,31 @@ struct SubnetStats {
 /// @param creditSold (uint256): The total number of credits sold in the subnet.
 /// @param creditCommitted (uint256): The total number of credits committed to active storage in the subnet.
 /// @param creditDebited (uint256): The total number of credits debited in the subnet.
-/// @param creditDebitRate (uint64): The byte-blocks per atto token rate set at genesis.
+/// @param blobCreditsPerByteBlock (uint64): The byte-blocks per atto token rate set at genesis.
 /// @param numAccounts (uint64): Total number of debit accounts.
 struct CreditStats {
     uint256 balance;
     uint256 creditSold;
     uint256 creditCommitted;
     uint256 creditDebited;
-    uint64 creditDebitRate;
+    uint256 tokenCreditRate;
     uint64 numAccounts;
 }
 
 /// @dev Subnet-wide storage statistics.
-/// @param capacityFree (uint256): The total free storage capacity of the subnet.
-/// @param capacityUsed (uint256): The total used storage capacity of the subnet.
+/// @param capacityFree (uint64): The total free storage capacity of the subnet.
+/// @param capacityUsed (uint64): The total used storage capacity of the subnet.
 /// @param numBlobs (uint64): Total number of actively stored blobs.
 /// @param numResolving (uint64): Total number of currently resolving blobs.
 struct StorageStats {
-    uint256 capacityFree;
-    uint256 capacityUsed;
+    uint64 capacityFree;
+    uint64 capacityUsed;
     uint64 numBlobs;
     uint64 numResolving;
+    uint64 numAccounts;
+    uint64 bytesResolving;
+    uint64 numAdded;
+    uint64 bytesAdded;
 }
 
 /// @dev Parameters for adding a raw blob.
@@ -161,10 +185,11 @@ enum BlobStatus {
 }
 
 /// @dev A subscriber and their subscription groups.
-/// @param subscriber (address): The subscriber address.
+/// @param subscriber (string): The subscriber address as a string value (e.g.,
+/// "f410ftfsva7i2kw6me2k4lc5bn6zx3am3bjg466vg7ji").
 /// @param subscriptionGroup (SubscriptionGroup[]): The subscription groups. See {SubscriptionGroup} for more details.
 struct Subscriber {
-    address subscriber;
+    string subscriber;
     SubscriptionGroup[] subscriptionGroup;
 }
 

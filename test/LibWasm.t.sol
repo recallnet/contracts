@@ -212,9 +212,13 @@ contract LibWasmTest is Test {
     }
 
     function testDecodeCborString() public view {
-        bytes memory data = hex"6b4f626a65637453746f726555";
+        bytes memory data = hex"65696e6e6572";
         bytes memory result = LibWasm.decodeCborStringToBytes(data);
-        assertEq(string(result), "ObjectStore");
+        assertEq(string(result), "inner");
+
+        data = hex"782c66343130667364337A7835786C667268796F6133663436637A716C71376361706A686F6967686D7A61676171";
+        result = LibWasm.decodeCborStringToBytes(data);
+        assertEq(string(result), "f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq");
     }
 
     function testDecodeCborBytesToString() public pure {
@@ -304,12 +308,50 @@ contract LibWasmTest is Test {
     }
 
     function testEncodeCborString() public pure {
-        string memory str = "Key";
+        string memory str = "inner";
         bytes memory result = LibWasm.encodeCborString(str);
-        assertEq(result, hex"634B6579");
+        assertEq(result, hex"65696E6E6572");
 
-        str = "Default";
+        str = "";
         result = LibWasm.encodeCborString(str);
-        assertEq(result, hex"6744656661756C74");
+        assertEq(result, hex"60");
+
+        str = "foo";
+        result = LibWasm.encodeCborString(str);
+        assertEq(result, hex"63666F6F");
+    }
+
+    function testEncodeCborUint256AsBytes() public {
+        uint256 value = 12345; // A credit limit of 12345 (adds padding)
+        bytes memory result = LibWasm.encodeCborUint256AsBytes(value, true);
+        assertEq(result, hex"4B00029D394A5D6305440000");
+
+        value = 987654321; // A gas fee limit of 987654321 (no padding)
+        result = LibWasm.encodeCborUint256AsBytes(value, false);
+        assertEq(result, hex"45003ADE68B1");
+
+        value = 10000000000000000000000000;
+        result = LibWasm.encodeCborUint256AsBytes(value, true);
+        assertEq(result, hex"530072CB5BD86321E38CB6CE6682E80000000000");
+
+        value = 1000000000000000000000000000000000000;
+        result = LibWasm.encodeCborUint256AsBytes(value, true);
+        assertEq(result, hex"5818000A70C3C40A64E6C51999090B65F67D9240000000000000");
+
+        value = 1000000000000000000000000000000000000000000000000000000000000000000000000;
+        result = LibWasm.encodeCborUint256AsBytes(value, false);
+        assertEq(result, hex"581f0090E40FBEEA1D3A4ABC8955E946FE31CDCF66F634E1000000000000000000");
+
+        // Causes an overflow
+        bytes memory expectedError = abi.encodeWithSelector(InvalidValue.selector, "value * 1e18 overflows uint256");
+        vm.expectRevert(expectedError);
+        value = 1000000000000000000000000000000000000000000000000000000000000000000000000;
+        result = LibWasm.encodeCborUint256AsBytes(value, true);
+    }
+
+    function testDecodeCborByteStringToUint64() public pure {
+        bytes memory data = hex"1a00015180";
+        uint64 result = LibWasm.decodeCborByteStringToUint64(data);
+        assertEq(result, 86400);
     }
 }

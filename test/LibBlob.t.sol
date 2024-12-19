@@ -7,12 +7,14 @@ import {console2 as console} from "forge-std/console2.sol";
 import {
     Account as CreditAccount,
     AddBlobParams,
-    Approvals,
+    Approval,
     BlobStatus,
     BlobTuple,
+    CreditApproval,
     SubnetStats,
     Subscriber,
-    Subscription
+    Subscription,
+    SubscriptionGroup
 } from "../src/types/BlobTypes.sol";
 import {LibBlob} from "../src/wrappers/LibBlob.sol";
 import {LibWasm} from "../src/wrappers/LibWasm.sol";
@@ -22,15 +24,15 @@ contract LibBlobTest is Test {
 
     function testDecodeSubnetStats() public view {
         bytes memory data =
-            hex"8d4b000a969d255e0cca0800008201821a4876e7fa17820181068201831aca0800001a9d255e0c190a968201811954608201811a000158b8010a0100000000";
+            hex"8d4b000a968163e7859f54fdc01b000009fffffffffa06520092efd1b8d0cf37be5aa1cae500000000004b00db8d0a662e2c080000004b00046a9b247c2d1ae00000a16472617465820184001ab34b9f101a7bc907151a00c097ce0a0100000000";
         SubnetStats memory stats = data.decodeSubnetStats();
-        assertEq(stats.balance, 50002000000000000000000);
-        assertEq(stats.capacityFree, 99999999994);
+        assertEq(stats.balance, 49999999989967561752000);
+        assertEq(stats.capacityFree, 10995116277754);
         assertEq(stats.capacityUsed, 6);
-        assertEq(stats.creditSold, 50002000000000000000000);
-        assertEq(stats.creditCommitted, 21600);
-        assertEq(stats.creditDebited, 88248);
-        assertEq(stats.creditDebitRate, 1);
+        assertEq(stats.creditSold, 50000000000000000000000000000000000000000);
+        assertEq(stats.creditCommitted, 1036800000000000000000000);
+        assertEq(stats.creditDebited, 20856000000000000000000);
+        assertEq(stats.tokenCreditRate, 1000000000000000000000000000000000000);
         assertEq(stats.numAccounts, 10);
         assertEq(stats.numBlobs, 1);
         assertEq(stats.numResolving, 0);
@@ -40,55 +42,83 @@ contract LibBlobTest is Test {
     }
 
     function testDecodeAccount() public view {
-        bytes memory data = hex"85820181068201831ab33939da1ab8bbcad019021d8201811a6b49d2001a00010769a0";
-        CreditAccount memory account = data.decodeAccount();
-        assertEq(account.creditFree, 9992999999998199937498);
-        assertEq(account.creditCommitted, 1800000000);
-        assertEq(account.lastDebitEpoch, 67433);
-    }
-
-    function testDecodeApprovals() public view {
+        // No approvals
         bytes memory data =
-            hex"a156040a15d34aaf54267db7d7c367839aaf71a00a2c6a65a156040a23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f83f6f6820080";
-        Approvals[] memory approvals = data.decodeApprovals();
-        assertEq(approvals[0].receiver, 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
-        assertEq(approvals[0].approval[0].requiredCaller, 0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f);
-        assertEq(approvals[0].approval[0].approval.limit, 0);
-        assertEq(approvals[0].approval[0].approval.expiry, 0);
-        assertEq(approvals[0].approval[0].approval.used, 0);
+            hex"880652000eb194f8e1ae51ec461b1b0a2ba69000004b006dc5deaa86aa2b500000f61912dba01a000151804b00010f0cf05ba22c783cc2";
+        CreditAccount memory account = data.decodeAccount();
+        assertEq(account.capacityUsed, 6);
+        assertEq(account.creditFree, 4999999999999999454276000000000000000000);
+        assertEq(account.creditCommitted, 518388000000000000000000);
+        assertEq(account.creditSponsor, address(0));
+        assertEq(account.lastDebitEpoch, 4827);
+        assertEq(account.approvals.length, 0);
+        assertEq(account.maxTtl, 86400);
+        assertEq(account.gasAllowance, 4999999989850243087554);
 
+        // With approvals to two different accounts and multiple caller allowlists, but no set credit, gas fee, or ttl
+        // limits
         data =
-            hex"a156040a15d34aaf54267db7d7c367839aaf71a00a2c6a65a256040a23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f83f6f682008056040a9965507d1a55bcc2695c58ba16fb37d819b0a4dc83f619edf7820080";
-        approvals = data.decodeApprovals();
-        assertEq(approvals[0].receiver, 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
-        assertEq(approvals[0].approval[0].requiredCaller, 0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f);
-        assertEq(approvals[0].approval[0].approval.limit, 0);
-        assertEq(approvals[0].approval[0].approval.expiry, 0);
-        assertEq(approvals[0].approval[0].approval.used, 0);
-        assertEq(approvals[0].approval[1].requiredCaller, 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc);
-        assertEq(approvals[0].approval[1].approval.limit, 0);
-        assertEq(approvals[0].approval[1].approval.expiry, 60919);
-        assertEq(approvals[0].approval[1].approval.used, 0);
+            hex"880652000eb194f8e1ae51ec461b1b0a2ba69000004b006dc5deaa86aa2b500000f61912dba2782c663431306663786a75766c3275657a3633707636646d36627a766c33727561666379327466766264617a706986f6f6f640408256040a14dc79964da2c08b23698b3d3cc7ca32193d995556040a976ea74026e726554db657fa54763abd0c3a0aa9782c66343130667335786b6f716267343474666b746e776b37356669357232787567647563766a64797736686d7186f6f6f640408156040aa0ee7a142d267c1f36714e4a8f75612f20a797201a000151804b00010f0cf059d0832e1cc2";
+        account = data.decodeAccount();
+        assertEq(account.capacityUsed, 6);
+        assertEq(account.creditFree, 4999999999999999454276000000000000000000);
+        assertEq(account.creditCommitted, 518388000000000000000000);
+        assertEq(account.creditSponsor, address(0));
+        assertEq(account.lastDebitEpoch, 4827);
+        assertEq(account.approvals.length, 2);
+        assertEq(account.approvals[0].to, "f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi");
+        assertEq(account.approvals[0].approval.creditLimit, 0);
+        assertEq(account.approvals[0].approval.gasFeeLimit, 0);
+        assertEq(account.approvals[0].approval.expiry, 0);
+        assertEq(account.approvals[0].approval.creditUsed, 0);
+        assertEq(account.approvals[0].approval.gasFeeUsed, 0);
+        assertEq(account.approvals[0].approval.callerAllowlist[0], 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955);
+        assertEq(account.approvals[0].approval.callerAllowlist[1], 0x976EA74026E726554dB657fA54763abd0C3a0aa9);
+        assertEq(account.approvals[1].to, "f410fs5xkoqbg44tfktnwk75fi5r2xugducvjdyw6hmq");
+        assertEq(account.approvals[1].approval.creditLimit, 0);
+        assertEq(account.approvals[1].approval.gasFeeLimit, 0);
+        assertEq(account.approvals[1].approval.expiry, 0);
+        assertEq(account.approvals[1].approval.creditUsed, 0);
+        assertEq(account.approvals[1].approval.gasFeeUsed, 0);
+        assertEq(account.approvals[1].approval.callerAllowlist[0], 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720);
+        assertEq(account.gasAllowance, 4999999987850243087554);
+        assertEq(account.maxTtl, 86400);
+
+        // With approval to one account and multiple caller allowlists—and with set credit, gas fee, and ttl limits
+        data =
+            hex"880652000eb194f8e1ae51ec461b1b0a2ba69000004b006ac206b92ad25f980000f6191c20a1782c663431306663786a75766c3275657a3633707636646d36627a766c33727561666379327466766264617a7069864b00029d394a5d630544000045003ade68b1192dca40408256040a14dc79964da2c08b23698b3d3cc7ca32193d995556040a976ea74026e726554db657fa54763abd0c3a0aa91a000151804b00010f0cf05716053eecc2";
+        account = data.decodeAccount();
+        assertEq(account.approvals[0].to, "f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi");
+        assertEq(account.approvals[0].approval.creditLimit, 12345000000000000000000);
+        assertEq(account.approvals[0].approval.gasFeeLimit, 987654321);
+        assertEq(account.approvals[0].approval.expiry, 11722);
+        assertEq(account.approvals[0].approval.creditUsed, 0);
+        assertEq(account.approvals[0].approval.gasFeeUsed, 0);
+        assertEq(account.approvals[0].approval.callerAllowlist[0], 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955);
+        assertEq(account.approvals[0].approval.callerAllowlist[1], 0x976EA74026E726554dB657fA54763abd0C3a0aa9);
     }
 
     function testEncodeApproveCreditParams() public pure {
         address from = 0x90F79bf6EB2c4f870365E785982E1f101E93b906;
-        address receiver = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
-        address requiredCaller = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
-        uint256 limit = 1000;
-        uint64 ttl = 3600;
-        bytes memory params = LibBlob.encodeApproveCreditParams(from, receiver, requiredCaller, limit, ttl);
+        address to = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
+        address[] memory caller = new address[](2);
+        caller[0] = 0x976EA74026E726554dB657fA54763abd0C3a0aa9;
+        caller[1] = 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955;
+        uint256 creditLimit = 12345;
+        uint256 gasFeeLimit = 987654321;
+        uint64 ttl = 4000;
+        bytes memory params = LibBlob.encodeApproveCreditParams(from, to, caller, creditLimit, gasFeeLimit, ttl);
         assertEq(
             params,
-            hex"8556040a90f79bf6eb2c4f870365e785982e1f101e93b90656040a15d34aaf54267db7d7c367839aaf71a00a2c6a6556040a15d34aaf54267db7d7c367839aaf71a00a2c6a65811903e8190e10"
+            hex"8656040a90f79bf6eb2c4f870365e785982e1f101e93b90656040a15d34aaf54267db7d7c367839aaf71a00a2c6a658256040a976ea74026e726554db657fa54763abd0c3a0aa956040a14dc79964da2c08b23698b3d3cc7ca32193d99554b00029d394a5d630544000045003ade68b1190fa0"
         );
     }
 
     function testEncodeRevokeCreditParams() public pure {
         address from = 0x90F79bf6EB2c4f870365E785982E1f101E93b906;
-        address receiver = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
-        address requiredCaller = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
-        bytes memory params = LibBlob.encodeRevokeCreditParams(from, receiver, requiredCaller);
+        address to = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
+        address caller = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
+        bytes memory params = LibBlob.encodeRevokeCreditParams(from, to, caller);
         assertEq(
             params,
             hex"8356040a90f79bf6eb2c4f870365e785982e1f101e93b90656040a15d34aaf54267db7d7c367839aaf71a00a2c6a6556040a15d34aaf54267db7d7c367839aaf71a00a2c6a65"
@@ -109,7 +139,7 @@ contract LibBlobTest is Test {
         bytes memory encoded = LibBlob.encodeAddBlobParams(params);
         assertEq(
             encoded,
-            hex"87f69820184518b61888181a18c01848184b1875188418ce18aa18e01838181c1833187218c118b3187118a418a818ea18e9184215189b18aa189a18e618d40e18e49820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a1899982000000000000000000000000000000000000000000000000000000000000000006744656661756c7406f6"
+            hex"87f69820184518b61888181a18c01848184b1875188418ce18aa18e01838181c1833187218c118b3187118a418a818ea18e9184215189b18aa189a18e618d40e18e49820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a189998200000000000000000000000000000000000000000000000000000000000000000a165696e6e65726006f6"
         );
     }
 
@@ -117,17 +147,21 @@ contract LibBlobTest is Test {
         // A small key string
         string memory key = "foo";
         bytes memory data = LibBlob.encodeSubscriptionId(key);
-        assertEq(data, hex"a1634b6579831866186f186f");
+        assertEq(data, hex"a165696e6e657263666f6f");
         string memory decoded = LibBlob.decodeSubscriptionId(data);
         assertEq(decoded, key);
+        key = "f";
+        data = LibBlob.encodeSubscriptionId(key);
+        assertEq(data, hex"a165696e6e65726166");
+        decoded = LibBlob.decodeSubscriptionId(data);
+        assertEq(decoded, key);
 
-        // Max 255 bytes
-        key =
-            "foofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoo";
+        // Max 64 bytes
+        key = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
         data = LibBlob.encodeSubscriptionId(key);
         assertEq(
             data,
-            hex"a1634b657998ff1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f1866186f186f"
+            hex"a165696e6e6572784061616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161"
         );
         decoded = LibBlob.decodeSubscriptionId(data);
         assertEq(decoded, key);
@@ -135,37 +169,68 @@ contract LibBlobTest is Test {
         // Default case
         key = "";
         data = LibBlob.encodeSubscriptionId(key);
-        assertEq(data, hex"6744656661756c74");
+        assertEq(data, hex"a165696e6e657260");
         decoded = LibBlob.decodeSubscriptionId(data);
-        assertEq(decoded, "Default");
+        assertEq(decoded, "");
     }
 
     function testDecodeSubscribers() public view {
         // One subscriber
         bytes memory data =
-            hex"a156040a90f79bf6eb2c4f870365e785982e1f101e93b906a26744656661756c74861903d1192b8cf59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4a1634b6579982018a118a7182203183b184c184d18b0186e18c918c018a718e01899186f1821184d18a4189b187318f318df18c0187618e61518d002182918d4184118d086190f77191d87f59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4";
+            hex"a1782c66343130667364337a7835786c667268796f6133663436637a716c71376361706a686f6967686d7a61676171a1784066616134333038396435643466366264383265346133623137306633353663613235386361396636336638386438336130383334353465653765393966633536861901021a00015282f4982018a018531418ce189d18fd1318300c18f218b618ef18b518d0189818a005188f18eb188618b218a4185b185f18d8184f18c11875187d188918d518a5f6f4";
         Subscriber[] memory subscribers = LibBlob.decodeSubscribers(data);
-        assertEq(subscribers[0].subscriber, 0x90F79bf6EB2c4f870365E785982E1f101E93b906);
-        assertEq(subscribers[0].subscriptionGroup[0].subscriptionId, "Default");
-        assertEq(subscribers[0].subscriptionGroup[0].subscription.added, 977);
-        assertEq(subscribers[0].subscriptionGroup[0].subscription.expiry, 11148);
-        assertEq(subscribers[0].subscriptionGroup[0].subscription.autoRenew, true);
+        assertEq(subscribers[0].subscriber, "f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq");
+        assertEq(
+            subscribers[0].subscriptionGroup[0].subscriptionId,
+            "faa43089d5d4f6bd82e4a3b170f356ca258ca9f63f88d83a083454ee7e99fc56"
+        );
+        assertEq(subscribers[0].subscriptionGroup[0].subscription.added, 258);
+        assertEq(subscribers[0].subscriptionGroup[0].subscription.expiry, 86658);
+        assertEq(subscribers[0].subscriptionGroup[0].subscription.autoRenew, false);
         assertEq(
             subscribers[0].subscriptionGroup[0].subscription.source,
-            "dj46xqiflbnyljn2uv5nbmjb7twj3g2u5mgo72xxtyhwmvarlcxa"
+            "ubjrjtu57ujtadhsw3x3lueyuacy724gwksfwx6yj7axk7mj2wsq"
         );
         assertEq(subscribers[0].subscriptionGroup[0].subscription.delegate.origin, address(0));
         assertEq(subscribers[0].subscriptionGroup[0].subscription.delegate.caller, address(0));
         assertEq(subscribers[0].subscriptionGroup[0].subscription.failed, false);
 
-        // Two subscribers
+        // Two subscription groups
         data =
-            hex"a256040a90f79bf6eb2c4f870365e785982e1f101e93b906a26744656661756c74861903d1192b8cf59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4a1634b6579982018a118a7182203183b184c184d18b0186e18c918c018a718e01899186f1821184d18a4189b187318f318df18c0187618e61518d002182918d4184118d086190f77192b98f59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f456040a976ea74026e726554db657fa54763abd0c3a0aa9a16744656661756c7486191d9c192bacf59820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818aef6f4";
+            hex"a1782c66343130667364337a7835786c667268796f6133663436637a716c71376361706a686f6967686d7a61676171a278403537303535653366663334663366613730303165396439613733633465613932616435623832333564636563373162363035396337613535326366336264613086190d6c1a00015eecf4982018a018531418ce189d18fd1318300c18f218b618ef18b518d0189818a005188f18eb188618b218a4185b185f18d8184f18c11875187d188918d518a5f6f4784066616134333038396435643466366264383265346133623137306633353663613235386361396636336638386438336130383334353465653765393966633536861901021a00015282f4982018a018531418ce189d18fd1318300c18f218b618ef18b518d0189818a005188f18eb188618b218a4185b185f18d8184f18c11875187d188918d518a5f6f4";
         subscribers = LibBlob.decodeSubscribers(data);
-        assertEq(subscribers[0].subscriber, 0x90F79bf6EB2c4f870365E785982E1f101E93b906);
-        assertEq(subscribers[0].subscriptionGroup[0].subscriptionId, "Default");
-        assertEq(subscribers[1].subscriber, 0x976EA74026E726554dB657fA54763abd0C3a0aa9);
-        assertEq(subscribers[1].subscriptionGroup[0].subscriptionId, "Default");
+        assertEq(subscribers[0].subscriber, "f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq");
+        assertEq(
+            subscribers[0].subscriptionGroup[0].subscriptionId,
+            "57055e3ff34f3fa7001e9d9a73c4ea92ad5b8235dcec71b6059c7a552cf3bda0"
+        );
+        assertEq(
+            subscribers[0].subscriptionGroup[1].subscriptionId,
+            "faa43089d5d4f6bd82e4a3b170f356ca258ca9f63f88d83a083454ee7e99fc56"
+        );
+
+        // Two different subscribers
+        data =
+            hex"a2782c66343130667364337a7835786c667268796f6133663436637a716c71376361706a686f6967686d7a61676171a178406661613433303839643564346636626438326534613362313730663335366361323538636139663633663838643833613038333435346565376539396663353686190ea31a00016023f4982018a018531418ce189d18fd1318300c18f218b618ef18b518d0189818a005188f18eb188618b218a4185b185f18d8184f18c11875187d188918d518a5f6f4782c663431306674667376613769326b77366d65326b346c6335626e367a7833616d33626a673436367667376a69a178406164663637663836393937383035383834346135623066636135313562613031323364626161393730373462363062333033353166626165663364363636636686190ec91a00016049f4982018a018531418ce189d18fd1318300c18f218b618ef18b518d0189818a005188f18eb188618b218a4185b185f18d8184f18c11875187d188918d518a5f6f4";
+        subscribers = LibBlob.decodeSubscribers(data);
+        assertEq(subscribers[0].subscriber, "f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq");
+        assertEq(subscribers[1].subscriber, "f410ftfsva7i2kw6me2k4lc5bn6zx3am3bjg466vg7ji");
+    }
+
+    function testDecodeSubscriptionGroup() public view {
+        bytes memory data =
+            hex"a1784066616134333038396435643466366264383265346133623137306633353663613235386361396636336638386438336130383334353465653765393966633536861901021a00015282f4982018a018531418ce189d18fd1318300c18f218b618ef18b518d0189818a005188f18eb188618b218a4185b185f18d8184f18c11875187d188918d518a5f6f4";
+        SubscriptionGroup[] memory subscriptionGroup = LibBlob.decodeSubscriptionGroup(data);
+        assertEq(
+            subscriptionGroup[0].subscriptionId, "faa43089d5d4f6bd82e4a3b170f356ca258ca9f63f88d83a083454ee7e99fc56"
+        );
+        assertEq(subscriptionGroup[0].subscription.added, 258);
+        assertEq(subscriptionGroup[0].subscription.expiry, 86658);
+        assertEq(subscriptionGroup[0].subscription.autoRenew, false);
+        assertEq(subscriptionGroup[0].subscription.source, "ubjrjtu57ujtadhsw3x3lueyuacy724gwksfwx6yj7axk7mj2wsq");
+        assertEq(subscriptionGroup[0].subscription.delegate.origin, address(0));
+        assertEq(subscriptionGroup[0].subscription.delegate.caller, address(0));
+        assertEq(subscriptionGroup[0].subscription.failed, false);
     }
 
     function testDecodeSubscription() public view {
@@ -197,34 +262,12 @@ contract LibBlobTest is Test {
     function testDecodeAddedOrPendingBlobs() public view {
         // Single blob
         bytes memory data =
-            hex"8182982018a1189d18c605187b1818188c18bd186718ea1839186618fd188d182c18a2188318f4185a187718d9185c182d18a51861189318ca189818d0187b183c18a7818356040a90f79bf6eb2c4f870365e785982e1f101e93b906a1634b657998201837182f183318e505188d18d7081870184d18d718de18180c185e183318f51857189a18c518b1187518781845184418b718a7183f182b189c18b018be9820181a187918eb18c1051858185b188518a518ba18a5187a18d018b1182118fc18ec189d189b185418eb0c18ef18ea18f7189e0f1866185411185818ae";
+            hex"81829820182718c118b318c218610518aa0f183a18bc188f0a182c182b18b418af18f8184c18c111188218960618cf187f18c9181818fa18881822188218c9818356040acafeb0ba00000000000000000000000000000000a165696e6e657260982001184518fe18d118ba18fb1518ae184406189318e2186b18e1186518b1189018ee182f18901518250418c4181d187c18b318b3185c18191318ae";
         BlobTuple[] memory blobs = LibBlob.decodeAddedOrPendingBlobs(data);
-        assertEq(blobs[0].blobHash, "ugo4mbl3dcgl2z7khftp3djmukb7iwtx3foc3jlbspfjrud3hstq");
-        assertEq(blobs[0].sourceInfo[0].subscriber, 0x90F79bf6EB2c4f870365E785982E1f101E93b906);
-        assertEq(
-            bytes(blobs[0].sourceInfo[0].subscriptionId),
-            hex"372f33e5058dd708704dd7de180c5e33f5579ac5b175784544b7a73f2b9cb0be"
-        );
-        assertEq(blobs[0].sourceInfo[0].source, "dj46xqiflbnyljn2uv5nbmjb7twj3g2u5mgo72xxtyhwmvarlcxa");
-
-        // Two different blobs, one of which has multiple subscribers
-        data =
-            hex"828298201618e218f118210318a518b7183d18a818a3186f187618b318b018f01897182318e9051718501879186a18bd183a1118561895186d182c18901896818356040acafeb0ba00000000000000000000000000000000a1634b65798618681865186c186c186f18329820181a181e182118dc18db1874185e18e118c318331018521850189a183d18ce1618b8181e18b2184e1718c518f718bf185618b418df1838184b18a9187d8298201835182918be18d018931887186d185b183718e618a90b18c518a4182918201841187a18f1185e182d188e15186a0418f31838181818e318fc185618ce828356040acafeb0ba00000000000000000000000000000000a1634b65798518681865186c186c186f982018b3188f18be18aa1847041837189218ab186a18c51881183118a3184f18a2183d18441820185818fa18780918471867189a18de1818182a183018d518338356040acafeb0ba000000000000000000000000000000006744656661756c7498201846185a185418ed18bd18b817021823186e18d918e018e218511888187518f2031845182918e11829186e188618271853188718650c188e18bb18b2";
-        blobs = LibBlob.decodeAddedOrPendingBlobs(data);
-        assertEq(blobs[0].blobHash, "c3rpciiduw3t3kfdn53lhmhqs4r6sbixkb4wvpj2cfljk3jmscla");
+        assertEq(blobs[0].blobHash, "e7a3hqtbawva6ov4r4fcyk5uv74ezqirqklant37zempvcbcqleq");
         assertEq(blobs[0].sourceInfo[0].subscriber, 0xCafeB0ba00000000000000000000000000000000);
-        assertEq(bytes(blobs[0].sourceInfo[0].subscriptionId), bytes("hello2"));
-        assertEq(blobs[0].sourceInfo[0].source, "dipcdxg3orpodqztcbjfbgr5zyllqhvsjyl4l557k22n6oclvf6q");
-
-        assertEq(blobs[1].blobHash, "guu35uetq5wvwn7gvef4ljbjebaxv4k6fwhbk2qe6m4bry74k3ha");
-        assertEq(blobs[1].sourceInfo[0].subscriber, 0xCafeB0ba00000000000000000000000000000000);
-        assertEq(bytes(blobs[1].sourceInfo[0].subscriptionId), bytes("hello"));
-        assertEq(blobs[1].sourceInfo[0].source, "woh35kshaq3zfk3kywatdi2pui6uiicy7j4asr3htlpbqkrq2uzq");
-
-        assertEq(blobs[1].blobHash, "guu35uetq5wvwn7gvef4ljbjebaxv4k6fwhbk2qe6m4bry74k3ha");
-        assertEq(blobs[1].sourceInfo[1].subscriber, 0xCafeB0ba00000000000000000000000000000000);
-        assertEq(bytes(blobs[1].sourceInfo[1].subscriptionId), bytes("Default"));
-        assertEq(blobs[1].sourceInfo[1].source, "iznfj3n5xalqei3o3hqoeumioxzagrjj4euw5brhkodwkdeoxoza");
+        assertEq(blobs[0].sourceInfo[0].subscriptionId, "");
+        assertEq(blobs[0].sourceInfo[0].source, "afc75un27mk24ragsprgxylfwgio4l4qcusqjra5psz3gxazcoxa");
     }
 
     function testDecodeBlobStatus() public view {
@@ -232,5 +275,11 @@ contract LibBlobTest is Test {
         bytes memory decoded = LibWasm.decodeCborStringToBytes(status);
         BlobStatus decodedStatus = LibBlob.decodeBlobStatus(decoded);
         assertEq(uint256(decodedStatus), uint256(BlobStatus.Resolved));
+    }
+
+    function testDecodeTokenCreditRate() public view {
+        bytes memory data = hex"a16472617465820184001ab34b9f101a7bc907151a00c097ce";
+        uint256 rate = LibBlob.decodeTokenCreditRate(data);
+        assertEq(rate, 1000000000000000000000000000000000000);
     }
 }

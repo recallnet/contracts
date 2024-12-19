@@ -5,7 +5,6 @@ import {
     Account,
     AddBlobParams,
     Approval,
-    Approvals,
     Balance,
     Blob,
     BlobSourceInfo,
@@ -32,10 +31,12 @@ library LibBlob {
     uint64 internal constant ACTOR_ID = 66;
     // General getters
     uint64 internal constant METHOD_GET_ACCOUNT = 3435393067;
+    uint64 internal constant METHOD_GET_ACCOUNT_TYPE = 2986222103;
     uint64 internal constant METHOD_GET_STATS = 188400153;
     // Credit methods
     uint64 internal constant METHOD_APPROVE_CREDIT = 2276438360;
     uint64 internal constant METHOD_BUY_CREDIT = 1035900737;
+    uint64 internal constant METHOD_SET_CREDIT_SPONSOR = 866259733;
     uint64 internal constant METHOD_REVOKE_CREDIT = 37550845;
     // Blob methods
     uint64 internal constant METHOD_ADD_BLOB = 913855558;
@@ -54,12 +55,12 @@ library LibBlob {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return stats;
         stats.balance = decoded[0].decodeCborBytesToUint256();
-        stats.capacityFree = decoded[1].decodeCborBigIntToUint256();
-        stats.capacityUsed = decoded[2].decodeCborBigIntToUint256();
-        stats.creditSold = decoded[3].decodeCborBigIntToUint256();
-        stats.creditCommitted = decoded[4].decodeCborBigIntToUint256();
-        stats.creditDebited = decoded[5].decodeCborBigIntToUint256();
-        stats.creditDebitRate = decoded[6].decodeCborBytesToUint64();
+        stats.capacityFree = decoded[1].decodeCborBytesToUint64();
+        stats.capacityUsed = decoded[2].decodeCborBytesToUint64();
+        stats.creditSold = decoded[3].decodeCborBytesToUint256();
+        stats.creditCommitted = decoded[4].decodeCborBytesToUint256();
+        stats.creditDebited = decoded[5].decodeCborBytesToUint256();
+        stats.tokenCreditRate = decodeTokenCreditRate(decoded[6]);
         stats.numAccounts = decoded[7].decodeCborBytesToUint64();
         stats.numBlobs = decoded[8].decodeCborBytesToUint64();
         stats.numResolving = decoded[9].decodeCborBytesToUint64();
@@ -74,11 +75,14 @@ library LibBlob {
     function decodeAccount(bytes memory data) internal view returns (Account memory account) {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return account;
-        account.capacityUsed = decoded[0].decodeCborBigIntToUint256();
-        account.creditFree = decoded[1].decodeCborBigIntToUint256();
-        account.creditCommitted = decoded[2].decodeCborBigIntToUint256();
-        account.lastDebitEpoch = decoded[3].decodeCborBytesToUint64();
-        account.approvals = decodeApprovals(decoded[4]);
+        account.capacityUsed = decoded[0].decodeCborBytesToUint64();
+        account.creditFree = decoded[1].decodeCborBytesToUint256();
+        account.creditCommitted = decoded[2].decodeCborBytesToUint256();
+        account.creditSponsor = decoded[3][0] == 0x00 ? address(0) : decoded[3].decodeCborAddress();
+        account.lastDebitEpoch = decoded[4].decodeCborBytesToUint64();
+        account.approvals = decodeApprovals(decoded[5]);
+        account.maxTtl = decoded[6].decodeCborBytesToUint64();
+        account.gasAllowance = decoded[7].decodeCborBytesToUint256();
     }
 
     /// @dev Helper function to decode a credit approval from CBOR to solidity.
@@ -89,26 +93,30 @@ library LibBlob {
         if (decoded.length == 0) return approval;
         // Note: `limit` is encoded as a BigUInt (single array with no sign bit and values) when writing data, but it
         // gets encoded as a BigInt (array with sign bit and nested array of values) when reading data.
-        approval.limit = decoded[0].decodeCborBigIntToUint256();
-        approval.expiry = decoded[1].decodeCborBytesToUint64();
-        approval.used = decoded[2].decodeCborBigIntToUint256();
+        approval.creditLimit = decoded[0].decodeCborBytesToUint256();
+        approval.gasFeeLimit = decoded[1].decodeCborBytesToUint256();
+        approval.expiry = decoded[2].decodeCborBytesToUint64();
+        approval.creditUsed = decoded[3].decodeCborBytesToUint256();
+        approval.gasFeeUsed = decoded[4].decodeCborBytesToUint256();
+        // TODO: we assume the allowlist addresses are EVM addresses, but in reality, they can be FVM addresses.
+        bytes[] memory callerAllowlist = decoded[5].decodeCborArrayToBytes();
+        approval.callerAllowlist = new address[](callerAllowlist.length);
+        for (uint256 i = 0; i < callerAllowlist.length; i++) {
+            approval.callerAllowlist[i] = callerAllowlist[i].decodeCborAddress();
+        }
     }
 
     /// @dev Helper function to decode approvals from CBOR to solidity.
     /// @param data The encoded CBOR mapping of approvals. This is a `HashMap<Address, HashMap<Address,
     /// <CreditApproval>>>` in Rust.
     /// @return approvals The decoded approvals, represented as a nested {Approvals} array.
-    function decodeApprovals(bytes memory data) internal view returns (Approvals[] memory approvals) {
+    function decodeApprovals(bytes memory data) internal view returns (Approval[] memory approvals) {
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
-        approvals = new Approvals[](decoded.length);
+        approvals = new Approval[](decoded.length);
         for (uint256 i = 0; i < decoded.length; i++) {
-            approvals[i].receiver = decoded[i][0].decodeCborAddress();
-            bytes[2][] memory approvalBytes = decoded[i][1].decodeCborMappingToBytes();
-            approvals[i].approval = new Approval[](approvalBytes.length);
-            for (uint256 j = 0; j < approvalBytes.length; j++) {
-                approvals[i].approval[j].requiredCaller = approvalBytes[j][0].decodeCborAddress();
-                approvals[i].approval[j].approval = decodeCreditApproval(approvalBytes[j][1]);
-            }
+            // TODO: this address (string) value is mainnet prefixed with `f` instead of `t`
+            approvals[i].to = string(decoded[i][0]);
+            approvals[i].approval = decodeCreditApproval(decoded[i][1]);
         }
     }
 
@@ -132,14 +140,10 @@ library LibBlob {
     /// @param data The encoded subscription ID.
     /// @return decoded The decoded subscription ID.
     function decodeSubscriptionId(bytes memory data) internal view returns (string memory) {
-        // If not a mapping with key-value pair, return default
-        if (data[0] != hex"a1") {
-            return "Default";
-        }
-
         // Decode the mapping and return subscription ID bytes
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
-        return string(decoded[0][1].decodeCborBytesArrayToBytes());
+        // An empty string gets decoded into 0x00 via `decodeCborMappingToBytes`
+        return (decoded[0][1].length == 1 && decoded[0][1][0] == hex"00") ? "" : string(decoded[0][1]);
     }
 
     /// @dev Decode a delegate from CBOR.
@@ -169,17 +173,15 @@ library LibBlob {
     }
 
     /// @dev Decode a subscription group from CBOR.
-    /// @param subscriptionGroupBytes The encoded subscription group bytes
+    /// @param data The encoded subscription group bytes
     /// @return group The decoded subscription group
-    function decodeSubscriptionGroup(bytes[2][] memory subscriptionGroupBytes)
-        internal
-        view
-        returns (SubscriptionGroup[] memory group)
-    {
-        group = new SubscriptionGroup[](subscriptionGroupBytes.length);
-        for (uint256 j = 0; j < subscriptionGroupBytes.length; j++) {
-            group[j].subscriptionId = decodeSubscriptionId(subscriptionGroupBytes[j][0]);
-            group[j].subscription = decodeSubscription(subscriptionGroupBytes[j][1]);
+    function decodeSubscriptionGroup(bytes memory data) internal view returns (SubscriptionGroup[] memory group) {
+        bytes[2][] memory decoded = data.decodeCborMappingToBytes();
+        group = new SubscriptionGroup[](decoded.length);
+        for (uint256 j = 0; j < decoded.length; j++) {
+            // String encoded in `SubscriptionGroup` (`HashMap<String, Subscription>`), not as `SubscriptionId` mapping
+            group[j].subscriptionId = string(decoded[j][0]);
+            group[j].subscription = decodeSubscription(decoded[j][1]);
         }
     }
 
@@ -190,8 +192,8 @@ library LibBlob {
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
         subscribers = new Subscriber[](decoded.length);
         for (uint256 i = 0; i < decoded.length; i++) {
-            subscribers[i].subscriber = decoded[i][0].decodeCborAddress();
-            subscribers[i].subscriptionGroup = decodeSubscriptionGroup(decoded[i][1].decodeCborMappingToBytes());
+            subscribers[i].subscriber = string(decoded[i][0]);
+            subscribers[i].subscriptionGroup = decodeSubscriptionGroup(decoded[i][1]);
         }
     }
 
@@ -237,49 +239,78 @@ library LibBlob {
         }
     }
 
+    /// @dev Decode a token credit rate from CBOR.
+    /// @param data The encoded CBOR array of a token credit rate.
+    /// @return rate The decoded token credit rate.
+    function decodeTokenCreditRate(bytes memory data) internal view returns (uint256) {
+        bytes[2][] memory decoded = data.decodeCborMappingToBytes();
+        // The TokenCreditRate mapping is `{inner: <value>}`, so we grab the value
+        return decoded[0][1].decodeCborBigIntToUint256();
+    }
+
     /// @dev Helper function to encode approve credit params.
     /// @param from (address): Account address that is approving the credit.
-    /// @param receiver (address): Account address that is receiving the approval.
-    /// @param requiredCaller (address): Optional restriction on caller address, e.g., an object store. Use zero address
+    /// @param to (address): Account address that is receiving the approval.
+    /// @param caller (address): Optional restriction on caller address, e.g., an object store. Use zero address
     /// if unused, indicating a null value.
-    /// @param limit (uint256): Optional credit approval limit. Use zero if unused, indicating a null value.
+    /// @param creditLimit (uint256): Optional credit approval limit. Use zero if unused, indicating a null value.
+    /// @param gasFeeLimit (uint256): Optional gas fee approval limit. Use zero if unused, indicating a null value.
     /// @param ttl (uint64): Optional credit approval time-to-live epochs. Minimum value is 3600 (1 hour). Use zero if
     /// unused, indicating a null value.
     /// @return encoded The encoded params.
     function encodeApproveCreditParams(
         address from,
-        address receiver,
-        address requiredCaller,
-        uint256 limit,
+        address to,
+        address[] memory caller,
+        uint256 creditLimit,
+        uint256 gasFeeLimit,
         uint64 ttl
     ) internal pure returns (bytes memory) {
-        bytes[] memory encoded = new bytes[](5);
+        bytes[] memory encoded = new bytes[](6);
         encoded[0] = from.encodeCborAddress();
-        encoded[1] = receiver.encodeCborAddress();
-        encoded[2] = requiredCaller == address(0) ? LibWasm.encodeCborNull() : requiredCaller.encodeCborAddress();
-        // Note: `limit` is encoded as a BigUInt (single array with no sign bit and values) when writing data, but it
-        // gets encoded as a BigInt (array with sign bit and nested array of values) when reading data.
-        encoded[3] = limit == 0 ? LibWasm.encodeCborNull() : limit.encodeCborBigUint();
-        encoded[4] = ttl == 0 ? LibWasm.encodeCborNull() : ttl.encodeCborUint64();
+        encoded[1] = to.encodeCborAddress();
+        encoded[2] = encodeCallerAllowlist(caller);
+        encoded[3] = creditLimit == 0 ? LibWasm.encodeCborNull() : creditLimit.encodeCborUint256AsBytes(true);
+        encoded[4] = gasFeeLimit == 0 ? LibWasm.encodeCborNull() : gasFeeLimit.encodeCborUint256AsBytes(false);
+        encoded[5] = ttl == 0 ? LibWasm.encodeCborNull() : ttl.encodeCborUint64();
 
+        return encoded.encodeCborArray();
+    }
+
+    /// @dev Helper function to encode caller allowlist.
+    /// @param caller The caller allowlist.
+    /// @return encoded The encoded caller allowlist.
+    function encodeCallerAllowlist(address[] memory caller) internal pure returns (bytes memory) {
+        if (caller.length == 0) return LibWasm.encodeCborNull();
+        bytes[] memory encoded = new bytes[](caller.length);
+        for (uint256 i = 0; i < caller.length; i++) {
+            encoded[i] = caller[i].encodeCborAddress();
+        }
+        return encoded.encodeCborArray();
+    }
+
+    /// @dev Helper function to encode set credit sponsor params.
+    /// @param from The address of the account.
+    /// @param sponsor The address of the sponsor. Use zero address if unused.
+    /// @return encoded The encoded params.
+    function encodeSetCreditSponsorParams(address from, address sponsor) internal pure returns (bytes memory) {
+        bytes[] memory encoded = new bytes[](2);
+        encoded[0] = from.encodeCborAddress();
+        encoded[1] = sponsor == address(0) ? LibWasm.encodeCborNull() : sponsor.encodeCborAddress();
         return encoded.encodeCborArray();
     }
 
     /// @dev Helper function to encode revoke credit params.
     /// @param from The address of the account that is revoking the credit.
-    /// @param receiver The address of the account that is receiving the credit.
-    /// @param requiredCaller The address of the account that is required to call this method. Use zero address
+    /// @param to The address of the account that is receiving the credit.
+    /// @param caller The address of the account that is required to call this method. Use zero address
     /// if unused, indicating a null value.
     /// @return encoded The encoded params.
-    function encodeRevokeCreditParams(address from, address receiver, address requiredCaller)
-        internal
-        pure
-        returns (bytes memory)
-    {
+    function encodeRevokeCreditParams(address from, address to, address caller) internal pure returns (bytes memory) {
         bytes[] memory encoded = new bytes[](3);
         encoded[0] = from.encodeCborAddress();
-        encoded[1] = receiver.encodeCborAddress();
-        encoded[2] = requiredCaller == address(0) ? LibWasm.encodeCborNull() : requiredCaller.encodeCborAddress();
+        encoded[1] = to.encodeCborAddress();
+        encoded[2] = caller == address(0) ? LibWasm.encodeCborNull() : caller.encodeCborAddress();
 
         return encoded.encodeCborArray();
     }
@@ -288,17 +319,12 @@ library LibBlob {
     /// @param subscriptionId The subscription ID.
     /// @return encoded The encoded subscription ID.
     function encodeSubscriptionId(string memory subscriptionId) internal pure returns (bytes memory) {
-        if (bytes(subscriptionId).length == 0) {
-            // Encoded as the raw string "Default"
-            return "Default".encodeCborString();
-        } else {
-            // Encoded as a 1 value mapping with `Key` key and value of the subscription ID as bytes
-            bytes[] memory encoded = new bytes[](3);
-            encoded[0] = hex"a1";
-            encoded[1] = "Key".encodeCborString();
-            encoded[2] = bytes(subscriptionId).encodeCborBytesArray();
-            return encoded.concatBytes();
-        }
+        // Encoded as a 1 value mapping with `inner` key and value of the subscription ID as bytes
+        bytes[] memory encoded = new bytes[](3);
+        encoded[0] = hex"a1";
+        encoded[1] = "inner".encodeCborString();
+        encoded[2] = subscriptionId.encodeCborString();
+        return encoded.concatBytes();
     }
 
     /// @dev Encode add blob params.
@@ -325,7 +351,9 @@ library LibBlob {
     function accountToBalance(Account memory account) internal pure returns (Balance memory balance) {
         balance.creditFree = account.creditFree;
         balance.creditCommitted = account.creditCommitted;
+        balance.creditSponsor = account.creditSponsor;
         balance.lastDebitEpoch = account.lastDebitEpoch;
+        balance.approvals = account.approvals;
     }
 
     /// @dev Helper function to convert subnet stats to storage stats.
@@ -340,6 +368,10 @@ library LibBlob {
         stats.capacityUsed = subnetStats.capacityUsed;
         stats.numBlobs = subnetStats.numBlobs;
         stats.numResolving = subnetStats.numResolving;
+        stats.numAccounts = subnetStats.numAccounts;
+        stats.bytesResolving = subnetStats.bytesResolving;
+        stats.numAdded = subnetStats.numAdded;
+        stats.bytesAdded = subnetStats.bytesAdded;
     }
 
     /// @dev Helper function to convert subnet stats to credit stats.
@@ -354,7 +386,7 @@ library LibBlob {
         stats.creditSold = subnetStats.creditSold;
         stats.creditCommitted = subnetStats.creditCommitted;
         stats.creditDebited = subnetStats.creditDebited;
-        stats.creditDebitRate = subnetStats.creditDebitRate;
+        stats.tokenCreditRate = subnetStats.tokenCreditRate;
         stats.numAccounts = subnetStats.numAccounts;
     }
 
@@ -372,6 +404,16 @@ library LibBlob {
         bytes memory params = addr.encodeCborAddress();
         bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_ACCOUNT, params);
         return decodeAccount(data);
+    }
+
+    /// @dev Get the maximum TTL for blobs for an account.
+    /// @param addr The address of the account.
+    /// @return ttl The maximum TTL for blobs for the account. Either default (86400), reduced (0), or extended
+    /// (9223372036854775807) with units being seconds.
+    function getAccountType(address addr) public view returns (uint64) {
+        bytes memory params = addr.encodeCborAddress();
+        bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_ACCOUNT_TYPE, params);
+        return data.decodeCborByteStringToUint64();
     }
 
     /// @dev Get the storage usage for an account.
@@ -476,26 +518,39 @@ library LibBlob {
 
     /// @dev Approve credits for an account. This is a simplified variant when no optional fields are needed.
     /// @param from The address of the account that owns the credits.
-    /// @param receiver The address of the account to approve credits for.
-    /// @param requiredCaller Optional restriction on caller address, e.g., an object store. Use zero address if unused.
-    /// @param limit Optional credit approval limit. Use zero if unused, indicating a null value.
+    /// @param to The address of the account to approve credits for.
+    /// @param caller Optional restriction on caller address, e.g., an object store. Use zero address if unused.
+    /// @param creditLimit Optional credit approval limit. Use zero if unused, indicating a null value.
+    /// @param gasFeeLimit Optional gas fee limit. Use zero if unused, indicating a null value.
     /// @param ttl Optional credit approval time-to-live epochs. Minimum value is 3600 (1 hour). Use zero if
     /// unused, indicating a null value.
     /// @return data The credit approval (`CreditApproval`) response as bytes.
-    function approveCredit(address from, address receiver, address requiredCaller, uint256 limit, uint64 ttl)
-        external
-        returns (bytes memory data)
-    {
-        bytes memory params = encodeApproveCreditParams(from, receiver, requiredCaller, limit, ttl);
+    function approveCredit(
+        address from,
+        address to,
+        address[] memory caller,
+        uint256 creditLimit,
+        uint256 gasFeeLimit,
+        uint64 ttl
+    ) external returns (bytes memory data) {
+        bytes memory params = encodeApproveCreditParams(from, to, caller, creditLimit, gasFeeLimit, ttl);
         return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_APPROVE_CREDIT, params);
+    }
+
+    /// @dev Set the credit sponsor for an account.
+    /// @param from The address of the account.
+    /// @param sponsor The address of the sponsor. Use zero address if unused.
+    function setCreditSponsor(address from, address sponsor) external returns (bytes memory data) {
+        bytes memory params = encodeSetCreditSponsorParams(from, sponsor);
+        return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_SET_CREDIT_SPONSOR, params);
     }
 
     /// @dev Revoke credits for an account. Includes optional fields, which if set to zero, will be encoded as null.
     /// @param from The address of the account that owns the credits.
-    /// @param receiver The address of the account to revoke credits for.
-    /// @param requiredCaller Optional restriction on caller address, e.g., an object store.
-    function revokeCredit(address from, address receiver, address requiredCaller) external {
-        bytes memory params = encodeRevokeCreditParams(from, receiver, requiredCaller);
+    /// @param to The address of the account to revoke credits for.
+    /// @param caller Optional restriction on caller address, e.g., an object store.
+    function revokeCredit(address from, address to, address caller) external {
+        bytes memory params = encodeRevokeCreditParams(from, to, caller);
         // Note: response bytes are always empty
         LibWasm.writeToWasmActor(ACTOR_ID, METHOD_REVOKE_CREDIT, params);
     }

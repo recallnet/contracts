@@ -141,7 +141,7 @@ library LibBucket {
     /// @param params The create bucket params.
     /// @return encoded The CBOR encoded create bucket params.
     function encodeCreateBucketParams(CreateBucketParams memory params) internal pure returns (bytes memory) {
-        bytes[] memory encoded = new bytes[](4);
+        bytes[] memory encoded = new bytes[](3);
         encoded[0] = params.owner.encodeCborAddress();
         encoded[1] = kindToString(params.kind).encodeCborString();
         encoded[2] = params.metadata.encodeCborKeyValueMap();
