@@ -492,7 +492,13 @@ library LibWasm {
     /// @param padding Whether to include padding bytes (used for credit limits to adhere to 1e36 units).
     /// @return encoded The CBOR encoded bytes value.
     function encodeCborUint256AsBytes(uint256 value, bool padding) internal pure returns (bytes memory) {
-        value = padding ? value * 1e18 : value;
+        if (padding) {
+            // avoid overflow (only handle sufficient precision)
+            if (value > type(uint256).max / 1e18) {
+                revert InvalidValue("value * 1e18 overflows uint256");
+            }
+            value *= 1e18;
+        }
         bytes memory valueBytes = new bytes(32);
         assembly {
             mstore(add(valueBytes, 32), value)
@@ -503,13 +509,28 @@ library LibWasm {
         for (start = 0; start < 32; start++) {
             if (valueBytes[start] != 0) break;
         }
-        // Include leading zero if needed (e.g., value with leading `0x00...` should be encoded in bytes)
+        // Include leading zero if needed
         start = start > 0 ? start - 1 : 0;
         uint256 length = 32 - start;
-        bytes memory result = new bytes(length + 1);
-        result[0] = bytes1(uint8(0x40 + length)); // Length indicator (0x40 + length for range 0x40..0x57	)
+
+        bytes memory result;
+        if (length <= 23) {
+            // Use compact form 0x40..0x57
+            result = new bytes(length + 1);
+            result[0] = bytes1(uint8(0x40 + length));
+        } else if (length <= 255) {
+            // Use 0x58 prefix with one-byte length
+            result = new bytes(length + 2);
+            result[0] = 0x58;
+            result[1] = bytes1(uint8(length));
+        } else {
+            revert InvalidValue("Length exceeds max size of 255 bytes");
+        }
+
+        // Copy the value bytes
+        uint256 offset = result.length - length;
         for (uint256 i = 0; i < length; i++) {
-            result[i + 1] = valueBytes[start + i];
+            result[i + offset] = valueBytes[start + i];
         }
 
         return result;
