@@ -42,85 +42,75 @@ contract LibBlobTest is Test {
     }
 
     function testDecodeAccount() public view {
-        // With approvals to two different accounts and multiple caller allowlists
+        // No approvals
         bytes memory data =
-            hex"87820181068201831aad5c0b401a1ad10cd319010f820181195460f6193840a2782c663431306663786a75766c3275657a3633707636646d36627a766c33727561666379327466766264617a706984f6f68200808256040a976ea74026e726554db657fa54763abd0c3a0aa956040a14dc79964da2c08b23698b3d3cc7ca32193d9955782c66343130667335786b6f716267343474666b746e776b37356669357232787567647563766a64797736686d7184f6f68200808156040aa0ee7a142d267c1f36714e4a8f75612f20a797201a00015180";
+            hex"880652000eb194f8e1ae51ec461b1b0a2ba69000004b006dc5deaa86aa2b500000f61912dba01a000151804b00010f0cf05ba22c783cc2";
         CreditAccount memory account = data.decodeAccount();
         assertEq(account.capacityUsed, 6);
-        assertEq(account.creditFree, 5000999983793693264704);
-        assertEq(account.creditCommitted, 21600);
+        assertEq(account.creditFree, 4999999999999999454276000000000000000000);
+        assertEq(account.creditCommitted, 518388000000000000000000);
         assertEq(account.creditSponsor, address(0));
-        assertEq(account.lastDebitEpoch, 14400);
-        assertEq(account.approvals[0].to, "f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi");
-        assertEq(account.approvals[0].approval.limit, 0);
-        assertEq(account.approvals[0].approval.expiry, 0);
-        assertEq(account.approvals[0].approval.used, 0);
-        assertEq(account.approvals[0].approval.callerAllowlist[0], 0x976EA74026E726554dB657fA54763abd0C3a0aa9);
-        assertEq(account.approvals[0].approval.callerAllowlist[1], 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955);
-        assertEq(account.approvals[1].to, "f410fs5xkoqbg44tfktnwk75fi5r2xugducvjdyw6hmq");
-        assertEq(account.approvals[1].approval.limit, 0);
-        assertEq(account.approvals[1].approval.expiry, 0);
-        assertEq(account.approvals[1].approval.used, 0);
-        assertEq(account.approvals[1].approval.callerAllowlist[0], 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720);
-        assertEq(account.maxTtlEpochs, 86400);
+        assertEq(account.lastDebitEpoch, 4827);
+        assertEq(account.approvals.length, 0);
+        assertEq(account.maxTtl, 86400);
+        assertEq(account.gasAllowance, 4999999989850243087554);
 
-        // No approvals
-        data = hex"87820181068201831a862266e01a1ad1084719010f820181195460f6194650a01a00015180";
+        // With approvals to two different accounts and multiple caller allowlists, but no set credit, gas fee, or ttl
+        // limits
+        data =
+            hex"880652000eb194f8e1ae51ec461b1b0a2ba69000004b006dc5deaa86aa2b500000f61912dba2782c663431306663786a75766c3275657a3633707636646d36627a766c33727561666379327466766264617a706986f6f6f640408256040a14dc79964da2c08b23698b3d3cc7ca32193d995556040a976ea74026e726554db657fa54763abd0c3a0aa9782c66343130667335786b6f716267343474666b746e776b37356669357232787567647563766a64797736686d7186f6f6f640408156040aa0ee7a142d267c1f36714e4a8f75612f20a797201a000151804b00010f0cf059d0832e1cc2";
         account = data.decodeAccount();
         assertEq(account.capacityUsed, 6);
-        assertEq(account.creditFree, 5000999978793693243104);
-        assertEq(account.creditCommitted, 21600);
+        assertEq(account.creditFree, 4999999999999999454276000000000000000000);
+        assertEq(account.creditCommitted, 518388000000000000000000);
         assertEq(account.creditSponsor, address(0));
-        assertEq(account.lastDebitEpoch, 18000);
-        assertEq(account.approvals.length, 0);
-        assertEq(account.maxTtlEpochs, 86400);
-    }
+        assertEq(account.lastDebitEpoch, 4827);
+        assertEq(account.approvals.length, 2);
+        assertEq(account.approvals[0].to, "f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi");
+        assertEq(account.approvals[0].approval.creditLimit, 0);
+        assertEq(account.approvals[0].approval.gasFeeLimit, 0);
+        assertEq(account.approvals[0].approval.expiry, 0);
+        assertEq(account.approvals[0].approval.creditUsed, 0);
+        assertEq(account.approvals[0].approval.gasFeeUsed, 0);
+        assertEq(account.approvals[0].approval.callerAllowlist[0], 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955);
+        assertEq(account.approvals[0].approval.callerAllowlist[1], 0x976EA74026E726554dB657fA54763abd0C3a0aa9);
+        assertEq(account.approvals[1].to, "f410fs5xkoqbg44tfktnwk75fi5r2xugducvjdyw6hmq");
+        assertEq(account.approvals[1].approval.creditLimit, 0);
+        assertEq(account.approvals[1].approval.gasFeeLimit, 0);
+        assertEq(account.approvals[1].approval.expiry, 0);
+        assertEq(account.approvals[1].approval.creditUsed, 0);
+        assertEq(account.approvals[1].approval.gasFeeUsed, 0);
+        assertEq(account.approvals[1].approval.callerAllowlist[0], 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720);
+        assertEq(account.gasAllowance, 4999999987850243087554);
+        assertEq(account.maxTtl, 86400);
 
-    function testDecodeApproval() public view {
-        bytes memory data =
-            hex"a2782c663431306663786a75766c3275657a3633707636646d36627a766c33727561666379327466766264617a706984f6f68200808156040a976ea74026e726554db657fa54763abd0c3a0aa9782c66343130667335786b6f716267343474666b746e776b37356669357232787567647563766a64797736686d7184f6f68200808156040aa0ee7a142d267c1f36714e4a8f75612f20a79720";
-        Approval[] memory approval = data.decodeApprovals();
-        assertEq(approval[0].to, "f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi");
-        assertEq(approval[0].approval.limit, 0);
-        assertEq(approval[0].approval.expiry, 0);
-        assertEq(approval[0].approval.used, 0);
-        assertEq(approval[0].approval.callerAllowlist[0], 0x976EA74026E726554dB657fA54763abd0C3a0aa9);
-        assertEq(approval[1].to, "f410fs5xkoqbg44tfktnwk75fi5r2xugducvjdyw6hmq");
-        assertEq(approval[1].approval.limit, 0);
-        assertEq(approval[1].approval.expiry, 0);
-        assertEq(approval[1].approval.used, 0);
-        assertEq(approval[1].approval.callerAllowlist[0], 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720);
-    }
-
-    function testDecodeCreditApproval() public view {
-        bytes memory data =
-            hex"848201811903e8194dbe8200808256040a976ea74026e726554db657fa54763abd0c3a0aa956040a14dc79964da2c08b23698b3d3cc7ca32193d9955";
-        CreditApproval memory approval = data.decodeCreditApproval();
-        assertEq(approval.limit, 1000);
-        assertEq(approval.expiry, 19902);
-        assertEq(approval.used, 0);
-        assertEq(approval.callerAllowlist[0], 0x976EA74026E726554dB657fA54763abd0C3a0aa9);
-
-        data = hex"84f6f6820080f6";
-        approval = data.decodeCreditApproval();
-        assertEq(approval.limit, 0);
-        assertEq(approval.expiry, 0);
-        assertEq(approval.used, 0);
-        assertEq(approval.callerAllowlist.length, 0);
+        // With approval to one account and multiple caller allowlists—and with set credit, gas fee, and ttl limits
+        data =
+            hex"880652000eb194f8e1ae51ec461b1b0a2ba69000004b006ac206b92ad25f980000f6191c20a1782c663431306663786a75766c3275657a3633707636646d36627a766c33727561666379327466766264617a7069864b00029d394a5d630544000045003ade68b1192dca40408256040a14dc79964da2c08b23698b3d3cc7ca32193d995556040a976ea74026e726554db657fa54763abd0c3a0aa91a000151804b00010f0cf05716053eecc2";
+        account = data.decodeAccount();
+        assertEq(account.approvals[0].to, "f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi");
+        assertEq(account.approvals[0].approval.creditLimit, 12345000000000000000000);
+        assertEq(account.approvals[0].approval.gasFeeLimit, 987654321);
+        assertEq(account.approvals[0].approval.expiry, 11722);
+        assertEq(account.approvals[0].approval.creditUsed, 0);
+        assertEq(account.approvals[0].approval.gasFeeUsed, 0);
+        assertEq(account.approvals[0].approval.callerAllowlist[0], 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955);
+        assertEq(account.approvals[0].approval.callerAllowlist[1], 0x976EA74026E726554dB657fA54763abd0C3a0aa9);
     }
 
     function testEncodeApproveCreditParams() public pure {
         address from = 0x90F79bf6EB2c4f870365E785982E1f101E93b906;
         address to = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65;
         address[] memory caller = new address[](2);
-        caller[0] = 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955;
-        caller[1] = 0x976EA74026E726554dB657fA54763abd0C3a0aa9;
-        uint256 limit = 1000;
-        uint64 ttl = 3600;
-        bytes memory params = LibBlob.encodeApproveCreditParams(from, to, caller, limit, ttl);
+        caller[0] = 0x976EA74026E726554dB657fA54763abd0C3a0aa9;
+        caller[1] = 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955;
+        uint256 creditLimit = 12345;
+        uint256 gasFeeLimit = 987654321;
+        uint64 ttl = 4000;
+        bytes memory params = LibBlob.encodeApproveCreditParams(from, to, caller, creditLimit, gasFeeLimit, ttl);
         assertEq(
             params,
-            hex"8556040a90f79bf6eb2c4f870365e785982e1f101e93b90656040a15d34aaf54267db7d7c367839aaf71a00a2c6a658256040a14dc79964da2c08b23698b3d3cc7ca32193d995556040a976ea74026e726554db657fa54763abd0c3a0aa9811903e8190e10"
+            hex"8656040a90f79bf6eb2c4f870365e785982e1f101e93b90656040a15d34aaf54267db7d7c367839aaf71a00a2c6a658256040a976ea74026e726554db657fa54763abd0c3a0aa956040a14dc79964da2c08b23698b3d3cc7ca32193d99554b00029d394a5d630544000045003ade68b1190fa0"
         );
     }
 

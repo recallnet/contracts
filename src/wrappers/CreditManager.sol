@@ -25,32 +25,33 @@ contract CreditManager is ICreditManager {
 
     /// @dev See {ICreditManager-approveCredit}.
     function approveCredit(address to) external {
-        LibBlob.approveCredit(msg.sender, to, new address[](0), 0, 0);
-        emit ApproveCredit(msg.sender, to, new address[](0), 0, 0);
+        LibBlob.approveCredit(msg.sender, to, new address[](0), 0, 0, 0);
+        emit ApproveCredit(msg.sender, to, new address[](0), 0, 0, 0);
     }
 
     /// @dev See {ICreditManager-approveCredit}.
     function approveCredit(address from, address to) external {
-        LibBlob.approveCredit(from, to, new address[](0), 0, 0);
-        emit ApproveCredit(from, to, new address[](0), 0, 0);
+        LibBlob.approveCredit(from, to, new address[](0), 0, 0, 0);
+        emit ApproveCredit(from, to, new address[](0), 0, 0, 0);
     }
 
     /// @dev See {ICreditManager-approveCredit}.
     function approveCredit(address from, address to, address[] memory caller) external {
-        LibBlob.approveCredit(from, to, caller, 0, 0);
-        emit ApproveCredit(from, to, caller, 0, 0);
+        LibBlob.approveCredit(from, to, caller, 0, 0, 0);
+        emit ApproveCredit(from, to, caller, 0, 0, 0);
     }
 
     /// @dev See {ICreditManager-approveCredit}.
-    function approveCredit(address from, address to, address[] memory caller, uint256 limit) external {
-        LibBlob.approveCredit(from, to, caller, limit, 0);
-        emit ApproveCredit(from, to, caller, limit, 0);
-    }
-
-    /// @dev See {ICreditManager-approveCredit}.
-    function approveCredit(address from, address to, address[] memory caller, uint256 limit, uint64 ttl) external {
-        LibBlob.approveCredit(from, to, caller, limit, ttl);
-        emit ApproveCredit(from, to, caller, limit, ttl);
+    function approveCredit(
+        address from,
+        address to,
+        address[] memory caller,
+        uint256 creditLimit,
+        uint256 gasFeeLimit,
+        uint64 ttl
+    ) external {
+        LibBlob.approveCredit(from, to, caller, creditLimit, gasFeeLimit, ttl);
+        emit ApproveCredit(from, to, caller, creditLimit, gasFeeLimit, ttl);
     }
 
     /// @dev See {ICreditManager-buyCredit}.

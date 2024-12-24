@@ -470,6 +470,34 @@ library LibWasm {
         return CBOR.data(buf);
     }
 
+    /// @dev Encode a uint256 to a CBOR encoded bytes value.
+    /// @param value The uint256 value to encode.
+    /// @param padding Whether to include padding bytes (used for credit limits to adhere to 1e36 units).
+    /// @return encoded The CBOR encoded bytes value.
+    function encodeCborUint256AsBytes(uint256 value, bool padding) internal pure returns (bytes memory) {
+        value = padding ? value * 1e18 : value;
+        bytes memory valueBytes = new bytes(32);
+        assembly {
+            mstore(add(valueBytes, 32), value)
+        }
+
+        // Find first non-zero byte
+        uint256 start;
+        for (start = 0; start < 32; start++) {
+            if (valueBytes[start] != 0) break;
+        }
+        // Include leading zero if needed (e.g., value with leading `0x00...` should be encoded in bytes)
+        start = start > 0 ? start - 1 : 0;
+        uint256 length = 32 - start;
+        bytes memory result = new bytes(length + 1);
+        result[0] = bytes1(uint8(0x40 + length)); // Length indicator (0x40 + length for range 0x40..0x57	)
+        for (uint256 i = 0; i < length; i++) {
+            result[i + 1] = valueBytes[start + i];
+        }
+
+        return result;
+    }
+
     /// @dev Encode a bytes array to a CBOR encoded fixed array/slice (e.g., a serialized Rust slice `[u8; N]`; bytes =>
     /// 98<length>...).
     /// @param value The bytes array to encode.

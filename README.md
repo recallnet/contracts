@@ -342,12 +342,9 @@ accepts "optional" arguments. All of the method parameters and return types can 
 - `approveCredit(address,address,address[])`: Approve credit for the credit owner (`from`) for an
   address (`to`), with a restriction on the caller address (`caller`) (e.g., enforce `to` can only
   use credit at `caller`).
-- `approveCredit(address,address,address[],uint256)`: Approve credit for the credit owner (`from`)
-  for an address (`to`), with a restriction on the caller address (`caller`), also providing the
-  `limit` field.
-- `approveCredit(address,address,address[],uint256,uint64)`: Approve credit for the credit owner
-  (`from`) for an address (`to`), providing all of the optional fields (`caller`, `limit`, and
-  `ttl`).
+- `approveCredit(address,address,address[],uint256,uint256,uint64)`: Approve credit for the credit
+  owner (`from`) for an address (`to`), providing all of the optional fields (`caller`,
+  `creditLimit`, `gasFeeLimit`, and `ttl`).
 - `setCreditSponsor(address,address)`: Set the credit sponsor for an address (`from`) to an address
   (`sponsor`, use zero address if unused).
 - `revokeCredit(address)`: Revoke credit for an address (`to`), assuming `msg.sender` is the owner
@@ -385,13 +382,13 @@ We can get the credit account info for the address at `EVM_ADDRESS` (the variabl
 you could provide any account's EVM public key that exists in the subnet.
 
 ```sh
-cast abi-decode "getAccount(address)((uint256,uint256,uint256,address,uint64,(string,(uint256,uint64,uint256,address[]))[],uint64))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)
+cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256,address[]))[],uint64,uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)
 ```
 
 This will return the following values:
 
 ```
-(6, 5000999977743285243104 [5e21], 21600 [2.16e4], 0x0000000000000000000000000000000000000000, 18000 [1.8e4], [("f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi", (1000, 22937 [2.293e4], 0, [0x976EA74026E726554dB657fA54763abd0C3a0aa9, 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955]))], 86400 [8.64e4])
+(6, 4999999999999999454276000000000000000000 [4.999e39], 504150000000000000000000 [5.041e23], 0x0000000000000000000000000000000000000000, 7200, [("f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi", (12345000000000000000000 [1.234e22], 987654321 [9.876e8], 11722 [1.172e4], 0, 0, [0x14dC79964da2C08b23698B3D3cc7Ca32193d9955, 0x976EA74026E726554dB657fA54763abd0C3a0aa9]))], 86400 [8.64e4], 4999999984799342175554 [4.999e21])
 ```
 
 Which maps to the `Account` struct:
@@ -399,12 +396,13 @@ Which maps to the `Account` struct:
 ```solidity
 struct Account {
     uint256 capacityUsed; // 6
-    uint256 creditFree; // 5000999977743285243104
-    uint256 creditCommitted; // 21600
+    uint256 creditFree; // 4999999999999999454276000000000000000000
+    uint256 creditCommitted; // 504150000000000000000000
     address creditSponsor; // 0x0000000000000000000000000000000000000000 (null)
-    uint64 lastDebitEpoch; // 18000
-    Approval[] approvals; // See Approval struct below: [("f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi", (1000, 22937 [2.293e4], 0, [0x976EA74026E726554dB657fA54763abd0C3a0aa9, 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955]))]
-    uint64 maxTtlEpochs; // 86400
+    uint64 lastDebitEpoch; // 7200
+    Approval[] approvals; // See Approval struct below
+    uint64 maxTtl; // 86400
+    uint256 gasAllowance; // 4999999984799342175554
 }
 ```
 
@@ -418,10 +416,12 @@ struct Approval {
 }
 
 struct CreditApproval {
-    uint256 limit; // 1000
-    uint64 expiry; // 22937
-    uint256 committed; // 0
-    address[] callerAllowlist; // [0x976EA74026E726554dB657fA54763abd0C3a0aa9, 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955]
+    uint256 creditLimit; // 12345000000000000000000
+    uint256 gasFeeLimit; // 987654321
+    uint64 expiry; // 11722
+    uint256 creditUsed; // 0
+    uint256 gasFeeUsed; // 0
+    address[] callerAllowlist; // [0x14dC79964da2C08b23698B3D3cc7Ca32193d9955, 0x976EA74026E726554dB657fA54763abd0C3a0aa9]
 }
 ```
 
@@ -440,7 +440,7 @@ cast abi-decode "getCreditStats()((uint256,uint256,uint256,uint256,uint64,uint64
 This will return the following values:
 
 ```
-(50000999975762821509530 [5e22], 50001000000000000000000 [5e22], 21600 [2.16e4], 24237178535296 [2.423e13], 1, 10)
+(50000999975762821509530 [5e22], 50001000000000000000000 [5e22], 21600 [2.16e4], 24237178535296 [2.423e13], 1000000000000000000000000000000000000 [1e36], 10)
 ```
 
 Which maps to the `CreditStats` struct:
@@ -451,7 +451,7 @@ struct CreditStats {
     uint256 creditSold; // 50001000000000000000000
     uint256 creditCommitted; // 21600
     uint256 creditDebited; // 24237178535296
-    uint64 blobCreditsPerByteBlock; // 1
+    uint256 tokenCreditRate; // 1000000000000000000000000000000000000
     uint64 numAccounts; // 10
 }
 ```
@@ -461,24 +461,24 @@ struct CreditStats {
 Fetch the credit balance for the address at `EVM_ADDRESS`:
 
 ```sh
-cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(string,(uint256,uint64,uint256,address[]))[]))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditBalance(address)" $EVM_ADDRESS)
+cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256,address[]))[]))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditBalance(address)" $EVM_ADDRESS)
 ```
 
 This will return the following values:
 
 ```
-(5000999977692519019104 [5e21], 21600 [2.16e4], 0x0000000000000000000000000000000000000000, 18000 [1.8e4], [("f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi", (1000, 22937 [2.293e4], 0, [0x976EA74026E726554dB657fA54763abd0C3a0aa9, 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955]))])
+(4999999999999999454276000000000000000000 [4.999e39], 504150000000000000000000 [5.041e23], 0x0000000000000000000000000000000000000000, 7200, [("f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi", (12345000000000000000000 [1.234e22], 987654321 [9.876e8], 11722 [1.172e4], 0, 0, [0x14dC79964da2C08b23698B3D3cc7Ca32193d9955, 0x976EA74026E726554dB657fA54763abd0C3a0aa9]))])
 ```
 
 Which maps to the `Balance` struct:
 
 ```solidity
 struct Balance {
-    uint256 creditFree; // 5000999977692519019104
-    uint256 creditCommitted; // 21600
+    uint256 creditFree; // 4999999999999999454276000000000000000000
+    uint256 creditCommitted; // 504150000000000000000000
     address creditSponsor; // 0x0000000000000000000000000000000000000000 (null)
-    uint64 lastDebitEpoch; // 18061
-    Approval[] approvals; // See Approval struct below: [("f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi", (1000, 22937 [2.293e4], 0, [0x976EA74026E726554dB657fA54763abd0C3a0aa9, 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955]))]
+    uint64 lastDebitEpoch; // 7200
+    Approval[] approvals; // See Approval struct below
 }
 
 struct Approval {
@@ -487,9 +487,11 @@ struct Approval {
 }
 
 struct CreditApproval {
-    uint256 limit; // 1000
-    uint64 expiry; // 22937
-    uint256 committed; // 0
+    uint256 creditLimit; // 12345000000000000000000
+    uint256 gasFeeLimit; // 987654321
+    uint64 expiry; // 11722
+    uint256 creditUsed; // 0
+    uint256 gasFeeUsed; // 0
     address[] callerAllowlist; // [0x976EA74026E726554dB657fA54763abd0C3a0aa9, 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955]
 }
 ```
@@ -547,11 +549,12 @@ address.
 Lastly, if we want to include all of the optional fields, we can use the following command:
 
 ```sh
-cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address,address,address[],uint256,uint64)" $EVM_ADDRESS $RECEIVER_ADDR '[]' 100 3600 --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address,address,address[],uint256,uint256,uint64)" $EVM_ADDRESS $RECEIVER_ADDR '[]' 100 100 3600 --private-key $PRIVATE_KEY
 ```
 
-This includes the `limit` field set to `100` credit, and the `ttl` set to `3600` seconds (`1` hour).
-If either of these should instead be null, just set them to `0`.
+This includes the `creditLimit` field set to `100` credit, the `gasFeeLimit` set to `100` gas fee,
+and the `ttl` set to `3600` seconds (`1` hour). If either of these should instead be null, just set
+them to `0`.
 
 ##### Set credit sponsor for an address
 
@@ -1002,13 +1005,13 @@ This will emit a `DeleteBlob` event and delete the blob from the network.
 ##### Get a blob
 
 ```sh
-cast abi-decode "getBlob(string)((uint64,string,(address,(string,(uint64,uint64,bool,string,(address,address),bool))[])[],uint8))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
+cast abi-decode "getBlob(string)((uint64,string,(string,(string,(uint64,uint64,bool,string,(address,address),bool))[])[],uint8))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
 ```
 
 This will return the following response:
 
 ```sh
-(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, [("foo", (5279, 8879, true, "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq", (0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000), false))])], 2)
+(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", [("f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq", [("foo", (4825, 91225 [9.122e4], false, "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq", (0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000), false))])], 2)
 ```
 
 Which maps to the `Blob` struct:
@@ -1022,7 +1025,7 @@ struct Blob {
 }
 
 struct Subscriber {
-    address subscriber; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
+    string subscriber; // f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq
     SubscriptionGroup[] subscriptionGroup; // See `SubscriptionGroup` struct below
 }
 
@@ -1032,9 +1035,9 @@ struct SubscriptionGroup {
 }
 
 struct Subscription {
-    uint64 added; // 5279
-    uint64 expiry; // 8879
-    bool autoRenew; // true
+    uint64 added; // 4825
+    uint64 expiry; // 91225
+    bool autoRenew; // false
     string source; // "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq"
     Delegate delegate; // See `Delegate` struct below
     bool failed; // false
@@ -1158,13 +1161,13 @@ This returns the total number of bytes that are pending network resolution:
 We can fetch the overall subnet stats with the following command:
 
 ```sh
-cast abi-decode "getSubnetStats()((uint256,uint256,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint64,uint64,uint64,uint64))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getSubnetStats()")
+cast abi-decode "getSubnetStats()((uint256,uint64,uint64,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint64,uint64,uint64))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getSubnetStats()")
 ```
 
 This will return the following values:
 
 ```
-(50000999974650615604884 [5e22], 10995116277754 [1.099e13], 6, 50001000000000000000000 [5e22], 21156 [2.115e4], 25349384457000 [2.534e13], 1, 10, 1, 0, 0, 0, 0)
+(50000999980767329202072 [5e22], 10995116277754 [1.099e13], 6, 50001000000000000000000000000000000000000 [5e40], 1002060000000000000000000 [1.002e24], 62064000000000000000000 [6.206e22], 1000000000000000000000000000000000000 [1e36], 10, 1, 0, 0, 0, 0)
 ```
 
 Which maps to the `SubnetStats` struct:
@@ -1172,12 +1175,12 @@ Which maps to the `SubnetStats` struct:
 ```solidity
 struct SubnetStats {
     uint256 balance; // 50000000000000000000000
-    uint256 capacityFree; // 10995116277754
-    uint256 capacityUsed; // 6
+    uint64 capacityFree; // 10995116277754
+    uint64 capacityUsed; // 6
     uint256 creditSold; // 50001000000000000000000
     uint256 creditCommitted; // 21156
     uint256 creditDebited; // 25349384457000
-    uint64 blobCreditsPerByteBlock; // 1
+    uint256 tokenCreditRate; // 1000000000000000000000000000000000000
     uint64 numAccounts; // 10
     uint64 numBlobs; // 1
     uint64 numResolving; // 0
@@ -1192,23 +1195,27 @@ struct SubnetStats {
 We can fetch the overall storage stats for the subnet with the following command:
 
 ```sh
-cast abi-decode "getStorageStats()((uint256,uint256,uint64,uint64))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getStorageStats()")
+cast abi-decode "getStorageStats()((uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getStorageStats()")
 ```
 
 This will return the following values:
 
 ```
-(10995116277754 [1.099e13], 6, 1, 0)
+(10995116277754 [1.099e13], 6, 1, 0, 10, 0, 0, 0)
 ```
 
 Which maps to the `StorageStats` struct:
 
 ```solidity
 struct StorageStats {
-    uint256 capacityFree; // 10995116277754
-    uint256 capacityUsed; // 6
+    uint64 capacityFree; // 10995116277754
+    uint64 capacityUsed; // 6
     uint64 numBlobs; // 1
     uint64 numResolving; // 0
+    uint64 numAccounts; // 10
+    uint64 bytesResolving; // 0
+    uint64 numAdded; // 0
+    uint64 bytesAdded; // 0
 }
 ```
 

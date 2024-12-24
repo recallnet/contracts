@@ -14,16 +14,17 @@ pragma solidity ^0.8.26;
 /// the origin is Alice.
 /// An approval for Bob might be valid from only one contract caller, so long as
 /// the origin is Bob.
-/// @param maxTtlEpochs (uint256): The maximum allowed TTL for actor's blobs.
+/// @param maxTtl (uint64): The maximum allowed TTL for actor's blobs.
 struct Account {
-    uint256 capacityUsed;
+    uint64 capacityUsed;
     uint256 creditFree;
     uint256 creditCommitted;
     address creditSponsor;
     uint64 lastDebitEpoch;
     // Note: this is a nested array that emulates a Rust `HashMap<String, CreditApproval>`
     Approval[] approvals;
-    uint64 maxTtlEpochs;
+    uint64 maxTtl;
+    uint256 gasAllowance;
 }
 
 /// @dev Credit approval from one account to another.
@@ -56,15 +57,19 @@ struct Balance {
 }
 
 /// @dev A credit approval from one account to another.
-/// @param limit (uint256): Optional credit approval limit.
-/// @param expiry (uint64): Optional credit approval time-to-live epochs.
-/// @param used (uint256): Counter for how much credit has been committed via this approval.
+/// @param creditLimit (uint256): Optional credit approval limit.
+/// @param gasFeeLimit (uint256): Optional gas fee limit. Used to limit gas fee delegation.
+/// @param expiry (uint64): Optional credit approval expiry epoch.
+/// @param creditUsed (uint256): Counter for how much credit has been committed via this approval.
+/// @param gasFeeUsed (uint256): Used to track gas fees paid for by the delegation
 /// @param callerAllowlist (string[]): Optional restriction on caller addresses, e.g., a bucket. The receiver will only
 /// be able to use the approval via an allowlisted caller. If not present, any caller is allowed.
 struct CreditApproval {
-    uint256 limit;
+    uint256 creditLimit;
+    uint256 gasFeeLimit;
     uint64 expiry;
-    uint256 used;
+    uint256 creditUsed;
+    uint256 gasFeeUsed;
     address[] callerAllowlist;
 }
 
@@ -120,15 +125,19 @@ struct CreditStats {
 }
 
 /// @dev Subnet-wide storage statistics.
-/// @param capacityFree (uint256): The total free storage capacity of the subnet.
-/// @param capacityUsed (uint256): The total used storage capacity of the subnet.
+/// @param capacityFree (uint64): The total free storage capacity of the subnet.
+/// @param capacityUsed (uint64): The total used storage capacity of the subnet.
 /// @param numBlobs (uint64): Total number of actively stored blobs.
 /// @param numResolving (uint64): Total number of currently resolving blobs.
 struct StorageStats {
-    uint256 capacityFree;
-    uint256 capacityUsed;
+    uint64 capacityFree;
+    uint64 capacityUsed;
     uint64 numBlobs;
     uint64 numResolving;
+    uint64 numAccounts;
+    uint64 bytesResolving;
+    uint64 numAdded;
+    uint64 bytesAdded;
 }
 
 /// @dev Parameters for adding a raw blob.

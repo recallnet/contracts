@@ -84,7 +84,7 @@ cast call --rpc-url $ETH_RPC_URL $BLOBS "getStorageStats()"
 echo
 echo "Testing getStorageUsage..."
 cast call --rpc-url $ETH_RPC_URL $BLOBS "getStorageUsage(address)" \
-    "0x0000000000000000000000000000000000000000"
+    $EVM_ADDRESS
 
 # Test getSubnetStats
 echo
@@ -173,7 +173,7 @@ CALLER_ALLOWLIST_ADDR=0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc
 echo
 echo "Testing getAccount..."
 ACCOUNT="$(cast call --rpc-url $ETH_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)"
-DECODED_ACCOUNT="$(cast abi-decode "getAccount(address)((uint256,uint256,uint256,address,uint64,(string,(uint256,uint64,uint256,address[]))[],uint64))" "$ACCOUNT")"
+DECODED_ACCOUNT="$(cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256,address[]))[],uint64,uint256))" "$ACCOUNT")"
 echo "Account info: $DECODED_ACCOUNT"
 
 # Test getCreditStats
@@ -187,7 +187,7 @@ echo "Credit stats: $DECODED_STATS"
 echo
 echo "Testing getCreditBalance..."
 BALANCE=$(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditBalance(address)" $EVM_ADDRESS)
-DECODED_BALANCE=$(cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(string,(uint256,uint64,uint256,address[]))[]))" $BALANCE)
+DECODED_BALANCE=$(cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256,address[]))[]))" $BALANCE)
 echo "Credit balance: $DECODED_BALANCE"
 
 # Test buyCredit
@@ -210,8 +210,8 @@ cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address)" $RECEIVER_ADDR
 cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address,address,address[])" $EVM_ADDRESS $RECEIVER_ADDR '[]' --private-key $PRIVATE_KEY
 
 # Approval with all optional fields
-cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address,address,address[],uint256,uint64)" \
-    $EVM_ADDRESS $RECEIVER_ADDR '[]' 100 3600 --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address,address,address[],uint256,uint256,uint64)" \
+    $EVM_ADDRESS $RECEIVER_ADDR '[]' 100 100 3600 --private-key $PRIVATE_KEY
 
 # Test setCreditSponsor
 echo

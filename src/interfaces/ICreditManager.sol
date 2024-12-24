@@ -8,7 +8,14 @@ import {Account, Balance, CreditApproval, CreditStats} from "../types/BlobTypes.
 /// https://github.com/hokunet/ipc/blob/develop/fendermint/actors/blobs/src/actor.rs
 interface ICreditManager {
     /// @dev Emitted when an account approves credits.
-    event ApproveCredit(address indexed from, address indexed to, address[] indexed caller, uint256 limit, uint64 ttl);
+    event ApproveCredit(
+        address indexed from,
+        address indexed to,
+        address[] indexed caller,
+        uint256 creditLimit,
+        uint256 gasFeeLimit,
+        uint64 ttl
+    );
 
     /// @dev Emitted when an account buys credits.
     event BuyCredit(address indexed addr, uint256 amount);
@@ -52,17 +59,18 @@ interface ICreditManager {
     /// @param from The address of the account that owns the credits.
     /// @param to The address of the account to approve credits for.
     /// @param caller Optional restriction on caller address, e.g., an object store. Use zero address if unused.
-    /// @param limit Optional credit approval limit. Use zero if unused, indicating a null value. Use zero if unused,
-    function approveCredit(address from, address to, address[] memory caller, uint256 limit) external;
-
-    /// @dev Approve credits for an account. This is a simplified variant when no optional fields are needed.
-    /// @param from The address of the account that owns the credits.
-    /// @param to The address of the account to approve credits for.
-    /// @param caller Optional restriction on caller address, e.g., an object store. Use zero address if unused.
-    /// @param limit Optional credit approval limit. Use zero if unused, indicating a null value.
+    /// @param creditLimit Optional credit approval limit. Use zero if unused, indicating a null value.
+    /// @param gasFeeLimit Optional gas fee approval limit. Use zero if unused, indicating a null value.
     /// @param ttl Optional credit approval time-to-live epochs. Minimum value is 3600 (1 hour). Use zero if
     /// unused, indicating a null value.
-    function approveCredit(address from, address to, address[] memory caller, uint256 limit, uint64 ttl) external;
+    function approveCredit(
+        address from,
+        address to,
+        address[] memory caller,
+        uint256 creditLimit,
+        uint256 gasFeeLimit,
+        uint64 ttl
+    ) external;
 
     /// @dev Buy credits for `msg.sender` with a `msg.value` for number of native currency to spend on credits.
     function buyCredit() external payable;

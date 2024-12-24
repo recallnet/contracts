@@ -320,4 +320,18 @@ contract LibWasmTest is Test {
         result = LibWasm.encodeCborString(str);
         assertEq(result, hex"63666F6F");
     }
+
+    function testEncodeCborUint256AsBytes() public pure {
+        uint256 value = 12345;
+        bytes memory result = LibWasm.encodeCborUint256AsBytes(value, true);
+        assertEq(result, hex"4B00029D394A5D6305440000");
+
+        value = 987654321;
+        result = LibWasm.encodeCborUint256AsBytes(value, false);
+        assertEq(result, hex"45003ADE68B1");
+
+        value = 10000000000000000000000000;
+        result = LibWasm.encodeCborUint256AsBytes(value, true);
+        assertEq(result, hex"530072CB5BD86321E38CB6CE6682E80000000000");
+    }
 }
