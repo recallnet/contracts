@@ -28,6 +28,7 @@
     - [Query objects](#query-objects)
   - [Blobs contract](#blobs-contract)
     - [Methods](#methods-2)
+  - [Testing](#testing)
 
 ## Background
 
@@ -919,6 +920,7 @@ accepts "optional" arguments. All of the method parameters and return types can 
 - `deleteBlob(address,string,string)`: Delete a blob from the network, passing the sponsor's
   address, the blob hash, and the subscription ID (either `""` if none was originally provided, or
   the string that was chosen during `addBlob`).
+- `getAccountType(address)`: Get the account's max blob TTL.
 - `getBlob(string)`: Get information about a specific blob at its blake3 hash.
 - `getBlobStatus(address,string,string)`: Get a blob's status, providing its credit sponsor (i.e.,
   the account's `address`, or `address(0)` if null), its blake3 blob hash (the first `string`
@@ -1001,6 +1003,18 @@ cast send --rpc-url $ETH_RPC_URL $BLOBS "deleteBlob(address,string,string)" 0x00
 ```
 
 This will emit a `DeleteBlob` event and delete the blob from the network.
+
+##### Get account type
+
+```sh
+cast abi-decode "getAccountType(address)(uint64)" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getAccountType(address)" $EVM_ADDRESS)
+```
+
+This will return the account's max blob TTL:
+
+```
+86400
+```
 
 ##### Get a blob
 
@@ -1232,3 +1246,30 @@ This will return the following values:
 ```
 123
 ```
+
+### Testing
+
+You can run all of the unit tests with the following command:
+
+```sh
+forge test
+```
+
+Or run a specific test in the `test` directory:
+
+```sh
+forge test --match-path test/LibWasm.t.sol
+```
+
+For the wrapper contracts, an naive "integration" test is provided in
+`test/scripts/wrapper_integration_test.sh`. This assumes you have the localnet running, and it
+deploys the contracts and runs through all of the methods described above via `cast`. You can run it
+with the following command:
+
+```sh
+test/scripts/wrapper_integration_test.sh
+```
+
+If everything is working, you should see `All tests completed successfully` logged at the end. But,
+if there's an error (i.e., incompatability with the wrappers relative to the subnet's expectation),
+the script will exit early.

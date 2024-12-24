@@ -37,6 +37,11 @@ BLOBS=$(forge script script/BlobManager.s.sol \
 
 echo "Using BlobManager: $BLOBS"
 
+# Test getAccountType
+echo
+echo "Testing getAccountType..."
+cast call --rpc-url $ETH_RPC_URL $BLOBS "getAccountType(address)" $EVM_ADDRESS
+
 # Test addBlob
 echo
 echo "Testing addBlob..."

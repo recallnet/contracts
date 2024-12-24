@@ -31,6 +31,7 @@ library LibBlob {
     uint64 internal constant ACTOR_ID = 66;
     // General getters
     uint64 internal constant METHOD_GET_ACCOUNT = 3435393067;
+    uint64 internal constant METHOD_GET_ACCOUNT_TYPE = 2986222103;
     uint64 internal constant METHOD_GET_STATS = 188400153;
     // Credit methods
     uint64 internal constant METHOD_APPROVE_CREDIT = 2276438360;
@@ -403,6 +404,16 @@ library LibBlob {
         bytes memory params = addr.encodeCborAddress();
         bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_ACCOUNT, params);
         return decodeAccount(data);
+    }
+
+    /// @dev Get the maximum TTL for blobs for an account.
+    /// @param addr The address of the account.
+    /// @return ttl The maximum TTL for blobs for the account. Either default (86400), reduced (0), or extended
+    /// (9223372036854775807) with units being seconds.
+    function getAccountType(address addr) public view returns (uint64) {
+        bytes memory params = addr.encodeCborAddress();
+        bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_ACCOUNT_TYPE, params);
+        return data.decodeCborByteStringToUint64();
     }
 
     /// @dev Get the storage usage for an account.

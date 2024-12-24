@@ -106,6 +106,23 @@ library LibWasm {
         return ByteParser.bytesToUint64(data);
     }
 
+    /// @dev Decode CBOR encoded bytes to uint64.
+    /// @param data The encoded CBOR uint64 as a byte string (e.g., `0x1a00015180`).
+    /// @return result The decoded uint64.
+    function decodeCborByteStringToUint64(bytes memory data) internal pure returns (uint64) {
+        // The leading byte is simply the length, so we can skip it, and the value is the remaining bytes
+        bytes memory shifted = new bytes(data.length - 1);
+        assembly {
+            // Copy to the new array, starting from the second byte
+            // Add 32 to skip the length field of the bytes array
+            // Add 1 to skip the first byte of the actual data
+            let srcPtr := add(add(data, 32), 1)
+            let destPtr := add(shifted, 32)
+            mstore(destPtr, mload(srcPtr))
+        }
+        return ByteParser.bytesToUint64(shifted);
+    }
+
     /// @dev Decode CBOR encoded bytes to uint256.
     /// @param data The encoded CBOR uint256.
     /// @return result The decoded uint256.
