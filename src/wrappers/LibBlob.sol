@@ -54,12 +54,12 @@ library LibBlob {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         if (decoded.length == 0) return stats;
         stats.balance = decoded[0].decodeCborBytesToUint256();
-        stats.capacityFree = decoded[1].decodeCborBigIntToUint256();
-        stats.capacityUsed = decoded[2].decodeCborBigIntToUint256();
-        stats.creditSold = decoded[3].decodeCborBigIntToUint256();
-        stats.creditCommitted = decoded[4].decodeCborBigIntToUint256();
-        stats.creditDebited = decoded[5].decodeCborBigIntToUint256();
-        stats.blobCreditsPerByteBlock = decoded[6].decodeCborBytesToUint64();
+        stats.capacityFree = decoded[1].decodeCborBytesToUint64();
+        stats.capacityUsed = decoded[2].decodeCborBytesToUint64();
+        stats.creditSold = decoded[3].decodeCborBytesToUint256();
+        stats.creditCommitted = decoded[4].decodeCborBytesToUint256();
+        stats.creditDebited = decoded[5].decodeCborBytesToUint256();
+        stats.tokenCreditRate = decodeTokenCreditRate(decoded[6]);
         stats.numAccounts = decoded[7].decodeCborBytesToUint64();
         stats.numBlobs = decoded[8].decodeCborBytesToUint64();
         stats.numResolving = decoded[9].decodeCborBytesToUint64();
@@ -136,14 +136,10 @@ library LibBlob {
     /// @param data The encoded subscription ID.
     /// @return decoded The decoded subscription ID.
     function decodeSubscriptionId(bytes memory data) internal view returns (string memory) {
-        // If not a mapping with key-value pair, return default
-        if (data[0] != hex"a1") {
-            return "Default";
-        }
-
         // Decode the mapping and return subscription ID bytes
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
-        return string(decoded[0][1].decodeCborBytesArrayToBytes());
+        // An empty string gets decoded into 0x00 via `decodeCborMappingToBytes`
+        return (decoded[0][1].length == 1 && decoded[0][1][0] == hex"00") ? "" : string(decoded[0][1]);
     }
 
     /// @dev Decode a delegate from CBOR.
@@ -173,17 +169,15 @@ library LibBlob {
     }
 
     /// @dev Decode a subscription group from CBOR.
-    /// @param subscriptionGroupBytes The encoded subscription group bytes
+    /// @param data The encoded subscription group bytes
     /// @return group The decoded subscription group
-    function decodeSubscriptionGroup(bytes[2][] memory subscriptionGroupBytes)
-        internal
-        view
-        returns (SubscriptionGroup[] memory group)
-    {
-        group = new SubscriptionGroup[](subscriptionGroupBytes.length);
-        for (uint256 j = 0; j < subscriptionGroupBytes.length; j++) {
-            group[j].subscriptionId = decodeSubscriptionId(subscriptionGroupBytes[j][0]);
-            group[j].subscription = decodeSubscription(subscriptionGroupBytes[j][1]);
+    function decodeSubscriptionGroup(bytes memory data) internal view returns (SubscriptionGroup[] memory group) {
+        bytes[2][] memory decoded = data.decodeCborMappingToBytes();
+        group = new SubscriptionGroup[](decoded.length);
+        for (uint256 j = 0; j < decoded.length; j++) {
+            // String encoded in `SubscriptionGroup` (`HashMap<String, Subscription>`), not as `SubscriptionId` mapping
+            group[j].subscriptionId = string(decoded[j][0]);
+            group[j].subscription = decodeSubscription(decoded[j][1]);
         }
     }
 
@@ -194,8 +188,8 @@ library LibBlob {
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
         subscribers = new Subscriber[](decoded.length);
         for (uint256 i = 0; i < decoded.length; i++) {
-            subscribers[i].subscriber = decoded[i][0].decodeCborAddress();
-            subscribers[i].subscriptionGroup = decodeSubscriptionGroup(decoded[i][1].decodeCborMappingToBytes());
+            subscribers[i].subscriber = string(decoded[i][0]);
+            subscribers[i].subscriptionGroup = decodeSubscriptionGroup(decoded[i][1]);
         }
     }
 
@@ -239,6 +233,15 @@ library LibBlob {
             blobs[i].blobHash = string(blobTuple[0].decodeCborBlobHashOrNodeId());
             blobs[i].sourceInfo = decodeBlobSourceInfo(blobTuple[1]);
         }
+    }
+
+    /// @dev Decode a token credit rate from CBOR.
+    /// @param data The encoded CBOR array of a token credit rate.
+    /// @return rate The decoded token credit rate.
+    function decodeTokenCreditRate(bytes memory data) internal view returns (uint256) {
+        bytes[2][] memory decoded = data.decodeCborMappingToBytes();
+        // The TokenCreditRate mapping is `{inner: <value>}`, so we grab the value
+        return decoded[0][1].decodeCborBigIntToUint256();
     }
 
     /// @dev Helper function to encode approve credit params.
@@ -309,17 +312,12 @@ library LibBlob {
     /// @param subscriptionId The subscription ID.
     /// @return encoded The encoded subscription ID.
     function encodeSubscriptionId(string memory subscriptionId) internal pure returns (bytes memory) {
-        if (bytes(subscriptionId).length == 0) {
-            // Encoded as the raw string "Default"
-            return "Default".encodeCborString();
-        } else {
-            // Encoded as a 1 value mapping with `Key` key and value of the subscription ID as bytes
-            bytes[] memory encoded = new bytes[](3);
-            encoded[0] = hex"a1";
-            encoded[1] = "Key".encodeCborString();
-            encoded[2] = bytes(subscriptionId).encodeCborBytesArray();
-            return encoded.concatBytes();
-        }
+        // Encoded as a 1 value mapping with `inner` key and value of the subscription ID as bytes
+        bytes[] memory encoded = new bytes[](3);
+        encoded[0] = hex"a1";
+        encoded[1] = "inner".encodeCborString();
+        encoded[2] = subscriptionId.encodeCborString();
+        return encoded.concatBytes();
     }
 
     /// @dev Encode add blob params.
@@ -377,7 +375,7 @@ library LibBlob {
         stats.creditSold = subnetStats.creditSold;
         stats.creditCommitted = subnetStats.creditCommitted;
         stats.creditDebited = subnetStats.creditDebited;
-        stats.blobCreditsPerByteBlock = subnetStats.blobCreditsPerByteBlock;
+        stats.tokenCreditRate = subnetStats.tokenCreditRate;
         stats.numAccounts = subnetStats.numAccounts;
     }
 

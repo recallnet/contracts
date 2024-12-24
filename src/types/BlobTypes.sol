@@ -76,8 +76,8 @@ struct CreditApproval {
 /// - The `blobCreditsPerByteBlock`, `numAccounts`, `numBlobs`, and `numResolving` are uint64, encoded as a
 /// CBOR byte string (e.g., 0x317).
 /// @param balance (uint256): The current token balance earned by the subnet.
-/// @param capacityFree (uint256): The total free storage capacity of the subnet.
-/// @param capacityUsed (uint256): The total used storage capacity of the subnet.
+/// @param capacityFree (uint64): The total free storage capacity of the subnet.
+/// @param capacityUsed (uint64): The total used storage capacity of the subnet.
 /// @param creditSold (uint256): The total number of credits sold in the subnet.
 /// @param creditCommitted (uint256): The total number of credits committed to active storage in the subnet.
 /// @param creditDebited (uint256): The total number of credits debited in the subnet.
@@ -89,12 +89,12 @@ struct CreditApproval {
 /// @param bytesAdded (uint64): Total bytes of all blobs that are not yet added to the validator's resolve pool.
 struct SubnetStats {
     uint256 balance;
-    uint256 capacityFree;
-    uint256 capacityUsed;
+    uint64 capacityFree;
+    uint64 capacityUsed;
     uint256 creditSold;
     uint256 creditCommitted;
     uint256 creditDebited;
-    uint64 blobCreditsPerByteBlock;
+    uint256 tokenCreditRate;
     uint64 numAccounts;
     uint64 numBlobs;
     uint64 numResolving;
@@ -115,7 +115,7 @@ struct CreditStats {
     uint256 creditSold;
     uint256 creditCommitted;
     uint256 creditDebited;
-    uint64 blobCreditsPerByteBlock;
+    uint256 tokenCreditRate;
     uint64 numAccounts;
 }
 
@@ -176,10 +176,11 @@ enum BlobStatus {
 }
 
 /// @dev A subscriber and their subscription groups.
-/// @param subscriber (address): The subscriber address.
+/// @param subscriber (string): The subscriber address as a string value (e.g.,
+/// "f410ftfsva7i2kw6me2k4lc5bn6zx3am3bjg466vg7ji").
 /// @param subscriptionGroup (SubscriptionGroup[]): The subscription groups. See {SubscriptionGroup} for more details.
 struct Subscriber {
-    address subscriber;
+    string subscriber;
     SubscriptionGroup[] subscriptionGroup;
 }
 

@@ -212,9 +212,13 @@ contract LibWasmTest is Test {
     }
 
     function testDecodeCborString() public view {
-        bytes memory data = hex"6b4f626a65637453746f726555";
+        bytes memory data = hex"65696e6e6572";
         bytes memory result = LibWasm.decodeCborStringToBytes(data);
-        assertEq(string(result), "ObjectStore");
+        assertEq(string(result), "inner");
+
+        data = hex"782c66343130667364337A7835786C667268796F6133663436637A716C71376361706A686F6967686D7A61676171";
+        result = LibWasm.decodeCborStringToBytes(data);
+        assertEq(string(result), "f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq");
     }
 
     function testDecodeCborBytesToString() public pure {
@@ -304,12 +308,16 @@ contract LibWasmTest is Test {
     }
 
     function testEncodeCborString() public pure {
-        string memory str = "Key";
+        string memory str = "inner";
         bytes memory result = LibWasm.encodeCborString(str);
-        assertEq(result, hex"634B6579");
+        assertEq(result, hex"65696E6E6572");
 
-        str = "Default";
+        str = "";
         result = LibWasm.encodeCborString(str);
-        assertEq(result, hex"6744656661756C74");
+        assertEq(result, hex"60");
+
+        str = "foo";
+        result = LibWasm.encodeCborString(str);
+        assertEq(result, hex"63666F6F");
     }
 }
