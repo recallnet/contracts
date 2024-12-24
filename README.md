@@ -28,6 +28,7 @@
     - [Query objects](#query-objects)
   - [Blobs contract](#blobs-contract)
     - [Methods](#methods-2)
+  - [Testing](#testing)
 
 ## Background
 
@@ -61,9 +62,9 @@ subnet):
 | -------------- | ----------- | -------------------------------------------- |
 | Hoku (ERC20)   | Calibration | `0x20d8a696091153c4d4816ba1fdefe113f71e0905` |
 | Faucet         | Subnet      | `0x7Aff9112A46D98A455f4d4F93c0e3D2438716A44` |
-| CreditManager  | Subnet      | `0xTODO`                                     |
 | BlobManager    | Subnet      | `0xTODO`                                     |
 | BucketManager  | Subnet      | `0xTODO`                                     |
+| CreditManager  | Subnet      | `0xTODO`                                     |
 | ValidatorGater | Subnet      | `0x880126f3134EdFBa4f1a65827D5870f021bb7124` |
 
 To get testnet tokens, visit: [https://faucet.hoku.sh](https://faucet.hoku.sh). Also, you can check
@@ -335,28 +336,25 @@ accepts "optional" arguments. All of the method parameters and return types can 
 - `getCreditBalance(address)`: Get credit balance for an address.
 - `buyCredit()`: Buy credit for the `msg.sender`.
 - `buyCredit(address)`: Buy credit for the given address.
-- `approveCredit(address)`: Approve credit for an address (`receiver`), assuming `msg.sender` is the
-  owner of the credit (inferred as `from` in underlying logic).
+- `approveCredit(address)`: Approve credit for an address (`to`), assuming `msg.sender` is the owner
+  of the credit (inferred as `from` in underlying logic).
 - `approveCredit(address,address)`: Approve credit for the credit owner (`from`) for an address
-  (`receiver`). Effectively, the same as `approveCredit(address)` but explicitly sets the `from`
-  address.
-- `approveCredit(address,address,address)`: Approve credit for the credit owner (`from`) for an
-  address (`receiver`), with a restriction on the caller address (`requiredCaller`) (e.g., enforce
-  receiver can only use credit at `requiredCaller`).
-- `approveCredit(address,address,address,uint256)`: Approve credit for the credit owner (`from`) for
-  an address (`receiver`), with a restriction on the caller address (`requiredCaller`), also
-  providing the `limit` field.
-- `approveCredit(address,address,address,uint256,uint64)`: Approve credit for the credit owner
-  (`from`) for an address (`receiver`), providing all of the optional fields (`requiredCaller`,
-  `limit`, and `ttl`).
-- `revokeCredit(address)`: Revoke credit for an address (`receiver`), assuming `msg.sender` is the
-  owner of the credit (inferred as `from` in underlying logic).
+  (`to`). Effectively, the same as `approveCredit(address)` but explicitly sets the `from` address.
+- `approveCredit(address,address,address[])`: Approve credit for the credit owner (`from`) for an
+  address (`to`), with a restriction on the caller address (`caller`) (e.g., enforce `to` can only
+  use credit at `caller`).
+- `approveCredit(address,address,address[],uint256,uint256,uint64)`: Approve credit for the credit
+  owner (`from`) for an address (`to`), providing all of the optional fields (`caller`,
+  `creditLimit`, `gasFeeLimit`, and `ttl`).
+- `setCreditSponsor(address,address)`: Set the credit sponsor for an address (`from`) to an address
+  (`sponsor`, use zero address if unused).
+- `revokeCredit(address)`: Revoke credit for an address (`to`), assuming `msg.sender` is the owner
+  of the credit (inferred as `from` in underlying logic).
 - `revokeCredit(address,address)`: Revoke credit for the credit owner (`from`) for an address
-  (`receiver`). Effectively, the same as `approveCredit(address)` but explicitly sets the `from`
-  address.
+  (`to`). Effectively, the same as `approveCredit(address)` but explicitly sets the `from` address.
 - `revokeCredit(address,address,address)`: Revoke credit for the credit owner (`from`) for an
-  address (`receiver`), with a restriction on the caller address (`requiredCaller`) (e.g., remove
-  permissions for `receiver` at `requiredCaller`).
+  address (`to`), with a restriction on the caller address (`caller`) (e.g., remove permissions for
+  `to` at `caller`).
 
 The overloads above have a bit of nuance when it comes to "optional" arguments. See the `ICredit`
 interface in `interfaces/ICredit.sol` for more details. For example, zero values are interpreted as
@@ -372,8 +370,8 @@ deployment address. For example:
 export CREDIT=0xAfC2973fbc4213DA7007A6b9459003A89c9C5b0E
 ```
 
-And lastly, we'll define a `RECEIVER_ADDR` environment variable, which points to the receiver
-address we'll be approving and revoking credit for. For example:
+And lastly, we'll define a `RECEIVER_ADDR` environment variable, which points to the `to` address
+we'll be approving and revoking credit for. For example:
 
 ```sh
 export RECEIVER_ADDR=0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
@@ -385,24 +383,27 @@ We can get the credit account info for the address at `EVM_ADDRESS` (the variabl
 you could provide any account's EVM public key that exists in the subnet.
 
 ```sh
-cast abi-decode "getAccount(address)((uint256,uint256,uint256,uint64,(address,(address,(uint256,uint256,uint64))[])[]))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)
+cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256,address[]))[],uint64,uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)
 ```
 
 This will return the following values:
 
 ```
-(0, 5000000000000000000000 [5e21], 0, 17701 [1.77e4], [(0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65, [(0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65, (0, 0, 0))])])
+(6, 4999999999999999454276000000000000000000 [4.999e39], 504150000000000000000000 [5.041e23], 0x0000000000000000000000000000000000000000, 7200, [("f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi", (12345000000000000000000 [1.234e22], 987654321 [9.876e8], 11722 [1.172e4], 0, 0, [0x14dC79964da2C08b23698B3D3cc7Ca32193d9955, 0x976EA74026E726554dB657fA54763abd0C3a0aa9]))], 86400 [8.64e4], 4999999984799342175554 [4.999e21])
 ```
 
 Which maps to the `Account` struct:
 
 ```solidity
 struct Account {
-    uint256 capacityUsed; // 0
-    uint256 creditFree; // 5000000000000000000000
-    uint256 creditCommitted; // 0
-    uint64 lastDebitEpoch; // 17701 [1.77e4]
-    Approvals[] approvals; // [(0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65, [(0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65, (0, 0, 0))])]
+    uint256 capacityUsed; // 6
+    uint256 creditFree; // 4999999999999999454276000000000000000000
+    uint256 creditCommitted; // 504150000000000000000000
+    address creditSponsor; // 0x0000000000000000000000000000000000000000 (null)
+    uint64 lastDebitEpoch; // 7200
+    Approval[] approvals; // See Approval struct below
+    uint64 maxTtl; // 86400
+    uint256 gasAllowance; // 4999999984799342175554
 }
 ```
 
@@ -410,20 +411,18 @@ The `approvals` array is empty if no approvals have been made. However, our exam
 approvals authorized. We can expand this to be interpreted as the following:
 
 ```solidity
-struct Approvals {
-    address receiver; // 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
-    Approval[] approval; // See Approval struct below
-}
-
 struct Approval {
-    address requiredCaller; // 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
+    string to; // f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi
     CreditApproval approval; // See CreditApproval struct below
 }
 
 struct CreditApproval {
-    uint256 limit; // 0
-    uint64 expiry; // 0
-    uint256 committed; // 0
+    uint256 creditLimit; // 12345000000000000000000
+    uint256 gasFeeLimit; // 987654321
+    uint64 expiry; // 11722
+    uint256 creditUsed; // 0
+    uint256 gasFeeUsed; // 0
+    address[] callerAllowlist; // [0x14dC79964da2C08b23698B3D3cc7Ca32193d9955, 0x976EA74026E726554dB657fA54763abd0C3a0aa9]
 }
 ```
 
@@ -442,18 +441,18 @@ cast abi-decode "getCreditStats()((uint256,uint256,uint256,uint256,uint64,uint64
 This will return the following values:
 
 ```
-(50000000000000000000000 [5e22], 50000000000000000000000 [5e22], 0, 0, 1, 10)
+(50000999975762821509530 [5e22], 50001000000000000000000 [5e22], 21600 [2.16e4], 24237178535296 [2.423e13], 1000000000000000000000000000000000000 [1e36], 10)
 ```
 
 Which maps to the `CreditStats` struct:
 
 ```solidity
 struct CreditStats {
-    uint256 balance; // 50000000000000000000000
-    uint256 creditSold; // 50000000000000000000000
-    uint256 creditCommitted; // 0
-    uint256 creditDebited; // 0
-    uint64 creditDebitRate; // 1
+    uint256 balance; // 50000999975762821509530
+    uint256 creditSold; // 50001000000000000000000
+    uint256 creditCommitted; // 21600
+    uint256 creditDebited; // 24237178535296
+    uint256 tokenCreditRate; // 1000000000000000000000000000000000000
     uint64 numAccounts; // 10
 }
 ```
@@ -463,22 +462,38 @@ struct CreditStats {
 Fetch the credit balance for the address at `EVM_ADDRESS`:
 
 ```sh
-cast abi-decode "getCreditBalance(address)((uint256,uint256,uint64))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditBalance(address)" $EVM_ADDRESS)
+cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256,address[]))[]))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditBalance(address)" $EVM_ADDRESS)
 ```
 
 This will return the following values:
 
 ```
-(5000000000000000000000 [5e21], 0, 18061 [1.806e4])
+(4999999999999999454276000000000000000000 [4.999e39], 504150000000000000000000 [5.041e23], 0x0000000000000000000000000000000000000000, 7200, [("f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi", (12345000000000000000000 [1.234e22], 987654321 [9.876e8], 11722 [1.172e4], 0, 0, [0x14dC79964da2C08b23698B3D3cc7Ca32193d9955, 0x976EA74026E726554dB657fA54763abd0C3a0aa9]))])
 ```
 
 Which maps to the `Balance` struct:
 
 ```solidity
 struct Balance {
-    uint256 creditFree; // 5000000000000000000000
-    uint256 creditCommitted; // 0
-    uint64 lastDebitEpoch; // 18061
+    uint256 creditFree; // 4999999999999999454276000000000000000000
+    uint256 creditCommitted; // 504150000000000000000000
+    address creditSponsor; // 0x0000000000000000000000000000000000000000 (null)
+    uint64 lastDebitEpoch; // 7200
+    Approval[] approvals; // See Approval struct below
+}
+
+struct Approval {
+    string to; // f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi
+    CreditApproval approval; // See CreditApproval struct below
+}
+
+struct CreditApproval {
+    uint256 creditLimit; // 12345000000000000000000
+    uint256 gasFeeLimit; // 987654321
+    uint64 expiry; // 11722
+    uint256 creditUsed; // 0
+    uint256 gasFeeUsed; // 0
+    address[] callerAllowlist; // [0x976EA74026E726554dB657fA54763abd0C3a0aa9, 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955]
 }
 ```
 
@@ -501,66 +516,74 @@ cast send --rpc-url $ETH_RPC_URL $CREDIT "buyCredit(address)" $EVM_ADDRESS --val
 
 Approving credit has a few variations. The first variation is approving credit for the address
 defined in the call, assuming the `msg.sender` is the owner of the credit. The `RECEIVER_ADDR`
-address is the `receiver` we want to approve credit for (defined as
+address is the `to` we want to approve credit for (defined as
 `0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65` above).
 
 ```sh
 cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address)" $RECEIVER_ADDR --private-key $PRIVATE_KEY
 ```
 
-There also exists `approveCredit(address,address)` and `approveCredit(address,address,address)`,
+There also exists `approveCredit(address,address)` and `approveCredit(address,address,address[])`,
 which inherently assumes a null value for the `limit` and `ttl` fields, and the order of the
-addresses is `from`, `receiver`, and `requiredCaller` (for the latter variation). Here's an example
-using the latter variation, effectively the same as the former due to the use of the zero address:
+addresses is `from`, `to`, and `caller` (for the latter variation). Here's an example using the
+latter variation, effectively the same as the former due to the use of the zero address:
 
 ```sh
-cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address,address,address)" $EVM_ADDRESS $RECEIVER_ADDR 0x0000000000000000000000000000000000000000 --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address,address,address[])" $EVM_ADDRESS $RECEIVER_ADDR '[]' --private-key $PRIVATE_KEY
 ```
 
-If, instead, we wanted to also restrict how the `receiver` can use the credit, we would set the
-`requiredCaller` (e.g., a contract address at `0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc`):
+If, instead, we wanted to also restrict how the `to` can use the credit, we would set the `caller`
+(e.g., a contract address at `0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc`):
 
 ```sh
-cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address,address,address)" $EVM_ADDRESS $RECEIVER_ADDR 0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address,address,address[])" $EVM_ADDRESS $RECEIVER_ADDR '[0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc]' --private-key $PRIVATE_KEY
 ```
 
-This would restrict the `receiver` to only be able to use the approved `from` address at the
-`requiredCaller` address.
+This would restrict the `to` to only be able to use the approved `from` address at the `caller`
+address.
 
-> [!NOTE] The `requiredCaller` can, in theory, be an EVM or WASM contract address. However, the
-> logic assumes only an EVM address is provided. Namely, it is _generally_ possible to restrict the
-> `requiredCaller` to a specific WASM contract (e.g., bucket with `t2...` prefix), but the current
-> Solidity implementation does not account for this and only assumes an EVM address.
+> [!NOTE] The `caller` can, in theory, be an EVM or WASM contract address. However, the logic
+> assumes only an EVM address is provided. Namely, it is _generally_ possible to restrict the
+> `caller` to a specific WASM contract (e.g., bucket with `t2...` prefix), but the current Solidity
+> implementation does not account for this and only assumes an EVM address.
 
 Lastly, if we want to include all of the optional fields, we can use the following command:
 
 ```sh
-cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address,address,address,uint256,uint64)" $EVM_ADDRESS $RECEIVER_ADDR 0x0000000000000000000000000000000000000000 100 3600 --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $CREDIT "approveCredit(address,address,address[],uint256,uint256,uint64)" $EVM_ADDRESS $RECEIVER_ADDR '[]' 100 100 3600 --private-key $PRIVATE_KEY
 ```
 
-This includes the `limit` field set to `100` credit, and the `ttl` set to `3600` seconds (`1` hour).
-If either of these should instead be null, just set them to `0`.
+This includes the `creditLimit` field set to `100` credit, the `gasFeeLimit` set to `100` gas fee,
+and the `ttl` set to `3600` seconds (`1` hour). If either of these should instead be null, just set
+them to `0`.
+
+##### Set credit sponsor for an address
+
+```sh
+cast send --rpc-url $ETH_RPC_URL $CREDIT "setCreditSponsor(address,address)" $EVM_ADDRESS $RECEIVER_ADDR --private-key $PRIVATE_KEY
+```
+
+This will set the credit sponsor for the `from` address to the `sponsor` address.
 
 ##### Revoke credit for an address
 
 Revoking credit is the opposite of approving credit and also has a few variations. The simplest form
-is revoking credit for the address defining in the call (`receiver`), which assumes the `msg.sender`
-is the owner of the credit.
+is revoking credit for the address defining in the call (`to`), which assumes the `msg.sender` is
+the owner of the credit.
 
 ```sh
 cast send --rpc-url $ETH_RPC_URL $CREDIT "revokeCredit(address)" $RECEIVER_ADDR --private-key $PRIVATE_KEY
 ```
 
 The other variants are `revokeCredit(address,address)` and `revokeCredit(address,address,address)`.
-Just like `approveCredit`, the order is: `from`, `receiver`, and `requiredCaller`. Here's an example
-using the latter variation:
+Just like `approveCredit`, the order is: `from`, `to`, and `caller`. Here's an example using the
+latter variation:
 
 ```sh
 cast send --rpc-url $ETH_RPC_URL $CREDIT "revokeCredit(address,address,address)" $EVM_ADDRESS $RECEIVER_ADDR 0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc --private-key $PRIVATE_KEY
 ```
 
-This would revoke the `receiver`'s ability to use the `from` address at the `requiredCaller`
-address.
+This would revoke the `to`'s ability to use the `from` address at the `caller` address.
 
 ### Buckets contract
 
@@ -897,6 +920,7 @@ accepts "optional" arguments. All of the method parameters and return types can 
 - `deleteBlob(address,string,string)`: Delete a blob from the network, passing the sponsor's
   address, the blob hash, and the subscription ID (either `""` if none was originally provided, or
   the string that was chosen during `addBlob`).
+- `getAccountType(address)`: Get the account's max blob TTL.
 - `getBlob(string)`: Get information about a specific blob at its blake3 hash.
 - `getBlobStatus(address,string,string)`: Get a blob's status, providing its credit sponsor (i.e.,
   the account's `address`, or `address(0)` if null), its blake3 blob hash (the first `string`
@@ -980,16 +1004,28 @@ cast send --rpc-url $ETH_RPC_URL $BLOBS "deleteBlob(address,string,string)" 0x00
 
 This will emit a `DeleteBlob` event and delete the blob from the network.
 
+##### Get account type
+
+```sh
+cast abi-decode "getAccountType(address)(uint64)" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getAccountType(address)" $EVM_ADDRESS)
+```
+
+This will return the account's max blob TTL:
+
+```
+86400
+```
+
 ##### Get a blob
 
 ```sh
-cast abi-decode "getBlob(string)((uint64,string,(address,(string,(uint64,uint64,bool,string,(address,address),bool))[])[],uint8))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
+cast abi-decode "getBlob(string)((uint64,string,(string,(string,(uint64,uint64,bool,string,(address,address),bool))[])[],uint8))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
 ```
 
 This will return the following response:
 
 ```sh
-(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, [("foo", (5279, 8879, true, "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq", (0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000), false))])], 2)
+(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", [("f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq", [("foo", (4825, 91225 [9.122e4], false, "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq", (0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000), false))])], 2)
 ```
 
 Which maps to the `Blob` struct:
@@ -1003,7 +1039,7 @@ struct Blob {
 }
 
 struct Subscriber {
-    address subscriber; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
+    string subscriber; // f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq
     SubscriptionGroup[] subscriptionGroup; // See `SubscriptionGroup` struct below
 }
 
@@ -1013,9 +1049,9 @@ struct SubscriptionGroup {
 }
 
 struct Subscription {
-    uint64 added; // 5279
-    uint64 expiry; // 8879
-    bool autoRenew; // true
+    uint64 added; // 4825
+    uint64 expiry; // 91225
+    bool autoRenew; // false
     string source; // "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq"
     Delegate delegate; // See `Delegate` struct below
     bool failed; // false
@@ -1139,13 +1175,13 @@ This returns the total number of bytes that are pending network resolution:
 We can fetch the overall subnet stats with the following command:
 
 ```sh
-cast abi-decode "getSubnetStats()((uint256,uint256,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint64,uint64,uint64,uint64))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getSubnetStats()")
+cast abi-decode "getSubnetStats()((uint256,uint64,uint64,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint64,uint64,uint64))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getSubnetStats()")
 ```
 
 This will return the following values:
 
 ```
-(50000000000000000000000 [5e22], 4294967296 [4.294e9], 0, 50000000000000000000000 [5e22], 0, 0, 1, 10, 0, 0)
+(50000999980767329202072 [5e22], 10995116277754 [1.099e13], 6, 50001000000000000000000000000000000000000 [5e40], 1002060000000000000000000 [1.002e24], 62064000000000000000000 [6.206e22], 1000000000000000000000000000000000000 [1e36], 10, 1, 0, 0, 0, 0)
 ```
 
 Which maps to the `SubnetStats` struct:
@@ -1153,14 +1189,14 @@ Which maps to the `SubnetStats` struct:
 ```solidity
 struct SubnetStats {
     uint256 balance; // 50000000000000000000000
-    uint256 capacityFree; // 4294967296
-    uint256 capacityUsed; // 0
-    uint256 creditSold; // 50000000000000000000000
-    uint256 creditCommitted; // 0
-    uint256 creditDebited; // 0
-    uint64 creditDebitRate; // 1
+    uint64 capacityFree; // 10995116277754
+    uint64 capacityUsed; // 6
+    uint256 creditSold; // 50001000000000000000000
+    uint256 creditCommitted; // 21156
+    uint256 creditDebited; // 25349384457000
+    uint256 tokenCreditRate; // 1000000000000000000000000000000000000
     uint64 numAccounts; // 10
-    uint64 numBlobs; // 0
+    uint64 numBlobs; // 1
     uint64 numResolving; // 0
     uint64 bytesResolving; // 0
     uint64 numAdded; // 0
@@ -1173,23 +1209,27 @@ struct SubnetStats {
 We can fetch the overall storage stats for the subnet with the following command:
 
 ```sh
-cast abi-decode "getStorageStats()((uint256,uint256,uint64,uint64))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getStorageStats()")
+cast abi-decode "getStorageStats()((uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getStorageStats()")
 ```
 
 This will return the following values:
 
 ```
-(4294967296 [4.294e9], 0, 0, 0)
+(10995116277754 [1.099e13], 6, 1, 0, 10, 0, 0, 0)
 ```
 
 Which maps to the `StorageStats` struct:
 
 ```solidity
-StorageStats {
-    uint256 capacityFree; // 4294967296
-    uint256 capacityUsed; // 0
-    uint64 numBlobs; // 0
+struct StorageStats {
+    uint64 capacityFree; // 10995116277754
+    uint64 capacityUsed; // 6
+    uint64 numBlobs; // 1
     uint64 numResolving; // 0
+    uint64 numAccounts; // 10
+    uint64 bytesResolving; // 0
+    uint64 numAdded; // 0
+    uint64 bytesAdded; // 0
 }
 ```
 
@@ -1206,3 +1246,30 @@ This will return the following values:
 ```
 123
 ```
+
+### Testing
+
+You can run all of the unit tests with the following command:
+
+```sh
+forge test
+```
+
+Or run a specific test in the `test` directory:
+
+```sh
+forge test --match-path test/LibWasm.t.sol
+```
+
+For the wrapper contracts, an naive "integration" test is provided in
+`test/scripts/wrapper_integration_test.sh`. This assumes you have the localnet running, and it
+deploys the contracts and runs through all of the methods described above via `cast`. You can run it
+with the following command:
+
+```sh
+test/scripts/wrapper_integration_test.sh
+```
+
+If everything is working, you should see `All tests completed successfully` logged at the end. But,
+if there's an error (i.e., incompatability with the wrappers relative to the subnet's expectation),
+the script will exit early.

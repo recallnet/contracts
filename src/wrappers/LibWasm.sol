@@ -106,6 +106,23 @@ library LibWasm {
         return ByteParser.bytesToUint64(data);
     }
 
+    /// @dev Decode CBOR encoded bytes to uint64.
+    /// @param data The encoded CBOR uint64 as a byte string (e.g., `0x1a00015180`).
+    /// @return result The decoded uint64.
+    function decodeCborByteStringToUint64(bytes memory data) internal pure returns (uint64) {
+        // The leading byte is simply the length, so we can skip it, and the value is the remaining bytes
+        bytes memory shifted = new bytes(data.length - 1);
+        assembly {
+            // Copy to the new array, starting from the second byte
+            // Add 32 to skip the length field of the bytes array
+            // Add 1 to skip the first byte of the actual data
+            let srcPtr := add(add(data, 32), 1)
+            let destPtr := add(shifted, 32)
+            mstore(destPtr, mload(srcPtr))
+        }
+        return ByteParser.bytesToUint64(shifted);
+    }
+
     /// @dev Decode CBOR encoded bytes to uint256.
     /// @param data The encoded CBOR uint256.
     /// @return result The decoded uint256.
@@ -468,6 +485,55 @@ library LibWasm {
         }
 
         return CBOR.data(buf);
+    }
+
+    /// @dev Encode a uint256 to a CBOR encoded bytes value.
+    /// @param value The uint256 value to encode.
+    /// @param padding Whether to include padding bytes (used for credit limits to adhere to 1e36 units).
+    /// @return encoded The CBOR encoded bytes value.
+    function encodeCborUint256AsBytes(uint256 value, bool padding) internal pure returns (bytes memory) {
+        if (padding) {
+            // avoid overflow (only handle sufficient precision)
+            if (value > type(uint256).max / 1e18) {
+                revert InvalidValue("value * 1e18 overflows uint256");
+            }
+            value *= 1e18;
+        }
+        bytes memory valueBytes = new bytes(32);
+        assembly {
+            mstore(add(valueBytes, 32), value)
+        }
+
+        // Find first non-zero byte
+        uint256 start;
+        for (start = 0; start < 32; start++) {
+            if (valueBytes[start] != 0) break;
+        }
+        // Include leading zero if needed
+        start = start > 0 ? start - 1 : 0;
+        uint256 length = 32 - start;
+
+        bytes memory result;
+        if (length <= 23) {
+            // Use compact form 0x40..0x57
+            result = new bytes(length + 1);
+            result[0] = bytes1(uint8(0x40 + length));
+        } else if (length <= 255) {
+            // Use 0x58 prefix with one-byte length
+            result = new bytes(length + 2);
+            result[0] = 0x58;
+            result[1] = bytes1(uint8(length));
+        } else {
+            revert InvalidValue("Length exceeds max size of 255 bytes");
+        }
+
+        // Copy the value bytes
+        uint256 offset = result.length - length;
+        for (uint256 i = 0; i < length; i++) {
+            result[i + offset] = valueBytes[start + i];
+        }
+
+        return result;
     }
 
     /// @dev Encode a bytes array to a CBOR encoded fixed array/slice (e.g., a serialized Rust slice `[u8; N]`; bytes =>

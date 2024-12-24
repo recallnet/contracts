@@ -13,6 +13,12 @@ interface IBlobManager {
     /// @dev Emitted when a blob is deleted.
     event DeleteBlob(address indexed caller, address indexed subscriber, string blobHash, string subscriptionId);
 
+    /// @dev Get the maximum TTL for blobs for an account.
+    /// @param addr The address of the account.
+    /// @return ttl The maximum TTL for blobs for the account. Either default (86400), reduced (0), or extended
+    /// (9223372036854775807) with units being seconds.
+    function getAccountType(address addr) external view returns (uint64);
+
     /// @dev Get a list of added blobs.
     /// @param size Maximum number of added blobs to return.
     /// @return blobs List of added blobs.
