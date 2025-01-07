@@ -48,12 +48,14 @@ struct Approval {
 /// the origin is Alice.
 /// An approval for Bob might be valid from only one contract caller, so long as
 /// the origin is Bob.
+/// @param gasAllowance (uint256): The amount of gas allowance for the account.
 struct Balance {
     uint256 creditFree;
     uint256 creditCommitted;
     address creditSponsor;
     uint64 lastDebitEpoch;
     Approval[] approvals;
+    uint256 gasAllowance;
 }
 
 /// @dev A credit approval from one account to another.
@@ -62,15 +64,12 @@ struct Balance {
 /// @param expiry (uint64): Optional credit approval expiry epoch.
 /// @param creditUsed (uint256): Counter for how much credit has been committed via this approval.
 /// @param gasFeeUsed (uint256): Used to track gas fees paid for by the delegation
-/// @param callerAllowlist (string[]): Optional restriction on caller addresses, e.g., a bucket. The receiver will only
-/// be able to use the approval via an allowlisted caller. If not present, any caller is allowed.
 struct CreditApproval {
     uint256 creditLimit;
     uint256 gasFeeLimit;
     uint64 expiry;
     uint256 creditUsed;
     uint256 gasFeeUsed;
-    address[] callerAllowlist;
 }
 
 /// @dev The stats of the blob actor.

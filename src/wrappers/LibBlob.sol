@@ -37,10 +37,11 @@ library LibBlob {
     uint64 internal constant METHOD_BUY_CREDIT = 1035900737;
     uint64 internal constant METHOD_SET_ACCOUNT_SPONSOR = 228279820;
     uint64 internal constant METHOD_REVOKE_CREDIT = 37550845;
-    // Blob methods
+    // Blob user methods
     uint64 internal constant METHOD_ADD_BLOB = 913855558;
     uint64 internal constant METHOD_DELETE_BLOB = 4230608948;
     uint64 internal constant METHOD_GET_BLOB = 1739171512;
+    // Blob system methods
     uint64 internal constant METHOD_GET_ADDED_BLOBS = 2462124090;
     uint64 internal constant METHOD_GET_BLOB_STATUS = 3505892271;
     uint64 internal constant METHOD_GET_PENDING_BLOBS = 799531123;
@@ -97,12 +98,6 @@ library LibBlob {
         approval.expiry = decoded[2].decodeCborBytesToUint64();
         approval.creditUsed = decoded[3].decodeCborBytesToUint256();
         approval.gasFeeUsed = decoded[4].decodeCborBytesToUint256();
-        // TODO: we assume the allowlist addresses are EVM addresses, but in reality, they can be FVM addresses.
-        bytes[] memory callerAllowlist = decoded[5].decodeCborArrayToBytes();
-        approval.callerAllowlist = new address[](callerAllowlist.length);
-        for (uint256 i = 0; i < callerAllowlist.length; i++) {
-            approval.callerAllowlist[i] = callerAllowlist[i].decodeCborAddress();
-        }
     }
 
     /// @dev Helper function to decode approvals from CBOR to solidity.
@@ -353,6 +348,7 @@ library LibBlob {
         balance.creditSponsor = account.creditSponsor;
         balance.lastDebitEpoch = account.lastDebitEpoch;
         balance.approvals = account.approvals;
+        balance.gasAllowance = account.gasAllowance;
     }
 
     /// @dev Helper function to convert subnet stats to storage stats.

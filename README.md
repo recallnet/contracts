@@ -383,13 +383,13 @@ We can get the credit account info for the address at `EVM_ADDRESS` (the variabl
 you could provide any account's EVM public key that exists in the subnet.
 
 ```sh
-cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256,address[]))[],uint64,uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)
+cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256))[],uint64,uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)
 ```
 
 This will return the following values:
 
 ```
-(6, 4999999999999999454276000000000000000000 [4.999e39], 504150000000000000000000 [5.041e23], 0x0000000000000000000000000000000000000000, 7200, [("f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi", (12345000000000000000000 [1.234e22], 987654321 [9.876e8], 11722 [1.172e4], 0, 0, [0x14dC79964da2C08b23698B3D3cc7Ca32193d9955, 0x976EA74026E726554dB657fA54763abd0C3a0aa9]))], 86400 [8.64e4], 4999999984799342175554 [4.999e21])
+(6, 4999999999999999454276000000000000000000 [4.999e39], 504150000000000000000000 [5.041e23], 0x0000000000000000000000000000000000000000, 7200, [("f0127", (12345000000000000000000 [1.234e22], 987654321 [9.876e8], 11722 [1.172e4], 0, 0))], 86400 [8.64e4], 4999999984799342175554 [4.999e21])
 ```
 
 Which maps to the `Account` struct:
@@ -412,7 +412,7 @@ approvals authorized. We can expand this to be interpreted as the following:
 
 ```solidity
 struct Approval {
-    string to; // f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi
+    string to; // f0127
     CreditApproval approval; // See CreditApproval struct below
 }
 
@@ -422,7 +422,6 @@ struct CreditApproval {
     uint64 expiry; // 11722
     uint256 creditUsed; // 0
     uint256 gasFeeUsed; // 0
-    address[] callerAllowlist; // [0x14dC79964da2C08b23698B3D3cc7Ca32193d9955, 0x976EA74026E726554dB657fA54763abd0C3a0aa9]
 }
 ```
 
@@ -462,38 +461,37 @@ struct CreditStats {
 Fetch the credit balance for the address at `EVM_ADDRESS`:
 
 ```sh
-cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256,address[]))[]))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditBalance(address)" $EVM_ADDRESS)
+cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256))[],uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditBalance(address)" $EVM_ADDRESS)
 ```
 
 This will return the following values:
 
 ```
-(4999999999999999454276000000000000000000 [4.999e39], 504150000000000000000000 [5.041e23], 0x0000000000000000000000000000000000000000, 7200, [("f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi", (12345000000000000000000 [1.234e22], 987654321 [9.876e8], 11722 [1.172e4], 0, 0, [0x14dC79964da2C08b23698B3D3cc7Ca32193d9955, 0x976EA74026E726554dB657fA54763abd0C3a0aa9]))])
+(5001999999999998208637000000000000000000 [5.001e39], 518400000000000000000000 [5.184e23], 0x0000000000000000000000000000000000000000, 6932, [("f0127", (0, 0, 0, 0, 0))], 1)
 ```
 
 Which maps to the `Balance` struct:
 
 ```solidity
 struct Balance {
-    uint256 creditFree; // 4999999999999999454276000000000000000000
-    uint256 creditCommitted; // 504150000000000000000000
+    uint256 creditFree; // 5001999999999998208637000000000000000000
+    uint256 creditCommitted; // 518400000000000000000000
     address creditSponsor; // 0x0000000000000000000000000000000000000000 (null)
-    uint64 lastDebitEpoch; // 7200
+    uint64 lastDebitEpoch; // 6932
     Approval[] approvals; // See Approval struct below
 }
 
 struct Approval {
-    string to; // f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi
+    string to; // f0127
     CreditApproval approval; // See CreditApproval struct below
 }
 
 struct CreditApproval {
-    uint256 creditLimit; // 12345000000000000000000
-    uint256 gasFeeLimit; // 987654321
-    uint64 expiry; // 11722
+    uint256 creditLimit; // 0
+    uint256 gasFeeLimit; // 0
+    uint64 expiry; // 0
     uint256 creditUsed; // 0
     uint256 gasFeeUsed; // 0
-    address[] callerAllowlist; // [0x976EA74026E726554dB657fA54763abd0C3a0aa9, 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955]
 }
 ```
 

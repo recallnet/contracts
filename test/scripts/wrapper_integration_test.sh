@@ -11,7 +11,7 @@ ETH_RPC_URL="http://localhost:8645"
 PRIVATE_KEY="0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6"
 EVM_ADDRESS="0x90f79bf6eb2c4f870365e785982e1f101e93b906"
 SOURCE=$(curl -X GET http://localhost:8001/v1/node | jq '.node_id' | tr -d '"')
-DIVIDER="\n============================\n"
+DIVIDER=$'\n============================\n'
 
 # Create a temporary file used when uploading objects or blobs
 TEMP_FILE=$(mktemp)
@@ -254,7 +254,7 @@ if [ "$output" = "0x" ]; then
     echo "getAccount failed"
     exit 1
 fi
-DECODED_ACCOUNT=$(cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256,address[]))[],uint64,uint256))" "$output")
+DECODED_ACCOUNT=$(cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256))[],uint64,uint256))" "$output")
 echo "Account info: $DECODED_ACCOUNT"
 
 # Test getCreditStats
@@ -276,7 +276,7 @@ if [ "$output" = "0x" ]; then
     echo "getCreditBalance failed"
     exit 1
 fi
-DECODED_BALANCE=$(cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256,address[]))[]))" $output)
+DECODED_BALANCE=$(cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256))[],uint256))" $output)
 echo "Credit balance: $DECODED_BALANCE"
 
 # Test buyCredit
