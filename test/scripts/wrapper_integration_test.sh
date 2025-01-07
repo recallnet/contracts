@@ -170,12 +170,37 @@ BUCKETS=$(forge script script/BucketManager.s.sol \
 echo "Using BucketManager: $BUCKETS"
 echo "Using bucket address: $BUCKET_ADDR"
 
+# Test createBucket
+echo
+echo "Testing createBucket()..."
+output=$(cast send --rpc-url $ETH_RPC_URL $BUCKETS "createBucket(address,(string,string)[])" \
+    "$EVM_ADDRESS" \
+    "[(\"alias\",\"foo\")]" \
+    --private-key $PRIVATE_KEY)
+if [ "$output" = "0x" ]; then
+    echo "createBucket failed"
+    exit 1
+fi
+echo "Output: $output"
+
+# Test listBuckets
+echo
+echo "Testing listBuckets()..."
+output=$(cast call --rpc-url $ETH_RPC_URL $BUCKETS "listBuckets(address)" \
+    "$EVM_ADDRESS" \
+    --private-key $PRIVATE_KEY)
+if [ "$output" = "0x" ]; then
+    echo "listBuckets failed"
+    exit 1
+fi
+echo "Output: $output"
+
 # Test addObject (both variations)
 echo
 echo "Testing addObject()..."
 OBJECT_KEY="hello/test"
 PARAMS="(\"$SOURCE\",\"$OBJECT_KEY\",\"$BLOB_HASH\",\"\",$SIZE,0,[],false)"
-output=$(cast send --rpc-url $ETH_RPC_URL $BUCKETS "addObject(string,(string,string,string,string,uint64,uint64,(string,string)[],bool))" \
+output=$(cast send --rpc-url $ETH_RPC_URL $BUCKETS "addObject(address,(string,string,string,string,uint64,uint64,(string,string)[],bool))" \
     "$BUCKET_ADDR" \
     "$PARAMS" \
     --private-key $PRIVATE_KEY)
@@ -188,40 +213,40 @@ echo "Output: $output"
 # Test getObject
 echo
 echo "Testing getObject..."
-output=$(cast call --rpc-url $ETH_RPC_URL $BUCKETS "getObject(string,string)" $BUCKET_ADDR $OBJECT_KEY)
+output=$(cast call --rpc-url $ETH_RPC_URL $BUCKETS "getObject(address,string)" $BUCKET_ADDR $OBJECT_KEY)
 if [ "$output" = "0x" ]; then
     echo "getObject failed"
     exit 1
 fi
-DECODED_OBJECT=$(cast abi-decode "getObject(string,string)((string,string,uint64,uint64,(string,string)[]))" $output)
+DECODED_OBJECT=$(cast abi-decode "getObject(address,string)((string,string,uint64,uint64,(string,string)[]))" $output)
 echo "Object: $DECODED_OBJECT"
 
 # Test queryObjects (various overloads)
 echo
 echo "Testing queryObjects variations..."
 # Basic query
-output=$(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(string)" $BUCKET_ADDR)
+output=$(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(address)" $BUCKET_ADDR)
 if [ "$output" = "0x" ]; then
     echo "queryObjects failed"
     exit 1
 fi
-DECODED_QUERY=$(cast abi-decode "queryObjects(string)(((string,(string,uint64,(string,string)[]))[],string[],string))" $output)
+DECODED_QUERY=$(cast abi-decode "queryObjects(address)(((string,(string,uint64,(string,string)[]))[],string[],string))" $output)
 echo "Basic query: $DECODED_QUERY"
 
 # Query with prefix
 PREFIX="hello/"
-output=$(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(string,string)" $BUCKET_ADDR $PREFIX)
+output=$(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(address,string)" $BUCKET_ADDR $PREFIX)
 if [ "$output" = "0x" ]; then
     echo "queryObjects with prefix failed"
     exit 1
 fi
-DECODED_QUERY_PREFIX=$(cast abi-decode "queryObjects(string,string)(((string,(string,uint64,(string,string)[]))[],string[],string))" $output)
+DECODED_QUERY_PREFIX=$(cast abi-decode "queryObjects(address,string)(((string,(string,uint64,(string,string)[]))[],string[],string))" $output)
 echo "Query with prefix: $DECODED_QUERY_PREFIX"
 
 # Test deleteObject
 echo
 echo "Testing deleteObject..."
-output=$(cast send --rpc-url $ETH_RPC_URL $BUCKETS "deleteObject(string,string)" $BUCKET_ADDR "hello/world" --private-key $PRIVATE_KEY)
+output=$(cast send --rpc-url $ETH_RPC_URL $BUCKETS "deleteObject(address,string)" $BUCKET_ADDR "hello/world" --private-key $PRIVATE_KEY)
 if [ "$output" = "0x" ]; then
     echo "deleteObject failed"
     exit 1

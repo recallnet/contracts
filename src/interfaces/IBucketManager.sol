@@ -16,13 +16,13 @@ interface IBucketManager {
     /// @param owner The owner.
     /// @param bucket The bucket's robust t2 address.
     /// @param key The object key.
-    event AddObject(address indexed owner, string bucket, string key);
+    event AddObject(address indexed owner, address indexed bucket, string key);
 
     /// @dev Emitted when an object is removed from a bucket.
     /// @param owner The owner.
     /// @param bucket The bucket's robust t2 address.
     /// @param key The object key.
-    event DeleteObject(address indexed owner, string bucket, string key);
+    event DeleteObject(address indexed owner, address indexed bucket, string key);
 
     /// @dev Create a bucket. Uses the sender as the owner.
     function createBucket() external;
@@ -53,7 +53,7 @@ interface IBucketManager {
     /// @param recoveryHash Blake3 hash of the metadata to use for object recovery.
     /// @param size The object size.
     function addObject(
-        string memory bucket,
+        address bucket,
         string memory source,
         string memory key,
         string memory blobHash,
@@ -64,36 +64,36 @@ interface IBucketManager {
     /// @dev Add an object to a bucket.
     /// @param bucket The bucket.
     /// @param addObjectParams The add object params. See {AddObjectParams} for more details.
-    function addObject(string memory bucket, AddObjectParams memory addObjectParams) external;
+    function addObject(address bucket, AddObjectParams memory addObjectParams) external;
 
     /// @dev Delete an object from a bucket.
     /// @param bucket The bucket.
     /// @param key The key.
-    function deleteObject(string memory bucket, string memory key) external;
+    function deleteObject(address bucket, string memory key) external;
 
     /// @dev Get an object from a bucket.
     /// @param bucket The bucket.
     /// @param key The key.
     /// @return value Object's value. See {ObjectValue} for more details.
-    function getObject(string memory bucket, string memory key) external view returns (ObjectValue memory);
+    function getObject(address bucket, string memory key) external view returns (ObjectValue memory);
 
     /// @dev Query the bucket.
     /// @param bucket The bucket.
     /// @return All objects matching the query.
-    function queryObjects(string memory bucket) external view returns (Query memory);
+    function queryObjects(address bucket) external view returns (Query memory);
 
     /// @dev Query the bucket.
     /// @param bucket The bucket.
     /// @param prefix The prefix.
     /// @return All objects matching the query.
-    function queryObjects(string memory bucket, string memory prefix) external view returns (Query memory);
+    function queryObjects(address bucket, string memory prefix) external view returns (Query memory);
 
     /// @dev Query the bucket.
     /// @param bucket The bucket.
     /// @param prefix The prefix.
     /// @param delimiter The delimiter.
     /// @return All objects matching the query.
-    function queryObjects(string memory bucket, string memory prefix, string memory delimiter)
+    function queryObjects(address bucket, string memory prefix, string memory delimiter)
         external
         view
         returns (Query memory);
@@ -104,7 +104,7 @@ interface IBucketManager {
     /// @param delimiter The delimiter.
     /// @param startKey The key to start listing objects from.
     /// @return All objects matching the query.
-    function queryObjects(string memory bucket, string memory prefix, string memory delimiter, string memory startKey)
+    function queryObjects(address bucket, string memory prefix, string memory delimiter, string memory startKey)
         external
         view
         returns (Query memory);
@@ -117,7 +117,7 @@ interface IBucketManager {
     /// @param limit The limit.
     /// @return All objects matching the query.
     function queryObjects(
-        string memory bucket,
+        address bucket,
         string memory prefix,
         string memory delimiter,
         string memory startKey,

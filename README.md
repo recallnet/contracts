@@ -542,7 +542,7 @@ address.
 
 > [!NOTE] The `caller` can, in theory, be an EVM or WASM contract address. However, the logic
 > assumes only an EVM address is provided. Namely, it is _generally_ possible to restrict the
-> `caller` to a specific WASM contract (e.g., bucket with `t2...` prefix), but the current Solidity
+> `caller` to a specific WASM contract (e.g., bucket with `t0...` prefix), but the current Solidity
 > implementation does not account for this and only assumes an EVM address.
 
 Lastly, if we want to include all of the optional fields, we can use the following command:
@@ -610,23 +610,23 @@ The following methods are available on the credit contract, shown with their fun
   metadata.
 - `listBuckets()`: List all buckets for the sender.
 - `listBuckets(address)`: List all buckets for the specified address.
-- `addObject(string,string,string,string,uint64)`: Add an object to a bucket and associated object
+- `addObject(address,string,string,string,uint64)`: Add an object to a bucket and associated object
   upload parameters. The first value is the bucket address, the subsequent values are all of the
   "required" values in `AddObjectParams` (`source` node ID, `key`, `blobHash`, and `size`).
-- `addObject(string,(string,string,string,string,uint64,uint64,(string,string)[],bool))`: Add an
+- `addObject(address,(string,string,string,string,uint64,uint64,(string,string)[],bool))`: Add an
   object to a bucket (first value) and associated object upload parameters (second value) as the
   `AddObjectParams` struct, described in more detail below.
-- `deleteObject((string,string)`: Remove an object from a bucket.
-- `getObject(string,string)`: Get an object from a bucket.
-- `queryObjects(string)`: Query the bucket (`t2...` string address) with no prefix (defaults to `/`
-  delimiter and the default offset and limit in the underlying WASM layer).
-- `queryObjects(string,string)`: Query the bucket with a prefix (e.g., `<prefix>/` string value),
+- `deleteObject(address,string)`: Remove an object from a bucket.
+- `getObject(address,string)`: Get an object from a bucket.
+- `queryObjects(address)`: Query the bucket (hex address) with no prefix (defaults to `/` delimiter
+  and the default offset and limit in the underlying WASM layer).
+- `queryObjects(address,string)`: Query the bucket with a prefix (e.g., `<prefix>/` string value),
   but no delimiter, offset, or limit.
-- `queryObjects(string,string,string)`: Query the bucket with a custom delimiter (e.g., something
+- `queryObjects(address,string,string)`: Query the bucket with a custom delimiter (e.g., something
   besides the default `/` delimeter value), but default offset and limit.
-- `queryObjects(string,string,string,uint64)`: Query the bucket with a prefix and delimiter, but no
+- `queryObjects(address,string,string,uint64)`: Query the bucket with a prefix and delimiter, but no
   limit.
-- `queryObjects(string,string,string,uint64,uint64)`: Query the bucket with a prefix, delimiter,
+- `queryObjects(address,string,string,uint64,uint64)`: Query the bucket with a prefix, delimiter,
   offset, and limit.
 
 #### Examples
@@ -678,13 +678,13 @@ You can list buckets for a specific address with the following command. Note you
 overloaded `listBuckets()` to list buckets for the sender.
 
 ```sh
-cast abi-decode "listBuckets(address)((uint8,string,(string,string)[])[])" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "listBuckets(address)" $EVM_ADDRESS)
+cast abi-decode "listBuckets(address)((uint8,address,(string,string)[])[])" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "listBuckets(address)" $EVM_ADDRESS)
 ```
 
 This will return the following output:
 
 ```
-(0, "t2pdadfrian5jrvtk2sulbc7uuyt5cnxmfdmet3ri", [("foo", "bar")])
+(0, 0xff000000000000000000000000000000000000ed, [("foo", "bar")])
 ```
 
 Which maps to an array of the `Machine` struct:
@@ -692,7 +692,7 @@ Which maps to an array of the `Machine` struct:
 ```solidity
 struct Machine {
     Kind kind; // See `Kind` struct below
-    string address; // t2pdadfrian5jrvtk2sulbc7uuyt5cnxmfdmet3ri
+    address addr; // 0xff000000000000000000000000000000000000ed
     KeyValue[] metadata; // See `KeyValue` struct below
 }
 
@@ -713,7 +713,7 @@ Given a bucket address, you can read or mutate the objects in the bucket. First,
 object, setting `BUCKET_ADDR` to an existing bucket from the command above:
 
 ```sh
-export BUCKET_ADDR=t2pdadfrian5jrvtk2sulbc7uuyt5cnxmfdmet3ri
+export BUCKET_ADDR=0xff0000000000000000000000000000000000008f
 ```
 
 Adding an object is a bit involved. You need to stage data offchain to a `source` bucket storage
@@ -783,7 +783,7 @@ Similar to [getting an object](#get-an-object), you can delete an object with th
 specifying the bucket and key for the mutating transaction:
 
 ```sh
-cast send --rpc-url $ETH_RPC_URL $BUCKETS "deleteObject(string,string)" $BUCKET_ADDR "hello/world" --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $BUCKETS "deleteObject(address,string)" $BUCKET_ADDR "hello/world" --private-key $PRIVATE_KEY
 ```
 
 ##### Get an object
@@ -793,7 +793,7 @@ returned. Thus, the response simply includes a single value. The `BUCKET_ADDR` i
 above.
 
 ```sh
-cast abi-decode "getObject(string,string)((string,string,uint64,uint64,(string,string)[]))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "getObject(string,string)" $BUCKET_ADDR "hello/world")
+cast abi-decode "getObject(address,string)((string,string,uint64,uint64,(string,string)[]))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "getObject(address,string)" $BUCKET_ADDR "hello/world")
 ```
 
 This will return the following response:
@@ -824,7 +824,7 @@ struct KeyValue {
 We'll continue using the same `BUCKET_ADDR` from the previous examples.
 
 ```sh
-cast abi-decode "queryObjects(string)(((string,(string,uint64,(string,string)[]))[],string[],string))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(string)" $BUCKET_ADDR)
+cast abi-decode "queryObjects(address)(((string,(string,uint64,(string,string)[]))[],string[],string))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(address)" $BUCKET_ADDR)
 ```
 
 This will return the following `Query` output:
@@ -853,7 +853,7 @@ export PREFIX="hello/"
 Now, we can query for these objects with the following command:
 
 ```sh
-cast abi-decode "queryObjects(string,string)(((string,(string,uint64,(string,string)[]))[],string[],string))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(string,string)" $BUCKET_ADDR $PREFIX)
+cast abi-decode "queryObjects(address,string)(((string,(string,uint64,(string,string)[]))[],string[],string))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(address,string)" $BUCKET_ADDR $PREFIX)
 ```
 
 This will return the following `Query` output:

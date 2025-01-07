@@ -65,11 +65,11 @@ struct ObjectValue {
 
 /// @dev A machine in the bucket.
 /// @param kind (Kind): The kind of the machine.
-/// @param addr (string): The robust address of the machine.
+/// @param addr (address): The robust address of the machine.
 /// @param metadata (KeyValue[]): The user-defined metadata.
 struct Machine {
     Kind kind;
-    string addr;
+    address addr;
     KeyValue[] metadata;
 }
 
