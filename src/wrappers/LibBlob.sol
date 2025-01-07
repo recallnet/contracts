@@ -12,7 +12,6 @@ import {
     BlobTuple,
     CreditApproval,
     CreditStats,
-    Delegate,
     StorageStats,
     SubnetStats,
     Subscriber,
@@ -140,19 +139,6 @@ library LibBlob {
         return (decoded[0][1].length == 1 && decoded[0][1][0] == hex"00") ? "" : string(decoded[0][1]);
     }
 
-    /// @dev Decode a delegate from CBOR.
-    /// @param data The encoded CBOR array of a delegate.
-    /// @return origin The delegate origin address
-    /// @return caller The delegate caller address
-    function decodeDelegate(bytes memory data) internal view returns (address origin, address caller) {
-        if (data.isCborNull()) {
-            return (address(0), address(0));
-        }
-        bytes[] memory decoded = data.decodeCborArrayToBytes();
-        origin = decoded[0].decodeCborAddress();
-        caller = decoded[1].decodeCborAddress();
-    }
-
     /// @dev Decode a subscription from CBOR.
     /// @param data The encoded CBOR array of a subscription.
     /// @return subscription The decoded subscription.
@@ -160,10 +146,9 @@ library LibBlob {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         subscription.added = decoded[0].decodeCborBytesToUint64();
         subscription.expiry = decoded[1].decodeCborBytesToUint64();
-        subscription.autoRenew = decoded[2].decodeCborBool();
-        subscription.source = string(decoded[3].decodeCborBlobHashOrNodeId());
-        (subscription.delegate.origin, subscription.delegate.caller) = decodeDelegate(decoded[4]);
-        subscription.failed = decoded[5].decodeCborBool();
+        subscription.source = string(decoded[2].decodeCborBlobHashOrNodeId());
+        subscription.delegate = decoded[3].isCborNull() ? address(0) : decoded[3].decodeCborAddress();
+        subscription.failed = decoded[4].decodeCborBool();
     }
 
     /// @dev Decode a subscription group from CBOR.

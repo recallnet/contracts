@@ -8,6 +8,7 @@ import {
     Account as CreditAccount,
     AddBlobParams,
     Approval,
+    Blob,
     BlobStatus,
     BlobTuple,
     CreditApproval,
@@ -171,85 +172,77 @@ contract LibBlobTest is Test {
     function testDecodeSubscribers() public view {
         // One subscriber
         bytes memory data =
-            hex"a1782c66343130667364337a7835786c667268796f6133663436637a716c71376361706a686f6967686d7a61676171a1784066616134333038396435643466366264383265346133623137306633353663613235386361396636336638386438336130383334353465653765393966633536861901021a00015282f4982018a018531418ce189d18fd1318300c18f218b618ef18b518d0189818a005188f18eb188618b218a4185b185f18d8184f18c11875187d188918d518a5f6f4";
+            hex"a1656630313234a17840343564616464393261326161373431383133323638376639613432313439306261643963356161643332656134653937623135356533373739316630306435308519021f1a0001539f982018fd18bb1871185b08188508184418a1183e182b18b518980118cb18a60218bf183b18351118720418fb18f41836188101181b18ef18941839f6f4";
         Subscriber[] memory subscribers = LibBlob.decodeSubscribers(data);
-        assertEq(subscribers[0].subscriber, "f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq");
+        assertEq(subscribers[0].subscriber, "f0124");
         assertEq(
             subscribers[0].subscriptionGroup[0].subscriptionId,
-            "faa43089d5d4f6bd82e4a3b170f356ca258ca9f63f88d83a083454ee7e99fc56"
+            "45dadd92a2aa7418132687f9a421490bad9c5aad32ea4e97b155e37791f00d50"
         );
-        assertEq(subscribers[0].subscriptionGroup[0].subscription.added, 258);
-        assertEq(subscribers[0].subscriptionGroup[0].subscription.expiry, 86658);
-        assertEq(subscribers[0].subscriptionGroup[0].subscription.autoRenew, false);
+        assertEq(subscribers[0].subscriptionGroup[0].subscription.added, 543);
+        assertEq(subscribers[0].subscriptionGroup[0].subscription.expiry, 86943);
         assertEq(
             subscribers[0].subscriptionGroup[0].subscription.source,
-            "ubjrjtu57ujtadhsw3x3lueyuacy724gwksfwx6yj7axk7mj2wsq"
+            "7w5xcwyiqueejij6fo2zqaoluybl6ozvcfzaj67ug2aqcg7psq4q"
         );
-        assertEq(subscribers[0].subscriptionGroup[0].subscription.delegate.origin, address(0));
-        assertEq(subscribers[0].subscriptionGroup[0].subscription.delegate.caller, address(0));
+        assertEq(subscribers[0].subscriptionGroup[0].subscription.delegate, address(0));
         assertEq(subscribers[0].subscriptionGroup[0].subscription.failed, false);
 
         // Two subscription groups
         data =
-            hex"a1782c66343130667364337a7835786c667268796f6133663436637a716c71376361706a686f6967686d7a61676171a278403537303535653366663334663366613730303165396439613733633465613932616435623832333564636563373162363035396337613535326366336264613086190d6c1a00015eecf4982018a018531418ce189d18fd1318300c18f218b618ef18b518d0189818a005188f18eb188618b218a4185b185f18d8184f18c11875187d188918d518a5f6f4784066616134333038396435643466366264383265346133623137306633353663613235386361396636336638386438336130383334353465653765393966633536861901021a00015282f4982018a018531418ce189d18fd1318300c18f218b618ef18b518d0189818a005188f18eb188618b218a4185b185f18d8184f18c11875187d188918d518a5f6f4";
+            hex"a1656630313234a2784034316664336363386562303731323262663165356564383562306236393237666236663162336630643662313331326261366531396437646536386366373833851908eb1a00015a6b982018fd18bb1871185b08188508184418a1183e182b18b518980118cb18a60218bf183b18351118720418fb18f41836188101181b18ef18941839f6f47840343564616464393261326161373431383133323638376639613432313439306261643963356161643332656134653937623135356533373739316630306435308519021f1a0001539f982018fd18bb1871185b08188508184418a1183e182b18b518980118cb18a60218bf183b18351118720418fb18f41836188101181b18ef18941839f6f4";
         subscribers = LibBlob.decodeSubscribers(data);
-        assertEq(subscribers[0].subscriber, "f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq");
+        assertEq(subscribers[0].subscriber, "f0124");
         assertEq(
             subscribers[0].subscriptionGroup[0].subscriptionId,
-            "57055e3ff34f3fa7001e9d9a73c4ea92ad5b8235dcec71b6059c7a552cf3bda0"
+            "41fd3cc8eb07122bf1e5ed85b0b6927fb6f1b3f0d6b1312ba6e19d7de68cf783"
         );
         assertEq(
             subscribers[0].subscriptionGroup[1].subscriptionId,
-            "faa43089d5d4f6bd82e4a3b170f356ca258ca9f63f88d83a083454ee7e99fc56"
+            "45dadd92a2aa7418132687f9a421490bad9c5aad32ea4e97b155e37791f00d50"
         );
 
         // Two different subscribers
         data =
-            hex"a2782c66343130667364337a7835786c667268796f6133663436637a716c71376361706a686f6967686d7a61676171a178406661613433303839643564346636626438326534613362313730663335366361323538636139663633663838643833613038333435346565376539396663353686190ea31a00016023f4982018a018531418ce189d18fd1318300c18f218b618ef18b518d0189818a005188f18eb188618b218a4185b185f18d8184f18c11875187d188918d518a5f6f4782c663431306674667376613769326b77366d65326b346c6335626e367a7833616d33626a673436367667376a69a178406164663637663836393937383035383834346135623066636135313562613031323364626161393730373462363062333033353166626165663364363636636686190ec91a00016049f4982018a018531418ce189d18fd1318300c18f218b618ef18b518d0189818a005188f18eb188618b218a4185b185f18d8184f18c11875187d188918d518a5f6f4";
+            hex"a2656630313234a2784034316664336363386562303731323262663165356564383562306236393237666236663162336630643662313331326261366531396437646536386366373833851908eb1a00015a6b982018fd18bb1871185b08188508184418a1183e182b18b518980118cb18a60218bf183b18351118720418fb18f41836188101181b18ef18941839f6f47840343564616464393261326161373431383133323638376639613432313439306261643963356161643332656134653937623135356533373739316630306435308519021f1a0001539f982018fd18bb1871185b08188508184418a1183e182b18b518980118cb18a60218bf183b18351118720418fb18f41836188101181b18ef18941839f6f4656630313236a1784033333566316434636333343130646136363562613133336136616339653666656536626334653861356435643239336262333966396465313266303530326438851909881a00015b08982018fd18bb1871185b08188508184418a1183e182b18b518980118cb18a60218bf183b18351118720418fb18f41836188101181b18ef18941839f6f4";
         subscribers = LibBlob.decodeSubscribers(data);
-        assertEq(subscribers[0].subscriber, "f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq");
-        assertEq(subscribers[1].subscriber, "f410ftfsva7i2kw6me2k4lc5bn6zx3am3bjg466vg7ji");
+        assertEq(subscribers[0].subscriber, "f0124");
+        assertEq(subscribers[1].subscriber, "f0126");
     }
 
     function testDecodeSubscriptionGroup() public view {
         bytes memory data =
-            hex"a1784066616134333038396435643466366264383265346133623137306633353663613235386361396636336638386438336130383334353465653765393966633536861901021a00015282f4982018a018531418ce189d18fd1318300c18f218b618ef18b518d0189818a005188f18eb188618b218a4185b185f18d8184f18c11875187d188918d518a5f6f4";
+            hex"a17840343564616464393261326161373431383133323638376639613432313439306261643963356161643332656134653937623135356533373739316630306435308519021f1a0001539f982018fd18bb1871185b08188508184418a1183e182b18b518980118cb18a60218bf183b18351118720418fb18f41836188101181b18ef18941839f6f4";
         SubscriptionGroup[] memory subscriptionGroup = LibBlob.decodeSubscriptionGroup(data);
         assertEq(
-            subscriptionGroup[0].subscriptionId, "faa43089d5d4f6bd82e4a3b170f356ca258ca9f63f88d83a083454ee7e99fc56"
+            subscriptionGroup[0].subscriptionId, "45dadd92a2aa7418132687f9a421490bad9c5aad32ea4e97b155e37791f00d50"
         );
-        assertEq(subscriptionGroup[0].subscription.added, 258);
-        assertEq(subscriptionGroup[0].subscription.expiry, 86658);
-        assertEq(subscriptionGroup[0].subscription.autoRenew, false);
-        assertEq(subscriptionGroup[0].subscription.source, "ubjrjtu57ujtadhsw3x3lueyuacy724gwksfwx6yj7axk7mj2wsq");
-        assertEq(subscriptionGroup[0].subscription.delegate.origin, address(0));
-        assertEq(subscriptionGroup[0].subscription.delegate.caller, address(0));
+        assertEq(subscriptionGroup[0].subscription.added, 543);
+        assertEq(subscriptionGroup[0].subscription.expiry, 86943);
+        assertEq(subscriptionGroup[0].subscription.source, "7w5xcwyiqueejij6fo2zqaoluybl6ozvcfzaj67ug2aqcg7psq4q");
+        assertEq(subscriptionGroup[0].subscription.delegate, address(0));
         assertEq(subscriptionGroup[0].subscription.failed, false);
     }
 
     function testDecodeSubscription() public view {
         // No delegate
         bytes memory data =
-            hex"8619045e19126ef59820184e1871182818b3189318920f011876188d189a182318c5189b185c18910b18f418cc18961876183518b6187a185c0418a318a2185f18ac18af1825f6f4";
+            hex"8519021f1a0001539f982018fd18bb1871185b08188508184418a1183e182b18b518980118cb18a60218bf183b18351118720418fb18f41836188101181b18ef18941839f6f4";
         Subscription memory subscription = LibBlob.decodeSubscription(data);
-        assertEq(subscription.added, 1118);
-        assertEq(subscription.expiry, 4718);
-        assertEq(subscription.autoRenew, true);
-        assertEq(subscription.source, "jzysrm4tsihqc5untir4lg24sef7jtewoy23m6s4asr2ex5mv4sq");
-        assertEq(subscription.delegate.origin, address(0));
-        assertEq(subscription.delegate.caller, address(0));
+        assertEq(subscription.added, 543);
+        assertEq(subscription.expiry, 86943);
+        assertEq(subscription.source, "7w5xcwyiqueejij6fo2zqaoluybl6ozvcfzaj67ug2aqcg7psq4q");
+        assertEq(subscription.delegate, address(0));
         assertEq(subscription.failed, false);
 
         // With delegate
         data =
-            hex"86191a54192864f59820184e1871182818b3189318920f011876188d189a182318c5189b185c18910b18f418cc18961876183518b6187a185c0418a318a2185f18ac18af18258256040aa0ee7a142d267c1f36714e4a8f75612f20a7972056040a11c81c1a7979cdd309096d1ea53f887ea9f8d14df4";
+            hex"85190b911a00015d11982018fd18bb1871185b08188508184418a1183e182b18b518980118cb18a60218bf183b18351118720418fb18f41836188101181b18ef1894183942007df4";
         subscription = LibBlob.decodeSubscription(data);
-        assertEq(subscription.added, 6740);
-        assertEq(subscription.expiry, 10340);
-        assertEq(subscription.autoRenew, true);
-        assertEq(subscription.source, "jzysrm4tsihqc5untir4lg24sef7jtewoy23m6s4asr2ex5mv4sq");
-        assertEq(subscription.delegate.origin, 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720);
-        assertEq(subscription.delegate.caller, 0x11c81c1A7979cdd309096D1ea53F887EA9f8D14d);
+        assertEq(subscription.added, 2961);
+        assertEq(subscription.expiry, 89361);
+        assertEq(subscription.source, "7w5xcwyiqueejij6fo2zqaoluybl6ozvcfzaj67ug2aqcg7psq4q");
+        assertEq(subscription.delegate, 0xFF0000000000000000000000000000000000007D);
         assertEq(subscription.failed, false);
     }
 
@@ -264,11 +257,21 @@ contract LibBlobTest is Test {
         assertEq(blobs[0].sourceInfo[0].source, "afc75un27mk24ragsprgxylfwgio4l4qcusqjra5psz3gxazcoxa");
     }
 
+    function testDecodeBlob() public view {
+        bytes memory data =
+            hex"84069820185818300918d918fc011819188d18b0150818dc186b18c918e618f10a185c18ef189118a3185d1864186d187318a518b718a8181918cd18b0184da1656630313234a17840343564616464393261326161373431383133323638376639613432313439306261643963356161643332656134653937623135356533373739316630306435308519021f1a0001539f982018fd18bb1871185b08188508184418a1183e182b18b518980118cb18a60218bf183b18351118720418fb18f41836188101181b18ef18941839f6f4685265736f6c766564";
+        Blob memory blob = LibBlob.decodeBlob(data);
+        assertEq(blob.size, 6);
+        assertEq(blob.metadataHash, "layatwp4aemy3mavbdogxspg6effz34runowi3ltuw32qgonwbgq");
+        assertEq(blob.subscribers.length, 1);
+        assertEq(uint8(blob.status), uint8(BlobStatus.Resolved));
+    }
+
     function testDecodeBlobStatus() public view {
         bytes memory status = hex"685265736F6C766564"; // Resolved
         bytes memory decoded = LibWasm.decodeCborStringToBytes(status);
         BlobStatus decodedStatus = LibBlob.decodeBlobStatus(decoded);
-        assertEq(uint256(decodedStatus), uint256(BlobStatus.Resolved));
+        assertEq(uint8(decodedStatus), uint8(BlobStatus.Resolved));
     }
 
     function testDecodeTokenCreditRate() public view {

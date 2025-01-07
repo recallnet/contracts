@@ -9,9 +9,16 @@ set -e # Exit on any error
 # Environment setup
 ETH_RPC_URL="http://localhost:8645"
 PRIVATE_KEY="0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6"
-EVM_ADDRESS="0x90f79bf6eb2c4f870365e785982e1f101e93b906"
+EVM_ADDRESS=$(cast wallet address $PRIVATE_KEY)
 SOURCE=$(curl -X GET http://localhost:8001/v1/node | jq '.node_id' | tr -d '"')
 DIVIDER=$'\n============================\n'
+
+echo "Running tests with environment:"
+echo "- RPC URL: $ETH_RPC_URL"
+echo "- Private key: $PRIVATE_KEY"
+echo "- EVM address: $EVM_ADDRESS"
+echo "- Iroh source: $SOURCE"
+echo -e "$DIVIDER"
 
 # Create a temporary file used when uploading objects or blobs
 TEMP_FILE=$(mktemp)
@@ -24,7 +31,7 @@ create_object_response=$(HOKU_PRIVATE_KEY=$PRIVATE_KEY HOKU_NETWORK=localnet hok
 SIZE=$(echo $create_object_response | jq '.object.size')
 BLOB_HASH=$(echo $create_object_response | jq '.object.hash' | tr -d '"')
 
-echo $DIVIDER
+echo -e "$DIVIDER"
 echo "Running BlobManager integration tests..."
 BLOBS=$(forge script script/BlobManager.s.sol \
     --tc DeployScript \
@@ -57,7 +64,8 @@ if [ "$output" = "0x" ]; then
     echo "getBlob failed"
     exit 1
 fi
-echo "Output: $output"
+DECODED_BLOB=$(cast abi-decode "getBlob(string)((uint64,string,(string,(string,(uint64,uint64,string,address,bool))[])[],uint8))" $output)
+echo "Output: $DECODED_BLOB"
 
 # Test getBlobStatus
 echo
@@ -68,7 +76,8 @@ if [ "$output" = "0x" ]; then
     echo "getBlobStatus failed"
     exit 1
 fi
-echo "Output: $output"
+DECODED_BLOB_STATUS=$(cast abi-decode "getBlobStatus(address,string,string)(uint8)" $output)
+echo "Output: $DECODED_BLOB_STATUS"
 
 # Test getAddedBlobs
 echo
@@ -78,7 +87,8 @@ if [ "$output" = "0x" ]; then
     echo "getAddedBlobs failed"
     exit 1
 fi
-echo "Output: $output"
+DECODED_ADDED_BLOBS=$(cast abi-decode "getAddedBlobs(uint32)((string,(address,string,string)[])[])" $output)
+echo "Output: $DECODED_ADDED_BLOBS"
 
 # Test getPendingBlobs
 echo
@@ -88,7 +98,8 @@ if [ "$output" = "0x" ]; then
     echo "getPendingBlobs failed"
     exit 1
 fi
-echo "Output: $output"
+DECODED_PENDING_BLOBS=$(cast abi-decode "getPendingBlobs(uint32)((string,(address,string,string)[])[])" $output)
+echo "Output: $DECODED_PENDING_BLOBS"
 
 # Test getPendingBlobsCount
 echo
@@ -98,7 +109,8 @@ if [ "$output" = "0x" ]; then
     echo "getPendingBlobsCount failed"
     exit 1
 fi
-echo "Output: $output"
+DECODED_PENDING_BLOBS_COUNT=$(cast abi-decode "getPendingBlobsCount()(uint64)" $output)
+echo "Output: $DECODED_PENDING_BLOBS_COUNT"
 
 # Test getPendingBytesCount
 echo
@@ -108,7 +120,8 @@ if [ "$output" = "0x" ]; then
     echo "getPendingBytesCount failed"
     exit 1
 fi
-echo "Output: $output"
+DECODED_PENDING_BYTES_COUNT=$(cast abi-decode "getPendingBytesCount()(uint64)" $output)
+echo "Output: $DECODED_PENDING_BYTES_COUNT"
 
 # Test getStorageStats
 echo
@@ -118,7 +131,8 @@ if [ "$output" = "0x" ]; then
     echo "getStorageStats failed"
     exit 1
 fi
-echo "Output: $output"
+DECODED_STORAGE_STATS=$(cast abi-decode "getStorageStats()((uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64))" $output)
+echo "Output: $DECODED_STORAGE_STATS"
 
 # Test getStorageUsage
 echo
@@ -129,7 +143,8 @@ if [ "$output" = "0x" ]; then
     echo "getStorageUsage failed"
     exit 1
 fi
-echo "Output: $output"
+DECODED_STORAGE_USAGE=$(cast abi-decode "getStorageUsage(address)(uint256)" $output)
+echo "Output: $DECODED_STORAGE_USAGE"
 
 # Test getSubnetStats
 echo
@@ -139,7 +154,8 @@ if [ "$output" = "0x" ]; then
     echo "getSubnetStats failed"
     exit 1
 fi
-echo "Output: $output"
+DECODED_SUBNET_STATS=$(cast abi-decode "getSubnetStats()((uint256,uint64,uint64,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint64,uint64,uint64))" $output)
+echo "Output: $DECODED_SUBNET_STATS"
 
 # Test deleteBlob
 echo
@@ -156,7 +172,7 @@ echo "Output: $output"
 echo
 echo "BlobManager integration tests completed"
 
-echo $DIVIDER
+echo -e "$DIVIDER"
 echo "Running BucketManager integration tests..."
 BUCKETS=$(forge script script/BucketManager.s.sol \
     --tc DeployScript \
@@ -187,13 +203,13 @@ echo "Output: $output"
 echo
 echo "Testing listBuckets()..."
 output=$(cast call --rpc-url $ETH_RPC_URL $BUCKETS "listBuckets(address)" \
-    "$EVM_ADDRESS" \
-    --private-key $PRIVATE_KEY)
+    "$EVM_ADDRESS")
 if [ "$output" = "0x" ]; then
     echo "listBuckets failed"
     exit 1
 fi
-echo "Output: $output"
+DECODED_BUCKETS=$(cast abi-decode "listBuckets(address)((uint8,address,(string,string)[])[])" $output)
+echo "Output: $DECODED_BUCKETS"
 
 # Test addObject (both variations)
 echo
@@ -256,7 +272,7 @@ OBJECT_KEY="hello/world"
 
 echo "BucketManager integration tests completed"
 
-echo $DIVIDER
+echo -e "$DIVIDER"
 echo "Running CreditManager integration tests..."
 CREDIT=$(forge script script/CreditManager.s.sol \
     --tc DeployScript \
@@ -391,5 +407,5 @@ echo "Output: $output"
 
 echo
 echo "CreditManager integration tests completed"
-echo $DIVIDER
+echo -e "$DIVIDER"
 echo "All tests completed successfully"

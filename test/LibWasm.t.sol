@@ -358,4 +358,11 @@ contract LibWasmTest is Test {
         uint64 result = LibWasm.decodeCborByteStringToUint64(data);
         assertEq(result, 86400);
     }
+
+    function testDecodeCborBlobHashOrNodeId() public pure {
+        bytes memory data =
+            hex"9820185818300918d918fc011819188d18b0150818dc186b18c918e618f10a185c18ef189118a3185d1864186d187318a518b718a8181918cd18b0184d";
+        string memory result = string(LibWasm.decodeCborBlobHashOrNodeId(data));
+        assertEq(result, "layatwp4aemy3mavbdogxspg6effz34runowi3ltuw32qgonwbgq");
+    }
 }

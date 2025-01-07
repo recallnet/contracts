@@ -1017,13 +1017,13 @@ This will return the account's max blob TTL:
 ##### Get a blob
 
 ```sh
-cast abi-decode "getBlob(string)((uint64,string,(string,(string,(uint64,uint64,bool,string,(address,address),bool))[])[],uint8))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
+cast abi-decode "getBlob(string)((uint64,string,(string,(string,(uint64,uint64,string,address,bool))[])[],uint8))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
 ```
 
 This will return the following response:
 
 ```sh
-(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", [("f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq", [("foo", (4825, 91225 [9.122e4], false, "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq", (0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000), false))])], 2)
+(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", [("f0124", [("foo", (4825, 91225 [9.122e4], "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq", 0x0000000000000000000000000000000000000000, false))])], 2)
 ```
 
 Which maps to the `Blob` struct:
@@ -1037,7 +1037,7 @@ struct Blob {
 }
 
 struct Subscriber {
-    string subscriber; // f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq
+    string subscriber; // f0124
     SubscriptionGroup[] subscriptionGroup; // See `SubscriptionGroup` struct below
 }
 
@@ -1049,15 +1049,9 @@ struct SubscriptionGroup {
 struct Subscription {
     uint64 added; // 4825
     uint64 expiry; // 91225
-    bool autoRenew; // false
     string source; // "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq"
-    Delegate delegate; // See `Delegate` struct below
+    address delegate; // 0x0000000000000000000000000000000000000000
     bool failed; // false
-}
-
-struct Delegate {
-    address origin; // Null value (0x0000000000000000000000000000000000000000)
-    address caller; // Null value (0x0000000000000000000000000000000000000000)
 }
 ```
 

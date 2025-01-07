@@ -185,8 +185,7 @@ enum BlobStatus {
 }
 
 /// @dev A subscriber and their subscription groups.
-/// @param subscriber (string): The subscriber address as a string value (e.g.,
-/// "f410ftfsva7i2kw6me2k4lc5bn6zx3am3bjg466vg7ji").
+/// @param subscriber (string): The subscriber address as a string value (e.g., "f0124").
 /// @param subscriptionGroup (SubscriptionGroup[]): The subscription groups. See {SubscriptionGroup} for more details.
 struct Subscriber {
     string subscriber;
@@ -208,26 +207,16 @@ struct SubscriptionGroup {
 /// @dev A subscription to a blob.
 /// @param added (uint64): The block number when the subscription was added.
 /// @param expiry (uint64): The block number when the subscription will expire.
-/// @param autoRenew (bool): Whether the subscription will automatically renew.
 /// @param source (string): The source Iroh node ID used for ingestion.
-/// @param delegate (Delegate): The delegate origin and caller that may have created the subscription via a credit
-/// approval.
+/// @param delegate (address): The delegate origin that may have created the subscription via a credit approval.
+/// approval (else, zero address if null)
 /// @param failed (bool): Whether the subscription failed due to an issue resolving the target blob.
 struct Subscription {
     uint64 added;
     uint64 expiry;
-    bool autoRenew;
     string source;
-    Delegate delegate;
+    address delegate;
     bool failed;
-}
-
-/// @dev The delegate origin and caller that may have created the subscription via a credit approval.
-/// @param origin (address): The delegate origin.
-/// @param caller (address): The caller address.
-struct Delegate {
-    address origin;
-    address caller;
 }
 
 /// @dev Pending blob information. Represents a Rust `(Hash, HashSet<(Address, SubscriptionId, PublicKey)>)`
