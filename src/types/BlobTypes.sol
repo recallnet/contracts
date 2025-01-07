@@ -86,12 +86,13 @@ struct CreditApproval {
 /// @param creditSold (uint256): The total number of credits sold in the subnet.
 /// @param creditCommitted (uint256): The total number of credits committed to active storage in the subnet.
 /// @param creditDebited (uint256): The total number of credits debited in the subnet.
-/// @param blobCreditsPerByteBlock (uint64): The current byte-blocks per atto token rate.
+/// @param tokenCreditRate (uint64): The current byte-blocks per atto token rate.
 /// @param numAccounts (uint64): Total number of debit accounts.
 /// @param numBlobs (uint64): Total number of actively stored blobs.
-/// @param bytesResolving (uint64): Total bytes of all currently resolving blobs.
 /// @param numAdded (uint64): Total number of blobs that are not yet added to the validator's resolve pool.
 /// @param bytesAdded (uint64): Total bytes of all blobs that are not yet added to the validator's resolve pool.
+/// @param numResolving (uint64): Total number of all currently resolving blobs.
+/// @param bytesResolving (uint64): Total bytes of all currently resolving blobs.
 struct SubnetStats {
     uint256 balance;
     uint64 capacityFree;
@@ -102,10 +103,10 @@ struct SubnetStats {
     uint256 tokenCreditRate;
     uint64 numAccounts;
     uint64 numBlobs;
-    uint64 numResolving;
-    uint64 bytesResolving;
     uint64 numAdded;
     uint64 bytesAdded;
+    uint64 numResolving;
+    uint64 bytesResolving;
 }
 
 /// @dev Subnet-wide credit statistics.

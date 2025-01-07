@@ -6,11 +6,6 @@ import {AddBlobParams, Blob, BlobStatus, BlobTuple, StorageStats, SubnetStats} f
 import {LibBlob} from "./LibBlob.sol";
 
 contract BlobManager is IBlobManager {
-    /// @dev See {IBlobManager-getAccountType}.
-    function getAccountType(address addr) external view returns (uint64) {
-        return LibBlob.getAccountType(addr);
-    }
-
     /// @dev See {IBlobManager-getAddedBlobs}.
     function getAddedBlobs(uint32 size) external view returns (BlobTuple[] memory blobs) {
         return LibBlob.getPendingBlobs(size);
