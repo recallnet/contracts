@@ -18,6 +18,11 @@ contract CreditManager is ICreditManager {
         return LibBlob.getCreditStats();
     }
 
+    /// @dev See {ICreditManager-getCreditApproval}.
+    function getCreditApproval(address from, address to) external view returns (CreditApproval memory approval) {
+        return LibBlob.getCreditApproval(from, to);
+    }
+
     /// @dev See {ICreditManager-getCreditBalance}.
     function getCreditBalance(address addr) external view returns (Balance memory balance) {
         return LibBlob.getCreditBalance(addr);
@@ -66,12 +71,6 @@ contract CreditManager is ICreditManager {
         emit BuyCredit(recipient, msg.value);
     }
 
-    /// @dev See {ICreditManager-setCreditSponsor}.
-    function setCreditSponsor(address from, address sponsor) external {
-        LibBlob.setCreditSponsor(from, sponsor);
-        emit SetCreditSponsor(from, sponsor);
-    }
-
     /// @dev See {ICreditManager-revokeCredit}.
     function revokeCredit(address to) external {
         LibBlob.revokeCredit(msg.sender, to, address(0));
@@ -88,5 +87,11 @@ contract CreditManager is ICreditManager {
     function revokeCredit(address from, address to, address caller) external {
         LibBlob.revokeCredit(from, to, caller);
         emit RevokeCredit(from, to, caller);
+    }
+
+    /// @dev See {ICreditManager-setAccountSponsor}.
+    function setAccountSponsor(address from, address sponsor) external {
+        LibBlob.setAccountSponsor(from, sponsor);
+        emit SetAccountSponsor(from, sponsor);
     }
 }

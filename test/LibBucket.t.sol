@@ -112,27 +112,27 @@ contract LibBucketTest is Test {
         assertEq(machines.length, 0);
 
         // 1 bucket
-        machines = LibBucket.decodeList(hex"8183664275636b657455023f08642392fbffeb74b4b1bd28c4856a40d3aaf4a0");
+        machines = LibBucket.decodeList(hex"8183664275636b65744300ed01a0");
         assertEq(machines.length, 1);
         assertEq(uint8(machines[0].kind), uint8(Kind.Bucket));
-        assertEq(machines[0].addr, "t2h4egii4s7p76w5fuwg6srrefnjanhkxuxiew6ha");
+        assertEq(machines[0].addr, 0xFf000000000000000000000000000000000000ed);
         assertEq(machines[0].metadata.length, 0);
 
         // Multiple buckets (with metadata)
         machines = LibBucket.decodeList(
-            hex"8383664275636b657455023f08642392fbffeb74b4b1bd28c4856a40d3aaf4a083664275636b65745502d89df1ae884b2d9d4dee800675fa005b78a138a9a083664275636b65745502770d21925703390a236f68f84ef1d432ca5742c4a163666f6f63626172"
+            hex"8383664275636b65744300ed01a083664275636b65744300ee01a083664275636b65744300ef01a165616c69617363666f6f"
         );
         assertEq(machines.length, 3);
         assertEq(uint8(machines[0].kind), uint8(Kind.Bucket));
-        assertEq(machines[0].addr, "t2h4egii4s7p76w5fuwg6srrefnjanhkxuxiew6ha");
+        assertEq(machines[0].addr, 0xFf000000000000000000000000000000000000ed);
         assertEq(machines[0].metadata.length, 0);
         assertEq(uint8(machines[1].kind), uint8(Kind.Bucket));
-        assertEq(machines[1].addr, "t23co7dluijmwz2tpoqadhl6qaln4kcofjcp24uby");
+        assertEq(machines[1].addr, 0xFF000000000000000000000000000000000000EE);
         assertEq(machines[1].metadata.length, 0);
         assertEq(uint8(machines[2].kind), uint8(Kind.Bucket));
-        assertEq(machines[2].addr, "t2o4gsdesxam4qui3pnd4e54ouglffoqwecfnrdzq");
-        assertEq(machines[2].metadata[0].key, "foo");
-        assertEq(machines[2].metadata[0].value, "bar");
+        assertEq(machines[2].addr, 0xFf000000000000000000000000000000000000Ef);
+        assertEq(machines[2].metadata[0].key, "alias");
+        assertEq(machines[2].metadata[0].value, "foo");
     }
 
     function testEncodeAddObjectParams() public pure {

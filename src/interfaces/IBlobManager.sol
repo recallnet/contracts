@@ -13,11 +13,8 @@ interface IBlobManager {
     /// @dev Emitted when a blob is deleted.
     event DeleteBlob(address indexed caller, address indexed subscriber, string blobHash, string subscriptionId);
 
-    /// @dev Get the maximum TTL for blobs for an account.
-    /// @param addr The address of the account.
-    /// @return ttl The maximum TTL for blobs for the account. Either default (86400), reduced (0), or extended
-    /// (9223372036854775807) with units being seconds.
-    function getAccountType(address addr) external view returns (uint64);
+    /// @dev Emitted when a blob is overwritten.
+    event OverwriteBlob(address indexed caller, string oldHash, string newHash, string subscriptionId);
 
     /// @dev Get a list of added blobs.
     /// @param size Maximum number of added blobs to return.
@@ -74,4 +71,9 @@ interface IBlobManager {
     /// @param blobHash Blob blake3 hash to delete.
     /// @param subscriptionId Identifier used to differentiate blob additions for the same subscriber.
     function deleteBlob(address subscriber, string memory blobHash, string memory subscriptionId) external;
+
+    /// @dev Overwrite a blob in storage.
+    /// @param oldHash The blake3 hash of the blob to be deleted.
+    /// @param params The parameters for adding a blob.
+    function overwriteBlob(string memory oldHash, AddBlobParams memory params) external;
 }

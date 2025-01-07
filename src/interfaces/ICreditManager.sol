@@ -21,7 +21,7 @@ interface ICreditManager {
     event BuyCredit(address indexed addr, uint256 amount);
 
     /// @dev Emitted when an account sets the credit sponsor.
-    event SetCreditSponsor(address indexed from, address indexed sponsor);
+    event SetAccountSponsor(address indexed from, address indexed sponsor);
 
     /// @dev Emitted when an account revokes credits.
     event RevokeCredit(address indexed from, address indexed to, address indexed caller);
@@ -34,6 +34,12 @@ interface ICreditManager {
     /// @dev Get the subnet-wide credit statistics.
     /// @return stats The subnet-wide credit statistics.
     function getCreditStats() external view returns (CreditStats memory stats);
+
+    /// @dev Get the credit approval from one account to another, if it exists.
+    /// @param from The address of the account.
+    /// @param to The address of the account to check the approval for.
+    /// @return approval The credit approval for the account.
+    function getCreditApproval(address from, address to) external view returns (CreditApproval memory approval);
 
     /// @dev Get the credit balance of an account.
     /// @param addr The address of the account.
@@ -79,11 +85,6 @@ interface ICreditManager {
     /// @param recipient The address of the account.
     function buyCredit(address recipient) external payable;
 
-    /// @dev Set the credit sponsor for an account.
-    /// @param from The address of the account.
-    /// @param sponsor The address of the sponsor. Use zero address if unused.
-    function setCreditSponsor(address from, address sponsor) external;
-
     /// @dev Revoke credits for an account. Assumes `msg.sender` is the owner of the credits.
     /// @param to The address of the account to revoke credits for.
     function revokeCredit(address to) external;
@@ -98,4 +99,9 @@ interface ICreditManager {
     /// @param to The address of the account to revoke credits for.
     /// @param caller Optional restriction on caller address, e.g., an object store.
     function revokeCredit(address from, address to, address caller) external;
+
+    /// @dev Set the credit sponsor for an account.
+    /// @param from The address of the account.
+    /// @param sponsor The address of the sponsor. Use zero address if unused.
+    function setAccountSponsor(address from, address sponsor) external;
 }

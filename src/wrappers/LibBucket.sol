@@ -52,7 +52,7 @@ library LibBucket {
         if (decoded.length == 0) return machine;
         machine = Machine({
             kind: stringToKind(string(decoded[0])), // Decoded array automatically removes leading byte (string length)
-            addr: decoded[1].decodeCborActorAddress(),
+            addr: decoded[1].decodeCborAddress(),
             metadata: decodeMetadata(decoded[2])
         });
     }
@@ -237,29 +237,29 @@ library LibBucket {
     /// @dev Add an object to the bucket.
     /// @param bucket The bucket.
     /// @param params The add object params. See {AddObjectParams} for more details.
-    function addObject(string memory bucket, AddObjectParams memory params) external {
-        bytes memory bucketAddr = bucket.encodeCborActorAddress();
+    function addObject(address bucket, AddObjectParams memory params) external {
+        uint64 bucketAddr = bucket.addressToActorId();
         bytes memory _params = encodeAddObjectParams(params);
-        LibWasm.writeToWasmActorByAddress(bucketAddr, METHOD_ADD_OBJECT, _params);
+        LibWasm.writeToWasmActor(bucketAddr, METHOD_ADD_OBJECT, _params);
     }
 
     /// @dev Delete an object from the bucket.
     /// @param bucket The bucket.
     /// @param key The object key.
-    function deleteObject(string memory bucket, string memory key) external {
-        bytes memory bucketAddr = bucket.encodeCborActorAddress();
+    function deleteObject(address bucket, string memory key) external {
+        uint64 bucketAddr = bucket.addressToActorId();
         bytes memory params = key.encodeCborBytes();
-        LibWasm.writeToWasmActorByAddress(bucketAddr, METHOD_DELETE_OBJECT, params);
+        LibWasm.writeToWasmActor(bucketAddr, METHOD_DELETE_OBJECT, params);
     }
 
     /// @dev Get an object from the bucket.
     /// @param bucket The bucket.
     /// @param key The object key.
     /// @return Object's value. See {Value} for more details.
-    function getObject(string memory bucket, string memory key) external view returns (ObjectValue memory) {
-        bytes memory bucketAddr = bucket.encodeCborActorAddress();
+    function getObject(address bucket, string memory key) external view returns (ObjectValue memory) {
+        uint64 bucketAddr = bucket.addressToActorId();
         bytes memory params = key.encodeCborBytes();
-        bytes memory data = LibWasm.readFromWasmActorByAddress(bucketAddr, METHOD_GET_OBJECT, params);
+        bytes memory data = LibWasm.readFromWasmActor(bucketAddr, METHOD_GET_OBJECT, params);
         return decodeObjectValue(data);
     }
 
@@ -271,15 +271,15 @@ library LibBucket {
     /// @param limit The limit.
     /// @return All objects matching the query.
     function queryObjects(
-        string memory bucket,
+        address bucket,
         string memory prefix,
         string memory delimiter,
         string memory startKey,
         uint64 limit
     ) external view returns (Query memory) {
-        bytes memory bucketAddr = bucket.encodeCborActorAddress();
+        uint64 bucketAddr = bucket.addressToActorId();
         bytes memory params = encodeQueryParams(prefix, delimiter, startKey, limit);
-        bytes memory data = LibWasm.readFromWasmActorByAddress(bucketAddr, METHOD_LIST_OBJECTS, params);
+        bytes memory data = LibWasm.readFromWasmActor(bucketAddr, METHOD_LIST_OBJECTS, params);
         return decodeQuery(data);
     }
 }

@@ -190,10 +190,14 @@ contract LibWasmTest is Test {
         assertEq(params, hex"871affffffff1affffffff1affffffff1affffffff1affffffff1affffffff1affffffff");
     }
 
-    function testDecodeAddress() public pure {
+    function testDecodeAddress() public view {
         bytes memory addr = hex"040a15d34aaf54267db7d7c367839aaf71a00a2c6a65";
         address result = LibWasm.decodeCborAddress(addr);
         assertEq(result, 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
+
+        addr = hex"00ED01";
+        result = LibWasm.decodeCborAddress(addr);
+        assertEq(result, 0xFf000000000000000000000000000000000000ed);
     }
 
     function testEncodeCborActorAddress() public pure {
@@ -353,5 +357,12 @@ contract LibWasmTest is Test {
         bytes memory data = hex"1a00015180";
         uint64 result = LibWasm.decodeCborByteStringToUint64(data);
         assertEq(result, 86400);
+    }
+
+    function testDecodeCborBlobHashOrNodeId() public pure {
+        bytes memory data =
+            hex"9820185818300918d918fc011819188d18b0150818dc186b18c918e618f10a185c18ef189118a3185d1864186d187318a518b718a8181918cd18b0184d";
+        string memory result = string(LibWasm.decodeCborBlobHashOrNodeId(data));
+        assertEq(result, "layatwp4aemy3mavbdogxspg6effz34runowi3ltuw32qgonwbgq");
     }
 }
