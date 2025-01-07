@@ -327,12 +327,12 @@ if [ "$output" = "0x" ]; then
 fi
 echo "Output: $output"
 
-# Test setCreditSponsor
+# Test setAccountSponsor
 echo
-echo "Testing setCreditSponsor..."
-output=$(cast send --rpc-url $ETH_RPC_URL $CREDIT "setCreditSponsor(address,address)" $EVM_ADDRESS $RECEIVER_ADDR --private-key $PRIVATE_KEY)
+echo "Testing setAccountSponsor..."
+output=$(cast send --rpc-url $ETH_RPC_URL $CREDIT "setAccountSponsor(address,address)" $EVM_ADDRESS $RECEIVER_ADDR --private-key $PRIVATE_KEY)
 if [ "$output" = "0x" ]; then
-    echo "setCreditSponsor failed"
+    echo "setAccountSponsor failed"
     exit 1
 fi
 echo "Output: $output"

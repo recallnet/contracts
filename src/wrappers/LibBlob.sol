@@ -35,7 +35,7 @@ library LibBlob {
     // Credit methods
     uint64 internal constant METHOD_APPROVE_CREDIT = 2276438360;
     uint64 internal constant METHOD_BUY_CREDIT = 1035900737;
-    uint64 internal constant METHOD_SET_CREDIT_SPONSOR = 866259733;
+    uint64 internal constant METHOD_SET_ACCOUNT_SPONSOR = 228279820;
     uint64 internal constant METHOD_REVOKE_CREDIT = 37550845;
     // Blob methods
     uint64 internal constant METHOD_ADD_BLOB = 913855558;
@@ -292,7 +292,7 @@ library LibBlob {
     /// @param from The address of the account.
     /// @param sponsor The address of the sponsor. Use zero address if unused.
     /// @return encoded The encoded params.
-    function encodeSetCreditSponsorParams(address from, address sponsor) internal pure returns (bytes memory) {
+    function encodeSetAccountSponsorParams(address from, address sponsor) internal pure returns (bytes memory) {
         bytes[] memory encoded = new bytes[](2);
         encoded[0] = from.encodeCborAddress();
         encoded[1] = sponsor == address(0) ? LibWasm.encodeCborNull() : sponsor.encodeCborAddress();
@@ -526,14 +526,6 @@ library LibBlob {
         return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_APPROVE_CREDIT, params);
     }
 
-    /// @dev Set the credit sponsor for an account.
-    /// @param from The address of the account.
-    /// @param sponsor The address of the sponsor. Use zero address if unused.
-    function setCreditSponsor(address from, address sponsor) external returns (bytes memory data) {
-        bytes memory params = encodeSetCreditSponsorParams(from, sponsor);
-        return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_SET_CREDIT_SPONSOR, params);
-    }
-
     /// @dev Revoke credits for an account. Includes optional fields, which if set to zero, will be encoded as null.
     /// @param from The address of the account that owns the credits.
     /// @param to The address of the account to revoke credits for.
@@ -542,6 +534,14 @@ library LibBlob {
         bytes memory params = encodeRevokeCreditParams(from, to, caller);
         // Note: response bytes are always empty
         LibWasm.writeToWasmActor(ACTOR_ID, METHOD_REVOKE_CREDIT, params);
+    }
+
+    /// @dev Set the credit sponsor for an account.
+    /// @param from The address of the account.
+    /// @param sponsor The address of the sponsor. Use zero address if unused.
+    function setAccountSponsor(address from, address sponsor) external returns (bytes memory data) {
+        bytes memory params = encodeSetAccountSponsorParams(from, sponsor);
+        return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_SET_ACCOUNT_SPONSOR, params);
     }
 
     /// @dev Add a blob to the subnet.
