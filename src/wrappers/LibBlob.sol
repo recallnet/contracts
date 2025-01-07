@@ -28,24 +28,26 @@ library LibBlob {
 
     // Constants for the actor and method IDs of the Hoku Blobs actor
     uint64 internal constant ACTOR_ID = 66;
-    // General getters
-    uint64 internal constant METHOD_GET_ACCOUNT = 3435393067;
-    uint64 internal constant METHOD_GET_STATS = 188400153;
-    // Credit methods
+
+    // User methods
+    uint64 internal constant METHOD_ADD_BLOB = 913855558;
     uint64 internal constant METHOD_APPROVE_CREDIT = 2276438360;
     uint64 internal constant METHOD_BUY_CREDIT = 1035900737;
-    uint64 internal constant METHOD_SET_ACCOUNT_SPONSOR = 228279820;
-    uint64 internal constant METHOD_REVOKE_CREDIT = 37550845;
-    // Blob user methods
-    uint64 internal constant METHOD_ADD_BLOB = 913855558;
-    uint64 internal constant METHOD_DELETE_BLOB = 4230608948;
+    uint64 internal constant METHOD_GET_ACCOUNT = 3435393067;
     uint64 internal constant METHOD_GET_BLOB = 1739171512;
-    // Blob system methods
+    uint64 internal constant METHOD_DELETE_BLOB = 4230608948;
+    uint64 internal constant METHOD_REVOKE_CREDIT = 37550845;
+    uint64 internal constant METHOD_SET_ACCOUNT_SPONSOR = 228279820;
+
+    // System methods
     uint64 internal constant METHOD_GET_ADDED_BLOBS = 2462124090;
     uint64 internal constant METHOD_GET_BLOB_STATUS = 3505892271;
     uint64 internal constant METHOD_GET_PENDING_BLOBS = 799531123;
     uint64 internal constant METHOD_GET_PENDING_BLOBS_COUNT = 1694235671;
     uint64 internal constant METHOD_GET_PENDING_BYTES_COUNT = 3795566289;
+
+    // Metrics methods
+    uint64 internal constant METHOD_GET_STATS = 188400153;
 
     /// @dev Helper function to decode the subnet stats from CBOR to solidity.
     /// @param data The encoded CBOR array of stats.
