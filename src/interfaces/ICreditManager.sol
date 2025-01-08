@@ -35,6 +35,12 @@ interface ICreditManager {
     /// @return stats The subnet-wide credit statistics.
     function getCreditStats() external view returns (CreditStats memory stats);
 
+    /// @dev Get the credit approval from one account to another, if it exists.
+    /// @param from The address of the account.
+    /// @param to The address of the account to check the approval for.
+    /// @return approval The credit approval for the account.
+    function getCreditApproval(address from, address to) external view returns (CreditApproval memory approval);
+
     /// @dev Get the credit balance of an account.
     /// @param addr The address of the account.
     /// @return balance The credit balance of the account.

@@ -333,6 +333,8 @@ accepts "optional" arguments. All of the method parameters and return types can 
 
 - `getAccount(address)`: Get credit account info for an address.
 - `getCreditStats()`: Get credit stats.
+- `getCreditApproval(address,address)`: Get credit approval `from` one account `to` another, if it
+  exists.
 - `getCreditBalance(address)`: Get credit balance for an address.
 - `buyCredit()`: Buy credit for the `msg.sender`.
 - `buyCredit(address)`: Buy credit for the given address.
@@ -453,6 +455,32 @@ struct CreditStats {
     uint256 creditDebited; // 24237178535296
     uint256 tokenCreditRate; // 1000000000000000000000000000000000000
     uint64 numAccounts; // 10
+}
+```
+
+##### Get credit approval for an account
+
+Get the credit approval from the address at `EVM_ADDRESS` to the address at `RECEIVER_ADDR`:
+
+```sh
+cast abi-decode "getCreditApproval(address,address)((uint256,uint256,uint64,uint256,uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditApproval(address,address)" $EVM_ADDRESS $RECEIVER_ADDR)
+```
+
+This will return the following values:
+
+```
+(100000000000000000000000000 [1e26], 1000, 7275, 0, 0)
+```
+
+Which maps to the `CreditApproval` struct:
+
+```solidity
+struct CreditApproval {
+    uint256 creditLimit; // 100000000000000000000000000
+    uint256 gasFeeLimit; // 1000
+    uint64 expiry; // 7275
+    uint256 creditUsed; // 0
+    uint256 gasFeeUsed; // 0
 }
 ```
 
@@ -918,6 +946,8 @@ accepts "optional" arguments. All of the method parameters and return types can 
 - `deleteBlob(address,string,string)`: Delete a blob from the network, passing the sponsor's
   address, the blob hash, and the subscription ID (either `""` if none was originally provided, or
   the string that was chosen during `addBlob`).
+- `overwriteBlob(string,AddBlobParams memory)`: Overwrite a blob from the network, passing the old
+  blob hash, and the new blob parameters.
 - `getAccountType(address)`: Get the account's max blob TTL.
 - `getBlob(string)`: Get information about a specific blob at its blake3 hash.
 - `getBlobStatus(address,string,string)`: Get a blob's status, providing its credit sponsor (i.e.,
@@ -1008,7 +1038,7 @@ You can overwrite a blob you've created with the following, passing the old blob
 the new blob's parameters.
 
 ```sh
-cast send --rpc-url $ETH_RPC_URL $BLOBS "overwriteBlob(string,(address,string,string,string,string,uint64,uint64))" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" '(0x0000000000000000000000000000000000000000,"34jgtxo3rtnoolgjurzcvnyw6afl63qkwsx3u75tgrctl3yn4gpq","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","","",6,0)' --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $BLOBS "overwriteBlob(string,(address,string,string,string,string,uint64,uint64))" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" '(0x0000000000000000000000000000000000000000,"cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","","",6,0)' --private-key $PRIVATE_KEY
 ```
 
 This will emit an `OverwriteBlob` event and overwrite the blob in the network.

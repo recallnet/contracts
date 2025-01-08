@@ -18,6 +18,11 @@ contract CreditManager is ICreditManager {
         return LibBlob.getCreditStats();
     }
 
+    /// @dev See {ICreditManager-getCreditApproval}.
+    function getCreditApproval(address from, address to) external view returns (CreditApproval memory approval) {
+        return LibBlob.getCreditApproval(from, to);
+    }
+
     /// @dev See {ICreditManager-getCreditBalance}.
     function getCreditBalance(address addr) external view returns (Balance memory balance) {
         return LibBlob.getCreditBalance(addr);

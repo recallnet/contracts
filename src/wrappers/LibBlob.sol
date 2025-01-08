@@ -35,6 +35,7 @@ library LibBlob {
     uint64 internal constant METHOD_BUY_CREDIT = 1035900737;
     uint64 internal constant METHOD_GET_ACCOUNT = 3435393067;
     uint64 internal constant METHOD_GET_BLOB = 1739171512;
+    uint64 internal constant METHOD_GET_CREDIT_APPROVAL = 4218154481;
     uint64 internal constant METHOD_DELETE_BLOB = 4230608948;
     uint64 internal constant METHOD_OVERWRITE_BLOB = 609646161;
     uint64 internal constant METHOD_REVOKE_CREDIT = 37550845;
@@ -409,6 +410,19 @@ library LibBlob {
     function getCreditStats() external view returns (CreditStats memory stats) {
         SubnetStats memory subnetStats = getSubnetStats();
         return subnetStatsToCreditStats(subnetStats);
+    }
+
+    /// @dev Get the credit approval from one account to another, if it exists.
+    /// @param from The address of the account.
+    /// @param to The address of the account to check the approval for.
+    /// @return approval The credit approval for the account.
+    function getCreditApproval(address from, address to) external view returns (CreditApproval memory approval) {
+        bytes[] memory encoded = new bytes[](2);
+        encoded[0] = from.encodeCborAddress();
+        encoded[1] = to.encodeCborAddress();
+        bytes memory params = encoded.encodeCborArray();
+        bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_CREDIT_APPROVAL, params);
+        return decodeCreditApproval(data);
     }
 
     /// @dev Get the credit balance of an account.

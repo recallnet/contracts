@@ -18,7 +18,6 @@ echo "- RPC URL: $ETH_RPC_URL"
 echo "- Private key: $PRIVATE_KEY"
 echo "- EVM address: $EVM_ADDRESS"
 echo "- Iroh source: $SOURCE"
-echo -e "$DIVIDER"
 
 # Create a temporary file used when uploading objects or blobs
 TEMP_FILE=$(mktemp)
@@ -322,6 +321,17 @@ if [ "$output" = "0x" ]; then
 fi
 DECODED_STATS=$(cast abi-decode "getCreditStats()((uint256,uint256,uint256,uint256,uint64,uint64))" $output)
 echo "Credit stats: $DECODED_STATS"
+
+# Test getCreditApproval
+echo
+echo "Testing getCreditApproval..."
+output=$(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditApproval(address,address)" $EVM_ADDRESS $RECEIVER_ADDR)
+if [ "$output" = "0x" ]; then
+    echo "getCreditApproval failed"
+    exit 1
+fi
+DECODED_APPROVAL=$(cast abi-decode "getCreditApproval(address,address)((uint256,uint256,uint64,uint256,uint256))" $output)
+echo "Credit approval: $DECODED_APPROVAL"
 
 # Test getCreditBalance
 echo
