@@ -157,6 +157,19 @@ fi
 DECODED_SUBNET_STATS=$(cast abi-decode "getSubnetStats()((uint256,uint64,uint64,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint64,uint64,uint64))" $output)
 echo "Output: $DECODED_SUBNET_STATS"
 
+# Test overwriteBlob
+echo
+echo "Testing overwriteBlob..."
+output=$(cast send --rpc-url $ETH_RPC_URL $BLOBS "overwriteBlob(string,(address,string,string,string,string,uint64,uint64))" \
+    "$BLOB_HASH" \
+    "(0x0000000000000000000000000000000000000000,$SOURCE,$BLOB_HASH,\"\",\"\",$SIZE,0)" \
+    --private-key $PRIVATE_KEY)
+if [ "$output" = "0x" ]; then
+    echo "overwriteBlob failed"
+    exit 1
+fi
+echo "Output: $output"
+
 # Test deleteBlob
 echo
 echo "Testing deleteBlob..."
@@ -270,6 +283,7 @@ fi
 echo "Output: $output"
 OBJECT_KEY="hello/world"
 
+echo
 echo "BucketManager integration tests completed"
 
 echo -e "$DIVIDER"

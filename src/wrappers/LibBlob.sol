@@ -36,6 +36,7 @@ library LibBlob {
     uint64 internal constant METHOD_GET_ACCOUNT = 3435393067;
     uint64 internal constant METHOD_GET_BLOB = 1739171512;
     uint64 internal constant METHOD_DELETE_BLOB = 4230608948;
+    uint64 internal constant METHOD_OVERWRITE_BLOB = 609646161;
     uint64 internal constant METHOD_REVOKE_CREDIT = 37550845;
     uint64 internal constant METHOD_SET_ACCOUNT_SPONSOR = 228279820;
 
@@ -547,5 +548,16 @@ library LibBlob {
         bytes memory params = encoded.encodeCborArray();
         // Note: response bytes are always empty
         LibWasm.writeToWasmActor(ACTOR_ID, METHOD_DELETE_BLOB, params);
+    }
+
+    /// @dev Overwrite a blob in the subnet by deleting and adding within a single transaction.
+    /// @param oldHash The blake3 hash of the blob to be deleted.
+    /// @param params The parameters for adding a blob.
+    function overwriteBlob(string memory oldHash, AddBlobParams memory params) external returns (bytes memory data) {
+        bytes[] memory encoded = new bytes[](2);
+        encoded[0] = oldHash.encodeCborBlobHashOrNodeId();
+        encoded[1] = encodeAddBlobParams(params);
+        bytes memory _params = encoded.encodeCborArray();
+        return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_OVERWRITE_BLOB, _params);
     }
 }

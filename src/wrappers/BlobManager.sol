@@ -66,4 +66,10 @@ contract BlobManager is IBlobManager {
         LibBlob.deleteBlob(subscriber, blobHash, subscriptionId);
         emit DeleteBlob(msg.sender, subscriber, blobHash, subscriptionId);
     }
+
+    /// @dev See {IBlobManager-overwriteBlob}.
+    function overwriteBlob(string memory oldHash, AddBlobParams memory params) external {
+        LibBlob.overwriteBlob(oldHash, params);
+        emit OverwriteBlob(msg.sender, oldHash, params.blobHash, params.subscriptionId);
+    }
 }

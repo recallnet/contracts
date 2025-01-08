@@ -990,7 +990,7 @@ curl http://localhost:8001/v1/node | jq '.node_id'
 Or on testnet, you'd replace the URL with public bucket API endpoint
 `https://object-api-ignition-0.hoku.sh`.
 
-###### Delete a blob
+##### Delete a blob
 
 You can a delete a blob you've created with the following, passing the sponsor's address (zero
 address if null), the blob's blake3 hash, and the subscription ID (either the default empty string
@@ -1002,17 +1002,16 @@ cast send --rpc-url $ETH_RPC_URL $BLOBS "deleteBlob(address,string,string)" 0x00
 
 This will emit a `DeleteBlob` event and delete the blob from the network.
 
-##### Get account type
+##### Overwrite a blob
+
+You can overwrite a blob you've created with the following, passing the old blob's blake3 hash, and
+the new blob's parameters.
 
 ```sh
-cast abi-decode "getAccountType(address)(uint64)" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getAccountType(address)" $EVM_ADDRESS)
+cast send --rpc-url $ETH_RPC_URL $BLOBS "overwriteBlob(string,(address,string,string,string,string,uint64,uint64))" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" '(0x0000000000000000000000000000000000000000,"34jgtxo3rtnoolgjurzcvnyw6afl63qkwsx3u75tgrctl3yn4gpq","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","","",6,0)' --private-key $PRIVATE_KEY
 ```
 
-This will return the account's max blob TTL:
-
-```
-86400
-```
+This will emit an `OverwriteBlob` event and overwrite the blob in the network.
 
 ##### Get a blob
 
