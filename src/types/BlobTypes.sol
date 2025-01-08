@@ -48,12 +48,14 @@ struct Approval {
 /// the origin is Alice.
 /// An approval for Bob might be valid from only one contract caller, so long as
 /// the origin is Bob.
+/// @param gasAllowance (uint256): The amount of gas allowance for the account.
 struct Balance {
     uint256 creditFree;
     uint256 creditCommitted;
     address creditSponsor;
     uint64 lastDebitEpoch;
     Approval[] approvals;
+    uint256 gasAllowance;
 }
 
 /// @dev A credit approval from one account to another.
@@ -62,15 +64,12 @@ struct Balance {
 /// @param expiry (uint64): Optional credit approval expiry epoch.
 /// @param creditUsed (uint256): Counter for how much credit has been committed via this approval.
 /// @param gasFeeUsed (uint256): Used to track gas fees paid for by the delegation
-/// @param callerAllowlist (string[]): Optional restriction on caller addresses, e.g., a bucket. The receiver will only
-/// be able to use the approval via an allowlisted caller. If not present, any caller is allowed.
 struct CreditApproval {
     uint256 creditLimit;
     uint256 gasFeeLimit;
     uint64 expiry;
     uint256 creditUsed;
     uint256 gasFeeUsed;
-    address[] callerAllowlist;
 }
 
 /// @dev The stats of the blob actor.
@@ -86,12 +85,13 @@ struct CreditApproval {
 /// @param creditSold (uint256): The total number of credits sold in the subnet.
 /// @param creditCommitted (uint256): The total number of credits committed to active storage in the subnet.
 /// @param creditDebited (uint256): The total number of credits debited in the subnet.
-/// @param blobCreditsPerByteBlock (uint64): The current byte-blocks per atto token rate.
+/// @param tokenCreditRate (uint64): The current byte-blocks per atto token rate.
 /// @param numAccounts (uint64): Total number of debit accounts.
 /// @param numBlobs (uint64): Total number of actively stored blobs.
-/// @param bytesResolving (uint64): Total bytes of all currently resolving blobs.
 /// @param numAdded (uint64): Total number of blobs that are not yet added to the validator's resolve pool.
 /// @param bytesAdded (uint64): Total bytes of all blobs that are not yet added to the validator's resolve pool.
+/// @param numResolving (uint64): Total number of all currently resolving blobs.
+/// @param bytesResolving (uint64): Total bytes of all currently resolving blobs.
 struct SubnetStats {
     uint256 balance;
     uint64 capacityFree;
@@ -102,10 +102,10 @@ struct SubnetStats {
     uint256 tokenCreditRate;
     uint64 numAccounts;
     uint64 numBlobs;
-    uint64 numResolving;
-    uint64 bytesResolving;
     uint64 numAdded;
     uint64 bytesAdded;
+    uint64 numResolving;
+    uint64 bytesResolving;
 }
 
 /// @dev Subnet-wide credit statistics.
@@ -185,8 +185,7 @@ enum BlobStatus {
 }
 
 /// @dev A subscriber and their subscription groups.
-/// @param subscriber (string): The subscriber address as a string value (e.g.,
-/// "f410ftfsva7i2kw6me2k4lc5bn6zx3am3bjg466vg7ji").
+/// @param subscriber (string): The subscriber address as a string value (e.g., "f0124").
 /// @param subscriptionGroup (SubscriptionGroup[]): The subscription groups. See {SubscriptionGroup} for more details.
 struct Subscriber {
     string subscriber;
@@ -208,26 +207,16 @@ struct SubscriptionGroup {
 /// @dev A subscription to a blob.
 /// @param added (uint64): The block number when the subscription was added.
 /// @param expiry (uint64): The block number when the subscription will expire.
-/// @param autoRenew (bool): Whether the subscription will automatically renew.
 /// @param source (string): The source Iroh node ID used for ingestion.
-/// @param delegate (Delegate): The delegate origin and caller that may have created the subscription via a credit
-/// approval.
+/// @param delegate (address): The delegate origin that may have created the subscription via a credit approval.
+/// approval (else, zero address if null)
 /// @param failed (bool): Whether the subscription failed due to an issue resolving the target blob.
 struct Subscription {
     uint64 added;
     uint64 expiry;
-    bool autoRenew;
     string source;
-    Delegate delegate;
+    address delegate;
     bool failed;
-}
-
-/// @dev The delegate origin and caller that may have created the subscription via a credit approval.
-/// @param origin (address): The delegate origin.
-/// @param caller (address): The caller address.
-struct Delegate {
-    address origin;
-    address caller;
 }
 
 /// @dev Pending blob information. Represents a Rust `(Hash, HashSet<(Address, SubscriptionId, PublicKey)>)`

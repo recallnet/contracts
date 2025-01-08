@@ -5,6 +5,7 @@ import {BytesCBOR} from "@filecoin-solidity/v0.8/cbor/BytesCbor.sol";
 import {FilecoinCBOR, Misc} from "@filecoin-solidity/v0.8/cbor/FilecoinCbor.sol";
 import {CommonTypes} from "@filecoin-solidity/v0.8/types/CommonTypes.sol";
 import {Actor} from "@filecoin-solidity/v0.8/utils/Actor.sol";
+import {FilAddressIdConverter} from "@filecoin-solidity/v0.8/utils/FilAddressIdConverter.sol";
 import {FilAddresses} from "@filecoin-solidity/v0.8/utils/FilAddresses.sol";
 
 import {ActorError, InvalidValue} from "../errors/WasmErrors.sol";
@@ -139,20 +140,47 @@ library LibWasm {
         return data[0] == 0x01 || data[0] == 0xf5;
     }
 
-    /// @dev Decode CBOR encoded Filecoin address bytes to an Ethereum address.
-    /// @param addr The encoded CBOR Filecoin address. Example: 0x040a15d34aaf54267db7d7c367839aaf71a00a2c6a65
-    /// @return result The decoded Ethereum address. Example: 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
-    // TODO: we need to figure out handling `t2` addresses. For example `t2yxnetcwoaljcrctdk5bm3v3bcmg6o7kzxol4zwi` will
-    // get interpreted as `0xda498aCe02D2288A635742cdd761130De77D5900`, which is not valid since a `t2` address does not
-    // have an EVM address counterpart. But, this will be resolved with the issue below, so we can ignore, for now.
-    // See: https://github.com/hokunet/rust-hoku/issues/39
-    function decodeCborAddress(bytes memory addr) internal pure returns (address) {
+    /// @dev Decode CBOR encoded Filecoin address bytes to an Ethereum address. Valid addresses are either delegated
+    /// addresses (0x040a) or ID addresses (0x00).
+    /// @param addr The encoded CBOR Filecoin address. Example: 0x040a15d34aaf54267db7d7c367839aaf71a00a2c6a65 or
+    /// 0x00ED01
+    /// @return result The decoded Ethereum address. Example: 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65 or
+    /// 0xFf000000000000000000000000000000000000ed
+    function decodeCborAddress(bytes memory addr) internal view returns (address) {
         address result;
-        assembly {
+        // Check if the bytes starts with `040a`, which is the protocol/namespace for a delegated addresses
+        if (addr[0] == 0x04 && addr[1] == 0x0a) {
             // Skip 32 byte prefix, the first two FVM-specific bytes (0x04, 0x0a), and shift to the last 20 bytes
-            result := shr(96, mload(add(addr, 34)))
+            assembly {
+                result := shr(96, mload(add(addr, 34)))
+            }
+        } else if (addr[0] == 0x00) {
+            // Otherwise, it should be an ID address
+            result = decodeCborActorIdBytesToAddress(addr);
+        } else {
+            revert InvalidValue("Invalid address length or protocol");
         }
         return result;
+    }
+
+    /// @dev Decode CBOR encoded actor ID bytes to an Ethereum address.
+    /// @param data The encoded CBOR actor ID bytes.
+    /// @return result The decoded Ethereum address.
+    function decodeCborActorIdBytesToAddress(bytes memory data) internal view returns (address) {
+        // First, decode the LEB128 bytes value to the actor ID
+        uint64 result = 0;
+        uint64 shift = 0;
+
+        // Skip the first byte, which is `0x00` ID address protocol indicator
+        for (uint64 i = 1; i < data.length; i++) {
+            uint64 b = uint8(data[i]);
+            result |= (b & 0x7f) << shift;
+            if (b & 0x80 == 0) {
+                break;
+            }
+            shift += 7;
+        }
+        return FilAddressIdConverter.toAddress(result);
     }
 
     /// @dev Decode a CBOR encoded Wasm actor address to a string.
@@ -384,16 +412,25 @@ library LibWasm {
     /// @dev Prepare address parameter for a method call by serializing it.
     /// @param addr The address of the account.
     /// @return encoded The serialized address as CBOR bytes.
-    // TODO: figure out if a `t2` address can work here
     function encodeCborAddress(address addr) internal pure returns (bytes memory) {
         CommonTypes.FilAddress memory filAddr = FilAddresses.fromEthAddress(addr);
         return FilecoinCBOR.serializeAddress(filAddr);
+    }
+
+    /// @dev Convert an address to an actor ID.
+    /// @param addr The address of the actor.
+    /// @return id The actor ID.
+    function addressToActorId(address addr) internal view returns (uint64) {
+        (bool success, uint64 id) = FilAddressIdConverter.getActorID(addr);
+        if (!success) revert InvalidValue("Cannot convert to actor ID");
+        return id;
     }
 
     /// @dev Prepare actor address parameter for a method call by serializing it. Assumes the address is a valid `t2`
     /// address.
     /// @param addr The address of the Wasm actor (e.g, `t2...`).
     /// @return encoded The serialized Wasm actor address as CBOR bytes.
+    // Note: this method is not longer used since all actors are now encoded as actor IDs
     function encodeCborActorAddress(string memory addr) internal pure returns (bytes memory) {
         bytes memory addrBytes = bytes(addr);
         bytes1 protocol = addrBytes[1]; // Second value of `t2` is the protocol
@@ -650,6 +687,7 @@ library LibWasm {
     /// @param methodNum The method number.
     /// @param params The parameters.
     /// @return data The data returned from the actor.
+    // Note: this method is not longer used since all actors are now encoded as actor IDs
     function readFromWasmActorByAddress(bytes memory addr, uint64 methodNum, bytes memory params)
         internal
         view
@@ -698,6 +736,7 @@ library LibWasm {
     /// @param methodNum The method number.
     /// @param params The parameters.
     /// @return data The data returned from the actor.
+    // Note: this method is not longer used since all actors are now encoded as actor IDs
     function writeToWasmActorByAddress(bytes memory addr, uint64 methodNum, bytes memory params)
         internal
         returns (bytes memory)

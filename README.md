@@ -333,6 +333,8 @@ accepts "optional" arguments. All of the method parameters and return types can 
 
 - `getAccount(address)`: Get credit account info for an address.
 - `getCreditStats()`: Get credit stats.
+- `getCreditApproval(address,address)`: Get credit approval `from` one account `to` another, if it
+  exists.
 - `getCreditBalance(address)`: Get credit balance for an address.
 - `buyCredit()`: Buy credit for the `msg.sender`.
 - `buyCredit(address)`: Buy credit for the given address.
@@ -383,13 +385,13 @@ We can get the credit account info for the address at `EVM_ADDRESS` (the variabl
 you could provide any account's EVM public key that exists in the subnet.
 
 ```sh
-cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256,address[]))[],uint64,uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)
+cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256))[],uint64,uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)
 ```
 
 This will return the following values:
 
 ```
-(6, 4999999999999999454276000000000000000000 [4.999e39], 504150000000000000000000 [5.041e23], 0x0000000000000000000000000000000000000000, 7200, [("f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi", (12345000000000000000000 [1.234e22], 987654321 [9.876e8], 11722 [1.172e4], 0, 0, [0x14dC79964da2C08b23698B3D3cc7Ca32193d9955, 0x976EA74026E726554dB657fA54763abd0C3a0aa9]))], 86400 [8.64e4], 4999999984799342175554 [4.999e21])
+(6, 4999999999999999454276000000000000000000 [4.999e39], 504150000000000000000000 [5.041e23], 0x0000000000000000000000000000000000000000, 7200, [("f0127", (12345000000000000000000 [1.234e22], 987654321 [9.876e8], 11722 [1.172e4], 0, 0))], 86400 [8.64e4], 4999999984799342175554 [4.999e21])
 ```
 
 Which maps to the `Account` struct:
@@ -412,7 +414,7 @@ approvals authorized. We can expand this to be interpreted as the following:
 
 ```solidity
 struct Approval {
-    string to; // f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi
+    string to; // f0127
     CreditApproval approval; // See CreditApproval struct below
 }
 
@@ -422,7 +424,6 @@ struct CreditApproval {
     uint64 expiry; // 11722
     uint256 creditUsed; // 0
     uint256 gasFeeUsed; // 0
-    address[] callerAllowlist; // [0x14dC79964da2C08b23698B3D3cc7Ca32193d9955, 0x976EA74026E726554dB657fA54763abd0C3a0aa9]
 }
 ```
 
@@ -457,43 +458,68 @@ struct CreditStats {
 }
 ```
 
-##### Get credit balance for an account
+##### Get credit approval for an account
 
-Fetch the credit balance for the address at `EVM_ADDRESS`:
+Get the credit approval from the address at `EVM_ADDRESS` to the address at `RECEIVER_ADDR`:
 
 ```sh
-cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256,address[]))[]))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditBalance(address)" $EVM_ADDRESS)
+cast abi-decode "getCreditApproval(address,address)((uint256,uint256,uint64,uint256,uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditApproval(address,address)" $EVM_ADDRESS $RECEIVER_ADDR)
 ```
 
 This will return the following values:
 
 ```
-(4999999999999999454276000000000000000000 [4.999e39], 504150000000000000000000 [5.041e23], 0x0000000000000000000000000000000000000000, 7200, [("f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi", (12345000000000000000000 [1.234e22], 987654321 [9.876e8], 11722 [1.172e4], 0, 0, [0x14dC79964da2C08b23698B3D3cc7Ca32193d9955, 0x976EA74026E726554dB657fA54763abd0C3a0aa9]))])
+(100000000000000000000000000 [1e26], 1000, 7275, 0, 0)
+```
+
+Which maps to the `CreditApproval` struct:
+
+```solidity
+struct CreditApproval {
+    uint256 creditLimit; // 100000000000000000000000000
+    uint256 gasFeeLimit; // 1000
+    uint64 expiry; // 7275
+    uint256 creditUsed; // 0
+    uint256 gasFeeUsed; // 0
+}
+```
+
+##### Get credit balance for an account
+
+Fetch the credit balance for the address at `EVM_ADDRESS`:
+
+```sh
+cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256))[],uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditBalance(address)" $EVM_ADDRESS)
+```
+
+This will return the following values:
+
+```
+(5001999999999998208637000000000000000000 [5.001e39], 518400000000000000000000 [5.184e23], 0x0000000000000000000000000000000000000000, 6932, [("f0127", (0, 0, 0, 0, 0))], 1)
 ```
 
 Which maps to the `Balance` struct:
 
 ```solidity
 struct Balance {
-    uint256 creditFree; // 4999999999999999454276000000000000000000
-    uint256 creditCommitted; // 504150000000000000000000
+    uint256 creditFree; // 5001999999999998208637000000000000000000
+    uint256 creditCommitted; // 518400000000000000000000
     address creditSponsor; // 0x0000000000000000000000000000000000000000 (null)
-    uint64 lastDebitEpoch; // 7200
+    uint64 lastDebitEpoch; // 6932
     Approval[] approvals; // See Approval struct below
 }
 
 struct Approval {
-    string to; // f410fcxjuvl2uez63pv6dm6bzvl3ruafcy2tfvbdazpi
+    string to; // f0127
     CreditApproval approval; // See CreditApproval struct below
 }
 
 struct CreditApproval {
-    uint256 creditLimit; // 12345000000000000000000
-    uint256 gasFeeLimit; // 987654321
-    uint64 expiry; // 11722
+    uint256 creditLimit; // 0
+    uint256 gasFeeLimit; // 0
+    uint64 expiry; // 0
     uint256 creditUsed; // 0
     uint256 gasFeeUsed; // 0
-    address[] callerAllowlist; // [0x976EA74026E726554dB657fA54763abd0C3a0aa9, 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955]
 }
 ```
 
@@ -544,7 +570,7 @@ address.
 
 > [!NOTE] The `caller` can, in theory, be an EVM or WASM contract address. However, the logic
 > assumes only an EVM address is provided. Namely, it is _generally_ possible to restrict the
-> `caller` to a specific WASM contract (e.g., bucket with `t2...` prefix), but the current Solidity
+> `caller` to a specific WASM contract (e.g., bucket with `t0...` prefix), but the current Solidity
 > implementation does not account for this and only assumes an EVM address.
 
 Lastly, if we want to include all of the optional fields, we can use the following command:
@@ -612,23 +638,23 @@ The following methods are available on the credit contract, shown with their fun
   metadata.
 - `listBuckets()`: List all buckets for the sender.
 - `listBuckets(address)`: List all buckets for the specified address.
-- `addObject(string,string,string,string,uint64)`: Add an object to a bucket and associated object
+- `addObject(address,string,string,string,uint64)`: Add an object to a bucket and associated object
   upload parameters. The first value is the bucket address, the subsequent values are all of the
   "required" values in `AddObjectParams` (`source` node ID, `key`, `blobHash`, and `size`).
-- `addObject(string,(string,string,string,string,uint64,uint64,(string,string)[],bool))`: Add an
+- `addObject(address,(string,string,string,string,uint64,uint64,(string,string)[],bool))`: Add an
   object to a bucket (first value) and associated object upload parameters (second value) as the
   `AddObjectParams` struct, described in more detail below.
-- `deleteObject((string,string)`: Remove an object from a bucket.
-- `getObject(string,string)`: Get an object from a bucket.
-- `queryObjects(string)`: Query the bucket (`t2...` string address) with no prefix (defaults to `/`
-  delimiter and the default offset and limit in the underlying WASM layer).
-- `queryObjects(string,string)`: Query the bucket with a prefix (e.g., `<prefix>/` string value),
+- `deleteObject(address,string)`: Remove an object from a bucket.
+- `getObject(address,string)`: Get an object from a bucket.
+- `queryObjects(address)`: Query the bucket (hex address) with no prefix (defaults to `/` delimiter
+  and the default offset and limit in the underlying WASM layer).
+- `queryObjects(address,string)`: Query the bucket with a prefix (e.g., `<prefix>/` string value),
   but no delimiter, offset, or limit.
-- `queryObjects(string,string,string)`: Query the bucket with a custom delimiter (e.g., something
+- `queryObjects(address,string,string)`: Query the bucket with a custom delimiter (e.g., something
   besides the default `/` delimeter value), but default offset and limit.
-- `queryObjects(string,string,string,uint64)`: Query the bucket with a prefix and delimiter, but no
+- `queryObjects(address,string,string,uint64)`: Query the bucket with a prefix and delimiter, but no
   limit.
-- `queryObjects(string,string,string,uint64,uint64)`: Query the bucket with a prefix, delimiter,
+- `queryObjects(address,string,string,uint64,uint64)`: Query the bucket with a prefix, delimiter,
   offset, and limit.
 
 #### Examples
@@ -680,13 +706,13 @@ You can list buckets for a specific address with the following command. Note you
 overloaded `listBuckets()` to list buckets for the sender.
 
 ```sh
-cast abi-decode "listBuckets(address)((uint8,string,(string,string)[])[])" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "listBuckets(address)" $EVM_ADDRESS)
+cast abi-decode "listBuckets(address)((uint8,address,(string,string)[])[])" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "listBuckets(address)" $EVM_ADDRESS)
 ```
 
 This will return the following output:
 
 ```
-(0, "t2pdadfrian5jrvtk2sulbc7uuyt5cnxmfdmet3ri", [("foo", "bar")])
+(0, 0xff000000000000000000000000000000000000ed, [("foo", "bar")])
 ```
 
 Which maps to an array of the `Machine` struct:
@@ -694,7 +720,7 @@ Which maps to an array of the `Machine` struct:
 ```solidity
 struct Machine {
     Kind kind; // See `Kind` struct below
-    string address; // t2pdadfrian5jrvtk2sulbc7uuyt5cnxmfdmet3ri
+    address addr; // 0xff000000000000000000000000000000000000ed
     KeyValue[] metadata; // See `KeyValue` struct below
 }
 
@@ -715,7 +741,7 @@ Given a bucket address, you can read or mutate the objects in the bucket. First,
 object, setting `BUCKET_ADDR` to an existing bucket from the command above:
 
 ```sh
-export BUCKET_ADDR=t2pdadfrian5jrvtk2sulbc7uuyt5cnxmfdmet3ri
+export BUCKET_ADDR=0xff0000000000000000000000000000000000008f
 ```
 
 Adding an object is a bit involved. You need to stage data offchain to a `source` bucket storage
@@ -785,7 +811,7 @@ Similar to [getting an object](#get-an-object), you can delete an object with th
 specifying the bucket and key for the mutating transaction:
 
 ```sh
-cast send --rpc-url $ETH_RPC_URL $BUCKETS "deleteObject(string,string)" $BUCKET_ADDR "hello/world" --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $BUCKETS "deleteObject(address,string)" $BUCKET_ADDR "hello/world" --private-key $PRIVATE_KEY
 ```
 
 ##### Get an object
@@ -795,7 +821,7 @@ returned. Thus, the response simply includes a single value. The `BUCKET_ADDR` i
 above.
 
 ```sh
-cast abi-decode "getObject(string,string)((string,string,uint64,uint64,(string,string)[]))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "getObject(string,string)" $BUCKET_ADDR "hello/world")
+cast abi-decode "getObject(address,string)((string,string,uint64,uint64,(string,string)[]))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "getObject(address,string)" $BUCKET_ADDR "hello/world")
 ```
 
 This will return the following response:
@@ -826,7 +852,7 @@ struct KeyValue {
 We'll continue using the same `BUCKET_ADDR` from the previous examples.
 
 ```sh
-cast abi-decode "queryObjects(string)(((string,(string,uint64,(string,string)[]))[],string[],string))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(string)" $BUCKET_ADDR)
+cast abi-decode "queryObjects(address)(((string,(string,uint64,(string,string)[]))[],string[],string))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(address)" $BUCKET_ADDR)
 ```
 
 This will return the following `Query` output:
@@ -855,7 +881,7 @@ export PREFIX="hello/"
 Now, we can query for these objects with the following command:
 
 ```sh
-cast abi-decode "queryObjects(string,string)(((string,(string,uint64,(string,string)[]))[],string[],string))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(string,string)" $BUCKET_ADDR $PREFIX)
+cast abi-decode "queryObjects(address,string)(((string,(string,uint64,(string,string)[]))[],string[],string))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(address,string)" $BUCKET_ADDR $PREFIX)
 ```
 
 This will return the following `Query` output:
@@ -920,6 +946,8 @@ accepts "optional" arguments. All of the method parameters and return types can 
 - `deleteBlob(address,string,string)`: Delete a blob from the network, passing the sponsor's
   address, the blob hash, and the subscription ID (either `""` if none was originally provided, or
   the string that was chosen during `addBlob`).
+- `overwriteBlob(string,AddBlobParams memory)`: Overwrite a blob from the network, passing the old
+  blob hash, and the new blob parameters.
 - `getAccountType(address)`: Get the account's max blob TTL.
 - `getBlob(string)`: Get information about a specific blob at its blake3 hash.
 - `getBlobStatus(address,string,string)`: Get a blob's status, providing its credit sponsor (i.e.,
@@ -992,7 +1020,7 @@ curl http://localhost:8001/v1/node | jq '.node_id'
 Or on testnet, you'd replace the URL with public bucket API endpoint
 `https://object-api-ignition-0.hoku.sh`.
 
-###### Delete a blob
+##### Delete a blob
 
 You can a delete a blob you've created with the following, passing the sponsor's address (zero
 address if null), the blob's blake3 hash, and the subscription ID (either the default empty string
@@ -1004,28 +1032,27 @@ cast send --rpc-url $ETH_RPC_URL $BLOBS "deleteBlob(address,string,string)" 0x00
 
 This will emit a `DeleteBlob` event and delete the blob from the network.
 
-##### Get account type
+##### Overwrite a blob
+
+You can overwrite a blob you've created with the following, passing the old blob's blake3 hash, and
+the new blob's parameters.
 
 ```sh
-cast abi-decode "getAccountType(address)(uint64)" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getAccountType(address)" $EVM_ADDRESS)
+cast send --rpc-url $ETH_RPC_URL $BLOBS "overwriteBlob(string,(address,string,string,string,string,uint64,uint64))" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" '(0x0000000000000000000000000000000000000000,"cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","","",6,0)' --private-key $PRIVATE_KEY
 ```
 
-This will return the account's max blob TTL:
-
-```
-86400
-```
+This will emit an `OverwriteBlob` event and overwrite the blob in the network.
 
 ##### Get a blob
 
 ```sh
-cast abi-decode "getBlob(string)((uint64,string,(string,(string,(uint64,uint64,bool,string,(address,address),bool))[])[],uint8))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
+cast abi-decode "getBlob(string)((uint64,string,(string,(string,(uint64,uint64,string,address,bool))[])[],uint8))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
 ```
 
 This will return the following response:
 
 ```sh
-(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", [("f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq", [("foo", (4825, 91225 [9.122e4], false, "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq", (0x0000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000), false))])], 2)
+(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", [("f0124", [("foo", (4825, 91225 [9.122e4], "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq", 0x0000000000000000000000000000000000000000, false))])], 2)
 ```
 
 Which maps to the `Blob` struct:
@@ -1039,7 +1066,7 @@ struct Blob {
 }
 
 struct Subscriber {
-    string subscriber; // f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq
+    string subscriber; // f0124
     SubscriptionGroup[] subscriptionGroup; // See `SubscriptionGroup` struct below
 }
 
@@ -1051,15 +1078,9 @@ struct SubscriptionGroup {
 struct Subscription {
     uint64 added; // 4825
     uint64 expiry; // 91225
-    bool autoRenew; // false
     string source; // "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq"
-    Delegate delegate; // See `Delegate` struct below
+    address delegate; // 0x0000000000000000000000000000000000000000
     bool failed; // false
-}
-
-struct Delegate {
-    address origin; // Null value (0x0000000000000000000000000000000000000000)
-    address caller; // Null value (0x0000000000000000000000000000000000000000)
 }
 ```
 

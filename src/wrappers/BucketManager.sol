@@ -41,7 +41,7 @@ contract BucketManager is IBucketManager {
 
     /// @dev See {IBucketManager-addObject}.
     function addObject(
-        string memory bucket,
+        address bucket,
         string memory source,
         string memory key,
         string memory blobHash,
@@ -63,34 +63,34 @@ contract BucketManager is IBucketManager {
     }
 
     /// @dev See {IBucketManager-addObject}.
-    function addObject(string memory bucket, AddObjectParams memory params) external {
+    function addObject(address bucket, AddObjectParams memory params) external {
         LibBucket.addObject(bucket, params);
         emit AddObject(msg.sender, bucket, params.key);
     }
 
     /// @dev See {IBucketManager-deleteObject}.
-    function deleteObject(string memory bucket, string memory key) external {
+    function deleteObject(address bucket, string memory key) external {
         LibBucket.deleteObject(bucket, key);
         emit DeleteObject(msg.sender, bucket, key);
     }
 
     /// @dev See {IBucketManager-getObject}.
-    function getObject(string memory bucket, string memory key) external view returns (ObjectValue memory) {
+    function getObject(address bucket, string memory key) external view returns (ObjectValue memory) {
         return LibBucket.getObject(bucket, key);
     }
 
     /// @dev See {IBucketManager-queryObjects}.
-    function queryObjects(string memory bucket) external view returns (Query memory) {
+    function queryObjects(address bucket) external view returns (Query memory) {
         return LibBucket.queryObjects(bucket, "", "/", "", 0);
     }
 
     /// @dev See {IBucketManager-queryObjects}.
-    function queryObjects(string memory bucket, string memory prefix) external view returns (Query memory) {
+    function queryObjects(address bucket, string memory prefix) external view returns (Query memory) {
         return LibBucket.queryObjects(bucket, prefix, "/", "", 0);
     }
 
     /// @dev See {IBucketManager-queryObjects}.
-    function queryObjects(string memory bucket, string memory prefix, string memory delimiter)
+    function queryObjects(address bucket, string memory prefix, string memory delimiter)
         external
         view
         returns (Query memory)
@@ -99,7 +99,7 @@ contract BucketManager is IBucketManager {
     }
 
     /// @dev See {IBucketManager-queryObjects}.
-    function queryObjects(string memory bucket, string memory prefix, string memory delimiter, string memory startKey)
+    function queryObjects(address bucket, string memory prefix, string memory delimiter, string memory startKey)
         external
         view
         returns (Query memory)
@@ -109,7 +109,7 @@ contract BucketManager is IBucketManager {
 
     /// @dev See {IBucketManager-queryObjects}.
     function queryObjects(
-        string memory bucket,
+        address bucket,
         string memory prefix,
         string memory delimiter,
         string memory startKey,

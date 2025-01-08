@@ -12,7 +12,6 @@ import {
     BlobTuple,
     CreditApproval,
     CreditStats,
-    Delegate,
     StorageStats,
     SubnetStats,
     Subscriber,
@@ -29,24 +28,28 @@ library LibBlob {
 
     // Constants for the actor and method IDs of the Hoku Blobs actor
     uint64 internal constant ACTOR_ID = 66;
-    // General getters
-    uint64 internal constant METHOD_GET_ACCOUNT = 3435393067;
-    uint64 internal constant METHOD_GET_ACCOUNT_TYPE = 2986222103;
-    uint64 internal constant METHOD_GET_STATS = 188400153;
-    // Credit methods
+
+    // User methods
+    uint64 internal constant METHOD_ADD_BLOB = 913855558;
     uint64 internal constant METHOD_APPROVE_CREDIT = 2276438360;
     uint64 internal constant METHOD_BUY_CREDIT = 1035900737;
-    uint64 internal constant METHOD_SET_CREDIT_SPONSOR = 866259733;
-    uint64 internal constant METHOD_REVOKE_CREDIT = 37550845;
-    // Blob methods
-    uint64 internal constant METHOD_ADD_BLOB = 913855558;
-    uint64 internal constant METHOD_DELETE_BLOB = 4230608948;
+    uint64 internal constant METHOD_GET_ACCOUNT = 3435393067;
     uint64 internal constant METHOD_GET_BLOB = 1739171512;
+    uint64 internal constant METHOD_GET_CREDIT_APPROVAL = 4218154481;
+    uint64 internal constant METHOD_DELETE_BLOB = 4230608948;
+    uint64 internal constant METHOD_OVERWRITE_BLOB = 609646161;
+    uint64 internal constant METHOD_REVOKE_CREDIT = 37550845;
+    uint64 internal constant METHOD_SET_ACCOUNT_SPONSOR = 228279820;
+
+    // System methods
     uint64 internal constant METHOD_GET_ADDED_BLOBS = 2462124090;
     uint64 internal constant METHOD_GET_BLOB_STATUS = 3505892271;
     uint64 internal constant METHOD_GET_PENDING_BLOBS = 799531123;
     uint64 internal constant METHOD_GET_PENDING_BLOBS_COUNT = 1694235671;
     uint64 internal constant METHOD_GET_PENDING_BYTES_COUNT = 3795566289;
+
+    // Metrics methods
+    uint64 internal constant METHOD_GET_STATS = 188400153;
 
     /// @dev Helper function to decode the subnet stats from CBOR to solidity.
     /// @param data The encoded CBOR array of stats.
@@ -63,10 +66,10 @@ library LibBlob {
         stats.tokenCreditRate = decodeTokenCreditRate(decoded[6]);
         stats.numAccounts = decoded[7].decodeCborBytesToUint64();
         stats.numBlobs = decoded[8].decodeCborBytesToUint64();
-        stats.numResolving = decoded[9].decodeCborBytesToUint64();
-        stats.bytesResolving = decoded[10].decodeCborBytesToUint64();
-        stats.numAdded = decoded[11].decodeCborBytesToUint64();
-        stats.bytesAdded = decoded[12].decodeCborBytesToUint64();
+        stats.numAdded = decoded[9].decodeCborBytesToUint64();
+        stats.bytesAdded = decoded[10].decodeCborBytesToUint64();
+        stats.numResolving = decoded[11].decodeCborBytesToUint64();
+        stats.bytesResolving = decoded[12].decodeCborBytesToUint64();
     }
 
     /// @dev Helper function to decode an account from CBOR to solidity.
@@ -98,12 +101,6 @@ library LibBlob {
         approval.expiry = decoded[2].decodeCborBytesToUint64();
         approval.creditUsed = decoded[3].decodeCborBytesToUint256();
         approval.gasFeeUsed = decoded[4].decodeCborBytesToUint256();
-        // TODO: we assume the allowlist addresses are EVM addresses, but in reality, they can be FVM addresses.
-        bytes[] memory callerAllowlist = decoded[5].decodeCborArrayToBytes();
-        approval.callerAllowlist = new address[](callerAllowlist.length);
-        for (uint256 i = 0; i < callerAllowlist.length; i++) {
-            approval.callerAllowlist[i] = callerAllowlist[i].decodeCborAddress();
-        }
     }
 
     /// @dev Helper function to decode approvals from CBOR to solidity.
@@ -146,19 +143,6 @@ library LibBlob {
         return (decoded[0][1].length == 1 && decoded[0][1][0] == hex"00") ? "" : string(decoded[0][1]);
     }
 
-    /// @dev Decode a delegate from CBOR.
-    /// @param data The encoded CBOR array of a delegate.
-    /// @return origin The delegate origin address
-    /// @return caller The delegate caller address
-    function decodeDelegate(bytes memory data) internal view returns (address origin, address caller) {
-        if (data.isCborNull()) {
-            return (address(0), address(0));
-        }
-        bytes[] memory decoded = data.decodeCborArrayToBytes();
-        origin = decoded[0].decodeCborAddress();
-        caller = decoded[1].decodeCborAddress();
-    }
-
     /// @dev Decode a subscription from CBOR.
     /// @param data The encoded CBOR array of a subscription.
     /// @return subscription The decoded subscription.
@@ -166,10 +150,9 @@ library LibBlob {
         bytes[] memory decoded = data.decodeCborArrayToBytes();
         subscription.added = decoded[0].decodeCborBytesToUint64();
         subscription.expiry = decoded[1].decodeCborBytesToUint64();
-        subscription.autoRenew = decoded[2].decodeCborBool();
-        subscription.source = string(decoded[3].decodeCborBlobHashOrNodeId());
-        (subscription.delegate.origin, subscription.delegate.caller) = decodeDelegate(decoded[4]);
-        subscription.failed = decoded[5].decodeCborBool();
+        subscription.source = string(decoded[2].decodeCborBlobHashOrNodeId());
+        subscription.delegate = decoded[3].isCborNull() ? address(0) : decoded[3].decodeCborAddress();
+        subscription.failed = decoded[4].decodeCborBool();
     }
 
     /// @dev Decode a subscription group from CBOR.
@@ -293,7 +276,7 @@ library LibBlob {
     /// @param from The address of the account.
     /// @param sponsor The address of the sponsor. Use zero address if unused.
     /// @return encoded The encoded params.
-    function encodeSetCreditSponsorParams(address from, address sponsor) internal pure returns (bytes memory) {
+    function encodeSetAccountSponsorParams(address from, address sponsor) internal pure returns (bytes memory) {
         bytes[] memory encoded = new bytes[](2);
         encoded[0] = from.encodeCborAddress();
         encoded[1] = sponsor == address(0) ? LibWasm.encodeCborNull() : sponsor.encodeCborAddress();
@@ -354,6 +337,7 @@ library LibBlob {
         balance.creditSponsor = account.creditSponsor;
         balance.lastDebitEpoch = account.lastDebitEpoch;
         balance.approvals = account.approvals;
+        balance.gasAllowance = account.gasAllowance;
     }
 
     /// @dev Helper function to convert subnet stats to storage stats.
@@ -406,16 +390,6 @@ library LibBlob {
         return decodeAccount(data);
     }
 
-    /// @dev Get the maximum TTL for blobs for an account.
-    /// @param addr The address of the account.
-    /// @return ttl The maximum TTL for blobs for the account. Either default (86400), reduced (0), or extended
-    /// (9223372036854775807) with units being seconds.
-    function getAccountType(address addr) public view returns (uint64) {
-        bytes memory params = addr.encodeCborAddress();
-        bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_ACCOUNT_TYPE, params);
-        return data.decodeCborByteStringToUint64();
-    }
-
     /// @dev Get the storage usage for an account.
     /// @param addr The address of the account.
     /// @return usage The storage usage for the account.
@@ -436,6 +410,19 @@ library LibBlob {
     function getCreditStats() external view returns (CreditStats memory stats) {
         SubnetStats memory subnetStats = getSubnetStats();
         return subnetStatsToCreditStats(subnetStats);
+    }
+
+    /// @dev Get the credit approval from one account to another, if it exists.
+    /// @param from The address of the account.
+    /// @param to The address of the account to check the approval for.
+    /// @return approval The credit approval for the account.
+    function getCreditApproval(address from, address to) external view returns (CreditApproval memory approval) {
+        bytes[] memory encoded = new bytes[](2);
+        encoded[0] = from.encodeCborAddress();
+        encoded[1] = to.encodeCborAddress();
+        bytes memory params = encoded.encodeCborArray();
+        bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_CREDIT_APPROVAL, params);
+        return decodeCreditApproval(data);
     }
 
     /// @dev Get the credit balance of an account.
@@ -537,14 +524,6 @@ library LibBlob {
         return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_APPROVE_CREDIT, params);
     }
 
-    /// @dev Set the credit sponsor for an account.
-    /// @param from The address of the account.
-    /// @param sponsor The address of the sponsor. Use zero address if unused.
-    function setCreditSponsor(address from, address sponsor) external returns (bytes memory data) {
-        bytes memory params = encodeSetCreditSponsorParams(from, sponsor);
-        return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_SET_CREDIT_SPONSOR, params);
-    }
-
     /// @dev Revoke credits for an account. Includes optional fields, which if set to zero, will be encoded as null.
     /// @param from The address of the account that owns the credits.
     /// @param to The address of the account to revoke credits for.
@@ -553,6 +532,14 @@ library LibBlob {
         bytes memory params = encodeRevokeCreditParams(from, to, caller);
         // Note: response bytes are always empty
         LibWasm.writeToWasmActor(ACTOR_ID, METHOD_REVOKE_CREDIT, params);
+    }
+
+    /// @dev Set the credit sponsor for an account.
+    /// @param from The address of the account.
+    /// @param sponsor The address of the sponsor. Use zero address if unused.
+    function setAccountSponsor(address from, address sponsor) external returns (bytes memory data) {
+        bytes memory params = encodeSetAccountSponsorParams(from, sponsor);
+        return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_SET_ACCOUNT_SPONSOR, params);
     }
 
     /// @dev Add a blob to the subnet.
@@ -575,5 +562,16 @@ library LibBlob {
         bytes memory params = encoded.encodeCborArray();
         // Note: response bytes are always empty
         LibWasm.writeToWasmActor(ACTOR_ID, METHOD_DELETE_BLOB, params);
+    }
+
+    /// @dev Overwrite a blob in the subnet by deleting and adding within a single transaction.
+    /// @param oldHash The blake3 hash of the blob to be deleted.
+    /// @param params The parameters for adding a blob.
+    function overwriteBlob(string memory oldHash, AddBlobParams memory params) external returns (bytes memory data) {
+        bytes[] memory encoded = new bytes[](2);
+        encoded[0] = oldHash.encodeCborBlobHashOrNodeId();
+        encoded[1] = encodeAddBlobParams(params);
+        bytes memory _params = encoded.encodeCborArray();
+        return LibWasm.writeToWasmActor(ACTOR_ID, METHOD_OVERWRITE_BLOB, _params);
     }
 }
