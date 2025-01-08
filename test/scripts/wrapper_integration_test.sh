@@ -7,10 +7,11 @@
 set -e # Exit on any error
 
 # Environment setup
-ETH_RPC_URL="http://localhost:8645"
-PRIVATE_KEY="0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6"
+ETH_RPC_URL="${ETH_RPC_URL:-http://localhost:8645}"
+PRIVATE_KEY="${PRIVATE_KEY:-0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6}"
+OBJECT_API_URL="${OBJECT_API_URL:-http://localhost:8001}"
 EVM_ADDRESS=$(cast wallet address $PRIVATE_KEY)
-SOURCE=$(curl -X GET http://localhost:8001/v1/node | jq '.node_id' | tr -d '"')
+SOURCE=$(curl -X GET $OBJECT_API_URL/v1/node | jq '.node_id' | tr -d '"')
 DIVIDER=$'\n============================\n'
 
 echo "Running tests with environment:"
