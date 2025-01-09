@@ -9,12 +9,7 @@ import {Account, Balance, CreditApproval, CreditStats} from "../types/BlobTypes.
 interface ICreditManager {
     /// @dev Emitted when an account approves credits.
     event ApproveCredit(
-        address indexed from,
-        address indexed to,
-        address[] indexed caller,
-        uint256 creditLimit,
-        uint256 gasFeeLimit,
-        uint64 ttl
+        address indexed from, address indexed to, address[] caller, uint256 creditLimit, uint256 gasFeeLimit, uint64 ttl
     );
 
     /// @dev Emitted when an account buys credits.
