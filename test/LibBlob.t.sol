@@ -66,13 +66,16 @@ contract LibBlobTest is Test {
         assertEq(account.creditSponsor, address(0));
         assertEq(account.lastDebitEpoch, 6196);
         assertEq(account.approvals.length, 2);
-        assertEq(account.approvals[0].to, "f0125");
+        // Note: tests will always show this as a masked ID address, but in reality, it's a looked up delegated address
+        // This is because tests don't access the delegated address lookup precompile via the FVM runtime
+        assertEq(account.approvals[0].to, 0xFF0000000000000000000000000000000000007D);
         assertEq(account.approvals[0].approval.creditLimit, 0);
         assertEq(account.approvals[0].approval.gasFeeLimit, 0);
         assertEq(account.approvals[0].approval.expiry, 0);
         assertEq(account.approvals[0].approval.creditUsed, 0);
         assertEq(account.approvals[0].approval.gasFeeUsed, 0);
-        assertEq(account.approvals[1].to, "f0127");
+        // Note: tests will always show this as a masked ID address, but in reality, it's a looked up delegated address
+        assertEq(account.approvals[1].to, 0xff0000000000000000000000000000000000007f);
         assertEq(account.approvals[1].approval.creditLimit, 0);
         assertEq(account.approvals[1].approval.gasFeeLimit, 0);
         assertEq(account.approvals[1].approval.expiry, 0);
@@ -85,7 +88,8 @@ contract LibBlobTest is Test {
         data =
             hex"880652000eb194f8e1ae50e56f45b07f78a0d400004b006dc68533171604000000f6191834a1656630313235854c0052b7d2dcc80cd2e4000000430003e81927844b0005650e85ae5dfb900000401a000151804b00010f0cf0647f152e0ab9";
         account = data.decodeAccount();
-        assertEq(account.approvals[0].to, "f0125");
+        // Note: tests will always show this as a masked ID address, but in reality, it's a looked up delegated address
+        assertEq(account.approvals[0].to, 0xFF0000000000000000000000000000000000007D);
         assertEq(account.approvals[0].approval.creditLimit, 100000000000000000000000000);
         assertEq(account.approvals[0].approval.gasFeeLimit, 1000);
         assertEq(account.approvals[0].approval.expiry, 10116);
@@ -174,7 +178,8 @@ contract LibBlobTest is Test {
         bytes memory data =
             hex"a1656630313234a17840343564616464393261326161373431383133323638376639613432313439306261643963356161643332656134653937623135356533373739316630306435308519021f1a0001539f982018fd18bb1871185b08188508184418a1183e182b18b518980118cb18a60218bf183b18351118720418fb18f41836188101181b18ef18941839f6f4";
         Subscriber[] memory subscribers = LibBlob.decodeSubscribers(data);
-        assertEq(subscribers[0].subscriber, "f0124");
+        // Note: tests will always show this as a masked ID address, but in reality, it's a looked up delegated address
+        assertEq(subscribers[0].subscriber, 0xFf0000000000000000000000000000000000007C);
         assertEq(
             subscribers[0].subscriptionGroup[0].subscriptionId,
             "45dadd92a2aa7418132687f9a421490bad9c5aad32ea4e97b155e37791f00d50"
@@ -192,7 +197,8 @@ contract LibBlobTest is Test {
         data =
             hex"a1656630313234a2784034316664336363386562303731323262663165356564383562306236393237666236663162336630643662313331326261366531396437646536386366373833851908eb1a00015a6b982018fd18bb1871185b08188508184418a1183e182b18b518980118cb18a60218bf183b18351118720418fb18f41836188101181b18ef18941839f6f47840343564616464393261326161373431383133323638376639613432313439306261643963356161643332656134653937623135356533373739316630306435308519021f1a0001539f982018fd18bb1871185b08188508184418a1183e182b18b518980118cb18a60218bf183b18351118720418fb18f41836188101181b18ef18941839f6f4";
         subscribers = LibBlob.decodeSubscribers(data);
-        assertEq(subscribers[0].subscriber, "f0124");
+        // Note: tests will always show this as a masked ID address, but in reality, it's a looked up delegated address
+        assertEq(subscribers[0].subscriber, 0xFf0000000000000000000000000000000000007C);
         assertEq(
             subscribers[0].subscriptionGroup[0].subscriptionId,
             "41fd3cc8eb07122bf1e5ed85b0b6927fb6f1b3f0d6b1312ba6e19d7de68cf783"
@@ -202,12 +208,13 @@ contract LibBlobTest is Test {
             "45dadd92a2aa7418132687f9a421490bad9c5aad32ea4e97b155e37791f00d50"
         );
 
-        // Two different subscribers
+        // // Two different subscribers
         data =
             hex"a2656630313234a2784034316664336363386562303731323262663165356564383562306236393237666236663162336630643662313331326261366531396437646536386366373833851908eb1a00015a6b982018fd18bb1871185b08188508184418a1183e182b18b518980118cb18a60218bf183b18351118720418fb18f41836188101181b18ef18941839f6f47840343564616464393261326161373431383133323638376639613432313439306261643963356161643332656134653937623135356533373739316630306435308519021f1a0001539f982018fd18bb1871185b08188508184418a1183e182b18b518980118cb18a60218bf183b18351118720418fb18f41836188101181b18ef18941839f6f4656630313236a1784033333566316434636333343130646136363562613133336136616339653666656536626334653861356435643239336262333966396465313266303530326438851909881a00015b08982018fd18bb1871185b08188508184418a1183e182b18b518980118cb18a60218bf183b18351118720418fb18f41836188101181b18ef18941839f6f4";
         subscribers = LibBlob.decodeSubscribers(data);
-        assertEq(subscribers[0].subscriber, "f0124");
-        assertEq(subscribers[1].subscriber, "f0126");
+        // Note: tests will always show this as a masked ID address, but in reality, it's a looked up delegated address
+        assertEq(subscribers[0].subscriber, 0xFf0000000000000000000000000000000000007C);
+        assertEq(subscribers[1].subscriber, 0xFF0000000000000000000000000000000000007e);
     }
 
     function testDecodeSubscriptionGroup() public view {
@@ -242,6 +249,7 @@ contract LibBlobTest is Test {
         assertEq(subscription.added, 2961);
         assertEq(subscription.expiry, 89361);
         assertEq(subscription.source, "7w5xcwyiqueejij6fo2zqaoluybl6ozvcfzaj67ug2aqcg7psq4q");
+        // Note: tests will always show this as a masked ID address, but in reality, it's a looked up delegated address
         assertEq(subscription.delegate, 0xFF0000000000000000000000000000000000007D);
         assertEq(subscription.failed, false);
     }

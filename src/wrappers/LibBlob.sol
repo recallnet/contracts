@@ -111,8 +111,8 @@ library LibBlob {
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
         approvals = new Approval[](decoded.length);
         for (uint256 i = 0; i < decoded.length; i++) {
-            // TODO: this address (string) value is mainnet prefixed with `f` instead of `t`
-            approvals[i].to = string(decoded[i][0]);
+            // The `to` value is an ID address string, like `f0123`, so we convert it to an address
+            approvals[i].to = decoded[i][0].decodeCborActorIdStringToAddress();
             approvals[i].approval = decodeCreditApproval(decoded[i][1]);
         }
     }
@@ -175,7 +175,8 @@ library LibBlob {
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
         subscribers = new Subscriber[](decoded.length);
         for (uint256 i = 0; i < decoded.length; i++) {
-            subscribers[i].subscriber = string(decoded[i][0]);
+            // The `subscriber` value is an ID address string, like `f0123`, so we convert it to an address
+            subscribers[i].subscriber = decoded[i][0].decodeCborActorIdStringToAddress();
             subscribers[i].subscriptionGroup = decodeSubscriptionGroup(decoded[i][1]);
         }
     }
