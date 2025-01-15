@@ -28,11 +28,11 @@ struct Account {
 }
 
 /// @dev Credit approval from one account to another.
-/// @param to (string): Optional restriction on caller address, e.g., an object store. Use zero address if
+/// @param to (address): Optional restriction on caller address, e.g., an object store. Use zero address if
 /// unused, indicating a null value.
 /// @param approval (CreditApproval): The credit approval. See {CreditApproval} for more details.
 struct Approval {
-    string to;
+    address to;
     CreditApproval approval;
 }
 
@@ -185,10 +185,10 @@ enum BlobStatus {
 }
 
 /// @dev A subscriber and their subscription groups.
-/// @param subscriber (string): The subscriber address as a string value (e.g., "f0124").
+/// @param subscriber (address): The subscriber address.
 /// @param subscriptionGroup (SubscriptionGroup[]): The subscription groups. See {SubscriptionGroup} for more details.
 struct Subscriber {
-    string subscriber;
+    address subscriber;
     SubscriptionGroup[] subscriptionGroup;
 }
 

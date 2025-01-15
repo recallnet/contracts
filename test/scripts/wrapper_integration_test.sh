@@ -64,7 +64,7 @@ if [ "$output" = "0x" ]; then
     echo "getBlob failed"
     exit 1
 fi
-DECODED_BLOB=$(cast abi-decode "getBlob(string)((uint64,string,(string,(string,(uint64,uint64,string,address,bool))[])[],uint8))" $output)
+DECODED_BLOB=$(cast abi-decode "getBlob(string)((uint64,string,(address,(string,(uint64,uint64,string,address,bool))[])[],uint8))" $output)
 echo "Output: $DECODED_BLOB"
 
 # Test getBlobStatus
@@ -309,7 +309,7 @@ if [ "$output" = "0x" ]; then
     echo "getAccount failed"
     exit 1
 fi
-DECODED_ACCOUNT=$(cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256))[],uint64,uint256))" "$output")
+DECODED_ACCOUNT=$(cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(address,(uint256,uint256,uint64,uint256,uint256))[],uint64,uint256))" "$output")
 echo "Account info: $DECODED_ACCOUNT"
 
 # Test getCreditStats
@@ -342,7 +342,7 @@ if [ "$output" = "0x" ]; then
     echo "getCreditBalance failed"
     exit 1
 fi
-DECODED_BALANCE=$(cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256))[],uint256))" $output)
+DECODED_BALANCE=$(cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(address,(uint256,uint256,uint64,uint256,uint256))[],uint256))" $output)
 echo "Credit balance: $DECODED_BALANCE"
 
 # Test buyCredit
