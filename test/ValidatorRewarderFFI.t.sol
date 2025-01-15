@@ -52,7 +52,8 @@ contract ValidatorRewarderFFITest is ValidatorRewarderTestBase {
             params[2] = 0; // blocks committed
 
             string memory jsonStr = runPythonScript(PYTHON_SCRIPT, params);
-            uint256 expectedSupplyDelta = vm.parseJsonUint(jsonStr, ".supply_delta");
+            // Note: this variable is unused, but keep it for now in case we need it
+            // uint256 expectedSupplyDelta = vm.parseJsonUint(jsonStr, ".supply_delta");
 
             for (uint256 j = 0; j < claimants.length; j++) {
                 // Calculate expected validator share

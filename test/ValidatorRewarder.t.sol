@@ -77,7 +77,7 @@ abstract contract ValidatorRewarderTestBase is Test {
 
 // Test contract for initial state and basic functionality
 contract ValidatorRewarderInitialStateTest is ValidatorRewarderTestBase {
-    function testInitialState() public {
+    function testInitialState() public view {
         assertTrue(rewarder.isActive());
         assertEq(rewarder.subnet(), createSubnet().root);
         assertEq(address(rewarder.token()), address(token));
@@ -113,7 +113,7 @@ contract ValidatorRewarderActiveStateTest is ValidatorRewarderTestBase {
 contract ValidatorRewarderSubnetTest is ValidatorRewarderTestBase {
     using SubnetIDHelper for SubnetID;
 
-    function testInitialSubnetSetup() public {
+    function testInitialSubnetSetup() public view {
         SubnetID memory expectedSubnet = createSubnet();
         assertEq(rewarder.subnet(), expectedSubnet.root);
         assertEq(rewarder.checkpointPeriod(), CHECKPOINT_PERIOD);
@@ -149,7 +149,7 @@ contract ValidatorRewarderSubnetTest is ValidatorRewarderTestBase {
 
 // Token management tests
 contract ValidatorRewarderTokenTest is ValidatorRewarderTestBase {
-    function testInitialTokenSetup() public {
+    function testInitialTokenSetup() public view {
         assertEq(address(rewarder.token()), address(token));
     }
 }
@@ -372,7 +372,8 @@ contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
         uint256 initialSupply = token.totalSupply();
         // Reward for committing 100 blocks in a checkpoint period for given inflation rate
         // Reward for 1st validator = totalSupply * INFLATION_RATE * (blocksCommitted / CHECKPOINT_PERIOD)
-        uint256 baseReward = 154712667492044;
+        // Note: this variable is unused, but keep it for now in case we need it
+        // uint256 baseReward = 154712667492044;
 
         // Validator 1 claims for both checkpoints
         vm.startPrank(SUBNET_ROUTE);
