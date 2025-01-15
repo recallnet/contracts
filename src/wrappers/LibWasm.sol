@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
+import {PrecompilesAPI} from "@filecoin-solidity/v0.8/PrecompilesAPI.sol";
 import {BytesCBOR} from "@filecoin-solidity/v0.8/cbor/BytesCbor.sol";
 import {FilecoinCBOR, Misc} from "@filecoin-solidity/v0.8/cbor/FilecoinCbor.sol";
 import {CommonTypes} from "@filecoin-solidity/v0.8/types/CommonTypes.sol";
@@ -155,8 +156,9 @@ library LibWasm {
                 result := shr(96, mload(add(addr, 34)))
             }
         } else if (addr[0] == 0x00) {
-            // Otherwise, it should be an ID address
-            result = decodeCborActorIdBytesToAddress(addr);
+            // Otherwise, it should be an ID address—and we need to check if it's delegated or masked
+            uint64 actorId = decodeCborActorIdBytesToUint64(addr);
+            result = getDelegatedOrMaskedAddressFromActorId(actorId);
         } else {
             revert InvalidValue("Invalid address length or protocol");
         }
@@ -166,7 +168,24 @@ library LibWasm {
     /// @dev Decode CBOR encoded actor ID bytes to an Ethereum address.
     /// @param data The encoded CBOR actor ID bytes.
     /// @return result The decoded Ethereum address.
-    function decodeCborActorIdBytesToAddress(bytes memory data) internal view returns (address) {
+    function decodeCborActorIdStringToAddress(bytes memory data) internal view returns (address) {
+        bytes memory actorIdStr = new bytes(data.length - 1);
+        // Remove the first byte, which is the network prefix (`f`, which is 0x66)
+        assembly {
+            // Copy to the new array, starting from the second byte
+            let srcPtr := add(add(data, 32), 1) // +32 for length prefix, +1 to skip first byte
+            let destPtr := add(actorIdStr, 32) // +32 for length prefix
+            mstore(destPtr, mload(srcPtr))
+        }
+        uint64 actorId = 0;
+        for (uint64 i = 0; i < actorIdStr.length; i++) {
+            // Just subtract 0x30 to convert from ASCII to number
+            actorId = actorId * 10 + (uint8(actorIdStr[i]) - 0x30);
+        }
+        return getDelegatedOrMaskedAddressFromActorId(actorId);
+    }
+
+    function decodeCborActorIdBytesToUint64(bytes memory data) internal pure returns (uint64) {
         // First, decode the LEB128 bytes value to the actor ID
         uint64 result = 0;
         uint64 shift = 0;
@@ -180,7 +199,16 @@ library LibWasm {
             }
             shift += 7;
         }
-        return FilAddressIdConverter.toAddress(result);
+        return result;
+    }
+
+    /// @dev Get the delegated address for an actor ID, or the masked address if the actor ID is not delegated.
+    /// @param actorId The actor ID.
+    /// @return delegatedAddress The delegated address as bytes. Will be zero value if the actor ID is not delegated.
+    function getDelegatedOrMaskedAddressFromActorId(uint64 actorId) internal view returns (address) {
+        bytes memory data = PrecompilesAPI.lookupDelegatedAddress(actorId);
+        if (data.length == 0) return FilAddressIdConverter.toAddress(actorId);
+        return FilAddresses.toEthAddress(CommonTypes.FilAddress(data));
     }
 
     /// @dev Decode a CBOR encoded Wasm actor address to a string.

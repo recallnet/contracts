@@ -385,13 +385,13 @@ We can get the credit account info for the address at `EVM_ADDRESS` (the variabl
 you could provide any account's EVM public key that exists in the subnet.
 
 ```sh
-cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256))[],uint64,uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)
+cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(address,(uint256,uint256,uint64,uint256,uint256))[],uint64,uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)
 ```
 
 This will return the following values:
 
 ```
-(6, 4999999999999999454276000000000000000000 [4.999e39], 504150000000000000000000 [5.041e23], 0x0000000000000000000000000000000000000000, 7200, [("f0127", (12345000000000000000000 [1.234e22], 987654321 [9.876e8], 11722 [1.172e4], 0, 0))], 86400 [8.64e4], 4999999984799342175554 [4.999e21])
+(6, 4999999999999999454276000000000000000000 [4.999e39], 504150000000000000000000 [5.041e23], 0x0000000000000000000000000000000000000000, 7200, [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, (12345000000000000000000 [1.234e22], 987654321 [9.876e8], 11722 [1.172e4], 0, 0))], 86400 [8.64e4], 4999999984799342175554 [4.999e21])
 ```
 
 Which maps to the `Account` struct:
@@ -414,7 +414,7 @@ approvals authorized. We can expand this to be interpreted as the following:
 
 ```solidity
 struct Approval {
-    string to; // f0127
+    string to; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
     CreditApproval approval; // See CreditApproval struct below
 }
 
@@ -489,13 +489,13 @@ struct CreditApproval {
 Fetch the credit balance for the address at `EVM_ADDRESS`:
 
 ```sh
-cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(string,(uint256,uint256,uint64,uint256,uint256))[],uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditBalance(address)" $EVM_ADDRESS)
+cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(address,(uint256,uint256,uint64,uint256,uint256))[],uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditBalance(address)" $EVM_ADDRESS)
 ```
 
 This will return the following values:
 
 ```
-(5001999999999998208637000000000000000000 [5.001e39], 518400000000000000000000 [5.184e23], 0x0000000000000000000000000000000000000000, 6932, [("f0127", (0, 0, 0, 0, 0))], 1)
+(5001999999999998208637000000000000000000 [5.001e39], 518400000000000000000000 [5.184e23], 0x0000000000000000000000000000000000000000, 6932, [(0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65, (0, 0, 0, 0, 0))], 1)
 ```
 
 Which maps to the `Balance` struct:
@@ -510,7 +510,7 @@ struct Balance {
 }
 
 struct Approval {
-    string to; // f0127
+    string to; // 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
     CreditApproval approval; // See CreditApproval struct below
 }
 
@@ -1046,13 +1046,13 @@ This will emit an `OverwriteBlob` event and overwrite the blob in the network.
 ##### Get a blob
 
 ```sh
-cast abi-decode "getBlob(string)((uint64,string,(string,(string,(uint64,uint64,string,address,bool))[])[],uint8))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
+cast abi-decode "getBlob(string)((uint64,string,(address,(string,(uint64,uint64,string,address,bool))[])[],uint8))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
 ```
 
 This will return the following response:
 
 ```sh
-(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", [("f0124", [("foo", (4825, 91225 [9.122e4], "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq", 0x0000000000000000000000000000000000000000, false))])], 2)
+(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, [("foo", (4825, 91225 [9.122e4], "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq", 0x0000000000000000000000000000000000000000, false))])], 2)
 ```
 
 Which maps to the `Blob` struct:
@@ -1066,7 +1066,7 @@ struct Blob {
 }
 
 struct Subscriber {
-    string subscriber; // f0124
+    address subscriber; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
     SubscriptionGroup[] subscriptionGroup; // See `SubscriptionGroup` struct below
 }
 
@@ -1122,7 +1122,7 @@ cast abi-decode "getAddedBlobs(uint32)((string,(address,string,string)[])[])" $(
 This returns the values of added blobs, up to the `size` passed as the parameter:
 
 ```sh
-[("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, "Default", "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq")])]
+[("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, "default", "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq")])]
 ```
 
 Which maps to an array of the `BlobTuple` struct:
@@ -1135,7 +1135,7 @@ struct BlobTuple {
 
 struct BlobSourceInfo {
     address subscriber; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
-    string subscriptionId; // "Default"
+    string subscriptionId; // "default"
     string source; // "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq"
 }
 ```
@@ -1149,7 +1149,7 @@ cast abi-decode "getPendingBlobs(uint32)((string,(address,string,string)[])[])" 
 This returns the values of pending blobs, up to the `size` passed as the parameter:
 
 ```sh
-[("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, "Default", "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq")])]
+[("rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq", [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, "default", "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq")])]
 ```
 
 Which maps to an array of the `BlobTuple` struct:
@@ -1162,7 +1162,7 @@ struct BlobTuple {
 
 struct BlobSourceInfo {
     address subscriber; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
-    string subscriptionId; // "Default"
+    string subscriptionId; // "default"
     string source; // "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq"
 }
 ```
