@@ -166,7 +166,7 @@ library LibWasm {
     }
 
     /// @dev Decode CBOR encoded actor ID bytes to an Ethereum address.
-    /// @param data The encoded CBOR actor ID bytes.
+    /// @param data The encoded CBOR actor ID bytes. Example: `f0123`
     /// @return result The decoded Ethereum address.
     function decodeCborActorIdStringToAddress(bytes memory data) internal view returns (address) {
         bytes memory actorIdStr = new bytes(data.length - 1);
@@ -185,6 +185,31 @@ library LibWasm {
         return getDelegatedOrMaskedAddressFromActorId(actorId);
     }
 
+    /// @dev Decode CBOR encoded delegated address string to an Ethereum address.
+    /// @param data The encoded CBOR delegated address string value. Example:
+    /// `f410feot7hrogmplrcupubsdbbqarkdewmb4vkwc5qqq` (i.e., the bytes are `0x6634313066...`)
+    /// @return result The decoded Ethereum address.
+    function decodeCborDelegatedAddressStringToAddress(bytes memory data) internal pure returns (address) {
+        bytes memory subAddressBytes = new bytes(data.length - 5);
+        // Remove the first 5 bytes, which are the network prefix, protocol, and `f` prefix (`f410f`)
+        assembly {
+            let srcPtr := add(data, 37) // +32 for array length, +5 to skip the first 5 bytes
+            let destPtr := add(subAddressBytes, 32) // +32 for array length
+            let len := sub(mload(data), 5) // data.length - 5
+            for { let i := 0 } lt(i, len) { i := add(i, 32) } { mstore(add(destPtr, i), mload(add(srcPtr, i))) }
+        }
+        bytes32 decoded = bytes32(Base32.decode(subAddressBytes));
+        address result;
+        // Shift right by 96 bits (12 bytes) to get the last 20 bytes of the address (note: removes the last 4 bytes)
+        assembly {
+            result := shr(96, decoded)
+        }
+        return result;
+    }
+
+    /// @dev Decode CBOR encoded actor ID bytes to a uint64.
+    /// @param data The encoded CBOR actor ID bytes.
+    /// @return result The decoded uint64.
     function decodeCborActorIdBytesToUint64(bytes memory data) internal pure returns (uint64) {
         // First, decode the LEB128 bytes value to the actor ID
         uint64 result = 0;
