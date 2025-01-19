@@ -7,13 +7,8 @@ pragma solidity ^0.8.26;
 /// @param creditCommitted (uint256): Current committed credit in byte-blocks that will be used for debits.
 /// @param creditSponsor (address): Optional default sponsor account address.
 /// @param lastDebitEpoch (uint64): The chain epoch of the last debit.
-/// @param approvals (Approvals[]): Credit approvals to other accounts, keyed by receiver, keyed by caller,
-/// which could be the receiver or a specific contract, like a bucket.
-/// This allows for limiting approvals to interactions from a specific contract.
-/// For example, an approval for Alice might be valid for any contract caller, so long as
-/// the origin is Alice.
-/// An approval for Bob might be valid from only one contract caller, so long as
-/// the origin is Bob.
+/// @param approvalsTo (Approvals[]): Credit approvals to other accounts from this account, keyed by receiver.
+/// @param approvalsFrom (Approvals[]): Credit approvals to this account from other accounts, keyed by sender.
 /// @param maxTtl (uint64): The maximum allowed TTL for actor's blobs.
 struct Account {
     uint64 capacityUsed;
@@ -22,17 +17,18 @@ struct Account {
     address creditSponsor;
     uint64 lastDebitEpoch;
     // Note: this is a nested array that emulates a Rust `HashMap<String, CreditApproval>`
-    Approval[] approvals;
+    Approval[] approvalsTo;
+    Approval[] approvalsFrom;
     uint64 maxTtl;
     uint256 gasAllowance;
 }
 
 /// @dev Credit approval from one account to another.
-/// @param to (address): Optional restriction on caller address, e.g., an object store. Use zero address if
+/// @param addr (address): Optional restriction on caller address, e.g., an object store. Use zero address if
 /// unused, indicating a null value.
 /// @param approval (CreditApproval): The credit approval. See {CreditApproval} for more details.
 struct Approval {
-    address to;
+    address addr;
     CreditApproval approval;
 }
 
@@ -41,20 +37,16 @@ struct Approval {
 /// @param creditCommitted (uint256): Current committed credit in byte-blocks that will be used for debits.
 /// @param creditSponsor (address): Optional default sponsor account address.
 /// @param lastDebitEpoch (uint64): The chain epoch of the last debit.
-/// @param approvals (Approvals[]): Credit approvals to other accounts, keyed by receiver, keyed by caller,
-/// which could be the receiver or a specific contract, like a bucket.
-/// This allows for limiting approvals to interactions from a specific contract.
-/// For example, an approval for Alice might be valid for any contract caller, so long as
-/// the origin is Alice.
-/// An approval for Bob might be valid from only one contract caller, so long as
-/// the origin is Bob.
+/// @param approvalsTo (Approvals[]): Credit approvals to other accounts from this account, keyed by receiver.
+/// @param approvalsFrom (Approvals[]): Credit approvals to this account from other accounts, keyed by sender.
 /// @param gasAllowance (uint256): The amount of gas allowance for the account.
 struct Balance {
     uint256 creditFree;
     uint256 creditCommitted;
     address creditSponsor;
     uint64 lastDebitEpoch;
-    Approval[] approvals;
+    Approval[] approvalsTo;
+    Approval[] approvalsFrom;
     uint256 gasAllowance;
 }
 

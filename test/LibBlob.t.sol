@@ -45,56 +45,50 @@ contract LibBlobTest is Test {
     function testDecodeAccount() public view {
         // No approvals
         bytes memory data =
-            hex"880652000eb194f8e1ae50e56f45b07f78a0d400004b006dc68533171604000000f6191834a01a000151804b00010f0cf0647ee57f02b9";
+            hex"890052000eb194f8e1ae525fd5dcfab0800000000040f6191068a0a01a000151804b00010f0cf064dd59200000";
         CreditAccount memory account = data.decodeAccount();
-        assertEq(account.capacityUsed, 6);
-        assertEq(account.creditFree, 4999999999999998213053000000000000000000);
-        assertEq(account.creditCommitted, 518400000000000000000000);
+        assertEq(account.capacityUsed, 0);
+        assertEq(account.creditFree, 5000000000000000000000000000000000000000);
+        assertEq(account.creditCommitted, 0);
         assertEq(account.creditSponsor, address(0));
-        assertEq(account.lastDebitEpoch, 6196);
-        assertEq(account.approvals.length, 0);
+        assertEq(account.lastDebitEpoch, 4200);
+        assertEq(account.approvalsTo.length, 0);
+        assertEq(account.approvalsFrom.length, 0);
         assertEq(account.maxTtl, 86400);
-        assertEq(account.gasAllowance, 4999999999594333143737);
+        assertEq(account.gasAllowance, 5000000000000000000000);
 
-        // With approvals to two different accounts, but no set credit, gas fee, or ttl limits
+        // With all fields set: approvals to two different accounts, approvals from one account, and all optionals (set
+        // credit limit, gas fee limit, and ttl)
         data =
-            hex"880652000eb194f8e1ae50e56f45b07f78a0d400004b006dc68533171604000000f6191834a265663031323585f6f6f6404065663031323785f6f6f640401a000151804b00010f0cf0647e8620f2b9";
+            hex"890652000eb61887b895080136932adf5bcc4800004b006dc6853317160400000056040a15d34aaf54267db7d7c367839aaf71a00a2c6a65193b4ea2782c663431306663786a75766c3275657a3633707636646d36627a766c33727561666379327466766264617a7069854c0052b7d2dcc80cd2e400000045003b9aca001949ba4b000f60a131ed58b468000045003b9aca00782c663431306674667376613769326b77366d65326b346c6335626e367a7833616d33626a673436367667376a6985f6f6f64040a1782c663431306663786a75766c3275657a3633707636646d36627a766c33727561666379327466766264617a706985f6f6f64045002faf08001a000151804b00010f6034abfb0e425a07";
         account = data.decodeAccount();
         assertEq(account.capacityUsed, 6);
-        assertEq(account.creditFree, 4999999999999998213053000000000000000000);
+        assertEq(account.creditFree, 5005999999999999352418000000000000000000);
         assertEq(account.creditCommitted, 518400000000000000000000);
-        assertEq(account.creditSponsor, address(0));
-        assertEq(account.lastDebitEpoch, 6196);
-        assertEq(account.approvals.length, 2);
-        // Note: tests will always show this as a masked ID address, but in reality, it's a looked up delegated address
-        // This is because tests don't access the delegated address lookup precompile via the FVM runtime
-        assertEq(account.approvals[0].to, 0xFF0000000000000000000000000000000000007D);
-        assertEq(account.approvals[0].approval.creditLimit, 0);
-        assertEq(account.approvals[0].approval.gasFeeLimit, 0);
-        assertEq(account.approvals[0].approval.expiry, 0);
-        assertEq(account.approvals[0].approval.creditUsed, 0);
-        assertEq(account.approvals[0].approval.gasFeeUsed, 0);
-        // Note: tests will always show this as a masked ID address, but in reality, it's a looked up delegated address
-        assertEq(account.approvals[1].to, 0xff0000000000000000000000000000000000007f);
-        assertEq(account.approvals[1].approval.creditLimit, 0);
-        assertEq(account.approvals[1].approval.gasFeeLimit, 0);
-        assertEq(account.approvals[1].approval.expiry, 0);
-        assertEq(account.approvals[1].approval.creditUsed, 0);
-        assertEq(account.approvals[1].approval.gasFeeUsed, 0);
+        assertEq(account.creditSponsor, 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
+        assertEq(account.lastDebitEpoch, 15182);
+        assertEq(account.approvalsTo.length, 2);
+        assertEq(account.approvalsFrom.length, 1);
         assertEq(account.maxTtl, 86400);
-        assertEq(account.gasAllowance, 4999999999592733143737);
-
-        // With approval to one account with set credit, gas fee, and ttl limits
-        data =
-            hex"880652000eb194f8e1ae50e56f45b07f78a0d400004b006dc68533171604000000f6191834a1656630313235854c0052b7d2dcc80cd2e4000000430003e81927844b0005650e85ae5dfb900000401a000151804b00010f0cf0647f152e0ab9";
-        account = data.decodeAccount();
-        // Note: tests will always show this as a masked ID address, but in reality, it's a looked up delegated address
-        assertEq(account.approvals[0].to, 0xFF0000000000000000000000000000000000007D);
-        assertEq(account.approvals[0].approval.creditLimit, 100000000000000000000000000);
-        assertEq(account.approvals[0].approval.gasFeeLimit, 1000);
-        assertEq(account.approvals[0].approval.expiry, 10116);
-        assertEq(account.approvals[0].approval.creditUsed, 25476000000000000000000);
-        assertEq(account.approvals[0].approval.gasFeeUsed, 0);
+        assertEq(account.gasAllowance, 5005999998796482894343);
+        assertEq(account.approvalsTo[0].addr, 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
+        assertEq(account.approvalsTo[0].approval.creditLimit, 100000000000000000000000000);
+        assertEq(account.approvalsTo[0].approval.gasFeeLimit, 1000000000);
+        assertEq(account.approvalsTo[0].approval.expiry, 18874);
+        assertEq(account.approvalsTo[0].approval.creditUsed, 72618000000000000000000);
+        assertEq(account.approvalsTo[0].approval.gasFeeUsed, 1000000000);
+        assertEq(account.approvalsTo[1].addr, 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc);
+        assertEq(account.approvalsTo[1].approval.creditLimit, 0);
+        assertEq(account.approvalsTo[1].approval.gasFeeLimit, 0);
+        assertEq(account.approvalsTo[1].approval.expiry, 0);
+        assertEq(account.approvalsTo[1].approval.creditUsed, 0);
+        assertEq(account.approvalsTo[1].approval.gasFeeUsed, 0);
+        assertEq(account.approvalsFrom[0].addr, 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
+        assertEq(account.approvalsFrom[0].approval.creditLimit, 0);
+        assertEq(account.approvalsFrom[0].approval.gasFeeLimit, 0);
+        assertEq(account.approvalsFrom[0].approval.expiry, 0);
+        assertEq(account.approvalsFrom[0].approval.creditUsed, 0);
+        assertEq(account.approvalsFrom[0].approval.gasFeeUsed, 800000000);
     }
 
     function testEncodeApproveCreditParams() public pure {

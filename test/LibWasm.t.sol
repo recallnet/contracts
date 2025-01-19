@@ -209,6 +209,12 @@ contract LibWasmTest is Test {
         assertEq(result, hex"024722ebdc6ff1cd1c5e01b1484f4ff4cc551f2f19");
     }
 
+    function testDecodeCborDelegatedAddressStringToAddress() public pure {
+        bytes memory data = bytes("f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq");
+        address result = LibWasm.decodeCborDelegatedAddressStringToAddress(data);
+        assertEq(result, 0x90F79bf6EB2c4f870365E785982E1f101E93b906);
+    }
+
     function testDecodeCborActorAddress() public pure {
         bytes memory addr = hex"02770d21925703390a236f68f84ef1d432ca5742c4";
         string memory result = LibWasm.decodeCborActorAddress(addr);
