@@ -385,13 +385,13 @@ We can get the credit account info for the address at `EVM_ADDRESS` (the variabl
 you could provide any account's EVM public key that exists in the subnet.
 
 ```sh
-cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(address,(uint256,uint256,uint64,uint256,uint256))[],uint64,uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)
+cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(address,(uint256,uint256,uint64,uint256,uint256))[],(address,(uint256,uint256,uint64,uint256,uint256))[],uint64,uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getAccount(address)" $EVM_ADDRESS)
 ```
 
 This will return the following values:
 
 ```
-(6, 4999999999999999454276000000000000000000 [4.999e39], 504150000000000000000000 [5.041e23], 0x0000000000000000000000000000000000000000, 7200, [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, (12345000000000000000000 [1.234e22], 987654321 [9.876e8], 11722 [1.172e4], 0, 0))], 86400 [8.64e4], 4999999984799342175554 [4.999e21])
+(6, 4999999999999999454276000000000000000000 [4.999e39], 504150000000000000000000 [5.041e23], 0x0000000000000000000000000000000000000000, 7200, [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, (12345000000000000000000 [1.234e22], 987654321 [9.876e8], 11722 [1.172e4], 0, 0))], [], 86400 [8.64e4], 4999999984799342175554 [4.999e21])
 ```
 
 Which maps to the `Account` struct:
@@ -403,7 +403,8 @@ struct Account {
     uint256 creditCommitted; // 504150000000000000000000
     address creditSponsor; // 0x0000000000000000000000000000000000000000 (null)
     uint64 lastDebitEpoch; // 7200
-    Approval[] approvals; // See Approval struct below
+    Approval[] approvalsTo; // See Approval struct below
+    Approval[] approvalsFrom; // [] (empty)
     uint64 maxTtl; // 86400
     uint256 gasAllowance; // 4999999984799342175554
 }
@@ -414,7 +415,7 @@ approvals authorized. We can expand this to be interpreted as the following:
 
 ```solidity
 struct Approval {
-    string to; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
+    address addr; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
     CreditApproval approval; // See CreditApproval struct below
 }
 
@@ -489,7 +490,7 @@ struct CreditApproval {
 Fetch the credit balance for the address at `EVM_ADDRESS`:
 
 ```sh
-cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(address,(uint256,uint256,uint64,uint256,uint256))[],uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditBalance(address)" $EVM_ADDRESS)
+cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(address,(uint256,uint256,uint64,uint256,uint256))[],(address,(uint256,uint256,uint64,uint256,uint256))[],uint256))" $(cast call --rpc-url $ETH_RPC_URL $CREDIT "getCreditBalance(address)" $EVM_ADDRESS)
 ```
 
 This will return the following values:
@@ -948,7 +949,6 @@ accepts "optional" arguments. All of the method parameters and return types can 
   the string that was chosen during `addBlob`).
 - `overwriteBlob(string,AddBlobParams memory)`: Overwrite a blob from the network, passing the old
   blob hash, and the new blob parameters.
-- `getAccountType(address)`: Get the account's max blob TTL.
 - `getBlob(string)`: Get information about a specific blob at its blake3 hash.
 - `getBlobStatus(address,string,string)`: Get a blob's status, providing its credit sponsor (i.e.,
   the account's `address`, or `address(0)` if null), its blake3 blob hash (the first `string`

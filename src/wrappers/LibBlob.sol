@@ -83,9 +83,10 @@ library LibBlob {
         account.creditCommitted = decoded[2].decodeCborBytesToUint256();
         account.creditSponsor = decoded[3][0] == 0x00 ? address(0) : decoded[3].decodeCborAddress();
         account.lastDebitEpoch = decoded[4].decodeCborBytesToUint64();
-        account.approvals = decodeApprovals(decoded[5]);
-        account.maxTtl = decoded[6].decodeCborBytesToUint64();
-        account.gasAllowance = decoded[7].decodeCborBytesToUint256();
+        account.approvalsTo = decodeApprovals(decoded[5]);
+        account.approvalsFrom = decodeApprovals(decoded[6]);
+        account.maxTtl = decoded[7].decodeCborBytesToUint64();
+        account.gasAllowance = decoded[8].decodeCborBytesToUint256();
     }
 
     /// @dev Helper function to decode a credit approval from CBOR to solidity.
@@ -111,8 +112,9 @@ library LibBlob {
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
         approvals = new Approval[](decoded.length);
         for (uint256 i = 0; i < decoded.length; i++) {
-            // The `to` value is an ID address string, like `f0123`, so we convert it to an address
-            approvals[i].to = decoded[i][0].decodeCborActorIdStringToAddress();
+            // The `addr` value is an delegated address string, like `f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq`, so
+            // we need to convert it to an address
+            approvals[i].addr = decoded[i][0].decodeCborDelegatedAddressStringToAddress();
             approvals[i].approval = decodeCreditApproval(decoded[i][1]);
         }
     }
@@ -337,7 +339,8 @@ library LibBlob {
         balance.creditCommitted = account.creditCommitted;
         balance.creditSponsor = account.creditSponsor;
         balance.lastDebitEpoch = account.lastDebitEpoch;
-        balance.approvals = account.approvals;
+        balance.approvalsTo = account.approvalsTo;
+        balance.approvalsFrom = account.approvalsFrom;
         balance.gasAllowance = account.gasAllowance;
     }
 
@@ -441,6 +444,12 @@ library LibBlob {
         bytes memory params = blobHash.encodeCborBlobHashOrNodeId();
         bytes memory data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_BLOB, params);
         return decodeBlob(data);
+    }
+
+    function getBlob2(string memory blobHash) external view returns (bytes memory data) {
+        bytes memory params = blobHash.encodeCborBlobHashOrNodeId();
+        data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_BLOB, params);
+        return data;
     }
 
     /// @dev Get the status of a blob.

@@ -309,7 +309,7 @@ if [ "$output" = "0x" ]; then
     echo "getAccount failed"
     exit 1
 fi
-DECODED_ACCOUNT=$(cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(address,(uint256,uint256,uint64,uint256,uint256))[],uint64,uint256))" "$output")
+DECODED_ACCOUNT=$(cast abi-decode "getAccount(address)((uint64,uint256,uint256,address,uint64,(address,(uint256,uint256,uint64,uint256,uint256))[],(address,(uint256,uint256,uint64,uint256,uint256))[],uint64,uint256))" "$output")
 echo "Account info: $DECODED_ACCOUNT"
 
 # Test getCreditStats
@@ -342,7 +342,7 @@ if [ "$output" = "0x" ]; then
     echo "getCreditBalance failed"
     exit 1
 fi
-DECODED_BALANCE=$(cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(address,(uint256,uint256,uint64,uint256,uint256))[],uint256))" $output)
+DECODED_BALANCE=$(cast abi-decode "getCreditBalance(address)((uint256,uint256,address,uint64,(address,(uint256,uint256,uint64,uint256,uint256))[],(address,(uint256,uint256,uint64,uint256,uint256))[],uint256))" $output)
 echo "Credit balance: $DECODED_BALANCE"
 
 # Test buyCredit
