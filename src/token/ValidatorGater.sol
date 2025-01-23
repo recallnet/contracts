@@ -28,6 +28,9 @@ contract ValidatorGater is IValidatorGater, UUPSUpgradeable, OwnableUpgradeable 
 
     event ActiveStateChange(bool active, address account);
 
+    error InvalidRouteLength();
+    error InvalidRouteAddress(address invalidAddress);
+
     function initialize() public initializer {
         __Ownable_init(msg.sender);
         _active = true;
@@ -53,6 +56,16 @@ contract ValidatorGater is IValidatorGater, UUPSUpgradeable, OwnableUpgradeable 
     }
 
     function setSubnet(SubnetID calldata id) external onlyOwner whenActive {
+        if (id.route.length == 0) {
+            revert InvalidRouteLength();
+        }
+        
+        for (uint256 i = 0; i < id.route.length; i++) {
+            if (id.route[i] == address(0)) {
+                revert InvalidRouteAddress(address(0));
+            }
+        }
+        
         subnet = id;
     }
 

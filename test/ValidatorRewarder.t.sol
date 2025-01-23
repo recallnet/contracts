@@ -40,6 +40,7 @@ abstract contract ValidatorRewarderTestBase is Test {
         ValidatorRewarderDeployScript rewarderDeployer = new ValidatorRewarderDeployScript();
         rewarder = rewarderDeployer.run(address(token));
         rewarderOwner = rewarder.owner();
+        
         // Grant MINTER_ROLE to Rewarder for Hoku tokens
         vm.startPrank(token.deployer());
         token.grantRole(token.MINTER_ROLE(), address(rewarder));
@@ -48,7 +49,6 @@ abstract contract ValidatorRewarderTestBase is Test {
         // Set up rewarder configuration
         vm.startPrank(rewarderOwner);
         rewarder.setSubnet(subnet, 600);
-        rewarder.setInflationRate(INFLATION_RATE);
         vm.stopPrank();
 
         // Mint initial supply of Hoku tokens to a random address
@@ -81,7 +81,7 @@ contract ValidatorRewarderInitialStateTest is ValidatorRewarderTestBase {
         assertTrue(rewarder.isActive());
         assertEq(rewarder.subnet(), createSubnet().root);
         assertEq(address(rewarder.token()), address(token));
-        assertEq(rewarder.inflationRate(), INFLATION_RATE);
+        assertEq(rewarder.INFLATION_RATE(), 928_276_004_952);
     }
 }
 
@@ -151,39 +151,6 @@ contract ValidatorRewarderSubnetTest is ValidatorRewarderTestBase {
 contract ValidatorRewarderTokenTest is ValidatorRewarderTestBase {
     function testInitialTokenSetup() public view {
         assertEq(address(rewarder.token()), address(token));
-    }
-}
-
-// Inflation rate management tests
-contract ValidatorRewarderInflationTest is ValidatorRewarderTestBase {
-    function testSetInflationRateNotOwner() public {
-        vm.startPrank(address(0x789));
-        vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", address(0x789)));
-        rewarder.setInflationRate(INFLATION_RATE * 2);
-        vm.stopPrank();
-    }
-
-    function testSetInflationRateAsOwner() public {
-        uint256 newRate = INFLATION_RATE * 2;
-        vm.startPrank(rewarderOwner);
-        rewarder.setInflationRate(newRate);
-        vm.stopPrank();
-        assertEq(rewarder.inflationRate(), newRate);
-    }
-
-    function testSetInflationRateWhenNotActive() public {
-        vm.startPrank(rewarderOwner);
-        rewarder.setActive(false);
-        vm.stopPrank();
-
-        vm.startPrank(rewarderOwner);
-        uint256 oldRate = rewarder.inflationRate();
-        uint256 newRate = oldRate * 2;
-        rewarder.setInflationRate(newRate);
-        vm.stopPrank();
-
-        // Rate should not change when rewarder is not active
-        assertEq(rewarder.inflationRate(), oldRate);
     }
 }
 

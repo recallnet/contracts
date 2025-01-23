@@ -27,7 +27,7 @@ contract Faucet is Ownable {
     mapping(string => uint256) internal _nextRequestAt;
 
     /// @dev Amount of tokens to drip per request
-    uint256 internal _dripAmount = 18;
+    uint256 internal _dripAmount = 5 ether;
 
     /// @dev Initializes the Faucet contract
     /// @dev Sets the contract deployer as the initial owner
