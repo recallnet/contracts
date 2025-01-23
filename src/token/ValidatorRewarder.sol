@@ -9,6 +9,8 @@ import {Hoku} from "./Hoku.sol";
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 
 /// @title ValidatorRewarder
@@ -17,6 +19,7 @@ import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 /// @dev The rewarder is called by the subnet actor when a validator claims rewards.
 contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgradeable {
     using SubnetIDHelper for SubnetID;
+    using SafeERC20 for Hoku;
 
     // ========== STATE VARIABLES ==========
 
@@ -30,35 +33,44 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     Hoku public token;
 
     /// @notice The latest checkpoint height that rewards can be claimed for
+    /// @dev Using uint64 to match Filecoin's epoch height type and save gas when interacting with the network
     uint64 public latestClaimedCheckpoint;
-
-    /// @notice The inflation rate for the subnet
-    /// @dev The rate is expressed as a decimal*1e18.
-    /// @dev For example 5% APY is 0.0000928276004952% yield per checkpoint period.
-    /// @dev This is expressed as 928_276_004_952 or 0.000000928276004952*1e18.
-    uint256 public inflationRate;
 
     /// @notice The bottomup checkpoint period for the subnet.
     /// @dev The checkpoint period is set when the subnet is created.
     uint256 public checkpointPeriod;
 
     /// @notice The supply of HOKU tokens at each checkpoint
-    mapping(uint64 => uint256) public checkpointToSupply;
+    mapping(uint64 checkpointHeight => uint256 totalSupply) public checkpointToSupply;
+
+    /// @notice The inflation rate for the subnet
+    /// @dev The rate is expressed as a decimal*1e18.
+    /// @dev For example 5% APY is 0.0000928276004952% yield per checkpoint period.
+    /// @dev This is expressed as 928_276_004_952 or 0.000000928276004952*1e18.
+    uint256 public constant INFLATION_RATE = 928_276_004_952;
 
     // ========== EVENTS & ERRORS ==========
 
     event ActiveStateChange(bool active, address account);
+    event SubnetUpdated(SubnetID subnet, uint256 checkpointPeriod);
+    event CheckpointClaimed(uint64 indexed checkpointHeight, address indexed validator, uint256 amount);
 
     error SubnetMismatch(SubnetID id);
     error InvalidClaimNotifier(address notifier);
     error InvalidCheckpointHeight(uint64 claimedCheckpointHeight);
     error InvalidCheckpointPeriod(uint256 period);
+    error InvalidTokenAddress(address token);
+    error InvalidValidatorAddress(address validator);
+    error ContractNotActive();
 
     // ========== INITIALIZER ==========
 
     /// @notice Initializes the rewarder
     /// @param hokuToken The address of the HOKU token contract
     function initialize(address hokuToken) public initializer {
+        if (hokuToken == address(0)) {
+            revert InvalidTokenAddress(hokuToken);
+        }
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         _active = true;
@@ -75,6 +87,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
         }
         subnet = subnetId;
         checkpointPeriod = period;
+        emit SubnetUpdated(subnetId, period);
     }
 
     // ========== PUBLIC FUNCTIONS ==========
@@ -82,9 +95,9 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @notice Modifier to ensure the contract is active
     modifier whenActive() {
         if (!_active) {
-            return; // Skip execution if not active
+            revert ContractNotActive();
         }
-        _; // Continue with function execution if active
+        _;
     }
 
     /// @notice Indicates whether the gate is active or not
@@ -100,13 +113,6 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
         emit ActiveStateChange(active, msg.sender);
     }
 
-    /// @notice Sets the inflation rate for the subnet.
-    /// @dev Only the owner can set the inflation rate, and only when the contract is active
-    /// @param rate The new inflation rate
-    function setInflationRate(uint256 rate) external onlyOwner whenActive {
-        inflationRate = rate;
-    }
-
     /// @notice Notifies the rewarder that a validator has claimed a reward.
     /// @dev Only the subnet actor can notify the rewarder, and only when the contract is active.
     /// @param id The subnet that the validator belongs to
@@ -117,6 +123,9 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
         uint64 claimedCheckpointHeight,
         Consensus.ValidatorData calldata data
     ) external override whenActive {
+        if (data.validator == address(0)) {
+            revert InvalidValidatorAddress(data.validator);
+        }
         // Check that the rewarder is responsible for the subnet that the validator is claiming rewards for
         if (keccak256(abi.encode(id)) != keccak256(abi.encode(subnet))) {
             revert SubnetMismatch(id);
@@ -143,25 +152,26 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
             // Get the current supply of HOKU tokens
             uint256 currentSupply = token.totalSupply();
 
-            // Set the supply for the checkpoint
+            // Set the supply for the checkpoint and update latest claimed checkpoint
             checkpointToSupply[claimedCheckpointHeight] = currentSupply;
-            // Calculate the inflation amount for __this__ checkpoint
-            uint256 supplyDelta = calculateInflationForCheckpoint(currentSupply);
-            // Calculate the validator's share of the inflation for __this__ checkpoint
-            uint256 validatorShare = calculateValidatorShare(data.blocksCommitted, supplyDelta);
-            // Mint the supply delta minus current validator's share to the Rewarder
-            token.mint(address(this), supplyDelta - validatorShare);
-            // Mint the validator's share to the validator
-            token.mint(data.validator, validatorShare);
-            // Update the latest claimable checkpoint.
             latestClaimedCheckpoint = claimedCheckpointHeight;
+
+            // Calculate rewards
+            uint256 supplyDelta = calculateInflationForCheckpoint(currentSupply);
+            uint256 validatorShare = calculateValidatorShare(data.blocksCommitted, supplyDelta);
+
+            // Perform external interactions after state updates
+            token.mint(address(this), supplyDelta - validatorShare);
+            token.mint(data.validator, validatorShare);
+            emit CheckpointClaimed(claimedCheckpointHeight, data.validator, validatorShare);
         } else {
             // Calculate the supply delta for the checkpoint
             uint256 supplyDelta = calculateInflationForCheckpoint(supplyAtCheckpoint);
             // Calculate the validator's share of the supply delta
             uint256 validatorShare = calculateValidatorShare(data.blocksCommitted, supplyDelta);
             // Transfer the validator's share of the supply delta to the validator
-            token.transfer(data.validator, validatorShare);
+            token.safeTransfer(data.validator, validatorShare);
+            emit CheckpointClaimed(claimedCheckpointHeight, data.validator, validatorShare);
         }
     }
 
@@ -170,9 +180,9 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @notice The internal method to calculate the supply delta for a checkpoint
     /// @param supply The token supply at the checkpoint
     /// @return The supply delta, i.e. the amount of new tokens minted for the checkpoint
-    function calculateInflationForCheckpoint(uint256 supply) internal view returns (uint256) {
+    function calculateInflationForCheckpoint(uint256 supply) internal pure returns (uint256) {
         UD60x18 supplyFixed = ud(supply);
-        UD60x18 inflationRateFixed = ud(inflationRate);
+        UD60x18 inflationRateFixed = ud(INFLATION_RATE);
         UD60x18 result = supplyFixed.mul(inflationRateFixed);
         return result.unwrap();
     }
