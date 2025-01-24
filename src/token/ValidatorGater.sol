@@ -10,9 +10,10 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 /// The power range that an approved validator can have.
+/// @dev Using uint128 for min/max to pack them into a single storage slot
 struct PowerRange {
-    uint256 min;
-    uint256 max;
+    uint128 min;
+    uint128 max;
 }
 
 /// This is a simple implementation of `IValidatorGater`. It makes sure the exact power change
@@ -30,6 +31,7 @@ contract ValidatorGater is IValidatorGater, UUPSUpgradeable, OwnableUpgradeable 
 
     error InvalidRouteLength();
     error InvalidRouteAddress(address invalidAddress);
+    error ContractNotActive();
 
     function initialize() public initializer {
         __Ownable_init(msg.sender);
@@ -50,22 +52,22 @@ contract ValidatorGater is IValidatorGater, UUPSUpgradeable, OwnableUpgradeable 
 
     modifier whenActive() {
         if (!_active) {
-            return; // Skip execution if not active
+            revert ContractNotActive();
         }
-        _; // Continue with function execution if active
+        _;
     }
 
     function setSubnet(SubnetID calldata id) external onlyOwner whenActive {
         if (id.route.length == 0) {
             revert InvalidRouteLength();
         }
-        
+
         for (uint256 i = 0; i < id.route.length; i++) {
             if (id.route[i] == address(0)) {
                 revert InvalidRouteAddress(address(0));
             }
         }
-        
+
         subnet = id;
     }
 
@@ -76,7 +78,7 @@ contract ValidatorGater is IValidatorGater, UUPSUpgradeable, OwnableUpgradeable 
 
     /// Only owner can approve the validator join request
     function approve(address validator, uint256 minPower, uint256 maxPower) external onlyOwner whenActive {
-        allowed[validator] = PowerRange({min: minPower, max: maxPower});
+        allowed[validator] = PowerRange({min: uint128(minPower), max: uint128(maxPower)});
     }
 
     /// Revoke approved power range

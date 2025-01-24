@@ -21,7 +21,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Install Dependencies
         run: pnpm install
@@ -43,9 +43,15 @@ jobs:
       - name: Install forge-coverage
         run: forge install
 
+        # Add build step before coverage
+      - name: Build contracts
+        run: |
+          forge build --extra-output-files abi --extra-output-files storageLayout
+
       - name: Run Coverage
         run: forge coverage --skip "*FFI.t.sol" --report lcov
-    # Check fails if coverage percentage falls under 80%
+
+      # Check fails if coverage percentage falls under 80%
       - name: Check Coverage Threshold
         run: |
           COVERAGE=$(forge coverage --skip "*FFI.t.sol"--report summary | grep 'Total coverage:' | awk '{print $3}' | cut -d'%' -f1)

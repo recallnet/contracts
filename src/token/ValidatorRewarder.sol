@@ -9,8 +9,9 @@ import {Hoku} from "./Hoku.sol";
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {UD60x18, ud} from "@prb/math/UD60x18.sol";
+
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 
 /// @title ValidatorRewarder
 /// @notice This contract is responsible for distributing rewards to validators.
@@ -32,6 +33,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     Hoku public token;
 
     /// @notice The latest checkpoint height that rewards can be claimed for
+    /// @dev Using uint64 to match Filecoin's epoch height type and save gas when interacting with the network
     uint64 public latestClaimedCheckpoint;
 
     /// @notice The bottomup checkpoint period for the subnet.
@@ -39,7 +41,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     uint256 public checkpointPeriod;
 
     /// @notice The supply of HOKU tokens at each checkpoint
-    mapping(uint64 => uint256) public checkpointToSupply;
+    mapping(uint64 checkpointHeight => uint256 totalSupply) public checkpointToSupply;
 
     /// @notice The inflation rate for the subnet
     /// @dev The rate is expressed as a decimal*1e18.
@@ -50,13 +52,16 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     // ========== EVENTS & ERRORS ==========
 
     event ActiveStateChange(bool active, address account);
+    event SubnetUpdated(SubnetID subnet, uint256 checkpointPeriod);
+    event CheckpointClaimed(uint64 indexed checkpointHeight, address indexed validator, uint256 amount);
 
     error SubnetMismatch(SubnetID id);
     error InvalidClaimNotifier(address notifier);
     error InvalidCheckpointHeight(uint64 claimedCheckpointHeight);
-    error InvalidCheckpointPeriod(uint256 period);    
+    error InvalidCheckpointPeriod(uint256 period);
     error InvalidTokenAddress(address token);
     error InvalidValidatorAddress(address validator);
+    error ContractNotActive();
 
     // ========== INITIALIZER ==========
 
@@ -82,6 +87,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
         }
         subnet = subnetId;
         checkpointPeriod = period;
+        emit SubnetUpdated(subnetId, period);
     }
 
     // ========== PUBLIC FUNCTIONS ==========
@@ -89,9 +95,9 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @notice Modifier to ensure the contract is active
     modifier whenActive() {
         if (!_active) {
-            return; // Skip execution if not active
+            revert ContractNotActive();
         }
-        _; // Continue with function execution if active
+        _;
     }
 
     /// @notice Indicates whether the gate is active or not
@@ -146,18 +152,18 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
             // Get the current supply of HOKU tokens
             uint256 currentSupply = token.totalSupply();
 
-            // Set the supply for the checkpoint
+            // Set the supply for the checkpoint and update latest claimed checkpoint
             checkpointToSupply[claimedCheckpointHeight] = currentSupply;
-            // Calculate the inflation amount for __this__ checkpoint
-            uint256 supplyDelta = calculateInflationForCheckpoint(currentSupply);
-            // Calculate the validator's share of the inflation for __this__ checkpoint
-            uint256 validatorShare = calculateValidatorShare(data.blocksCommitted, supplyDelta);
-            // Mint the supply delta minus current validator's share to the Rewarder
-            token.mint(address(this), supplyDelta - validatorShare);
-            // Mint the validator's share to the validator
-            token.mint(data.validator, validatorShare);
-            // Update the latest claimable checkpoint.
             latestClaimedCheckpoint = claimedCheckpointHeight;
+
+            // Calculate rewards
+            uint256 supplyDelta = calculateInflationForCheckpoint(currentSupply);
+            uint256 validatorShare = calculateValidatorShare(data.blocksCommitted, supplyDelta);
+
+            // Perform external interactions after state updates
+            token.mint(address(this), supplyDelta - validatorShare);
+            token.mint(data.validator, validatorShare);
+            emit CheckpointClaimed(claimedCheckpointHeight, data.validator, validatorShare);
         } else {
             // Calculate the supply delta for the checkpoint
             uint256 supplyDelta = calculateInflationForCheckpoint(supplyAtCheckpoint);
@@ -165,6 +171,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
             uint256 validatorShare = calculateValidatorShare(data.blocksCommitted, supplyDelta);
             // Transfer the validator's share of the supply delta to the validator
             token.safeTransfer(data.validator, validatorShare);
+            emit CheckpointClaimed(claimedCheckpointHeight, data.validator, validatorShare);
         }
     }
 

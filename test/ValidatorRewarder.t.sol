@@ -40,7 +40,7 @@ abstract contract ValidatorRewarderTestBase is Test {
         ValidatorRewarderDeployScript rewarderDeployer = new ValidatorRewarderDeployScript();
         rewarder = rewarderDeployer.run(address(token));
         rewarderOwner = rewarder.owner();
-        
+
         // Grant MINTER_ROLE to Rewarder for Hoku tokens
         vm.startPrank(token.deployer());
         token.grantRole(token.MINTER_ROLE(), address(rewarder));
@@ -166,6 +166,7 @@ contract ValidatorRewarderBasicClaimTest is ValidatorRewarderTestBase {
         address claimant = address(0x999);
         Consensus.ValidatorData memory validatorData = createValidatorData(claimant, 100);
 
+        vm.expectRevert(ValidatorRewarder.ContractNotActive.selector);
         rewarder.notifyValidClaim(createSubnet(), 600, validatorData);
         assertEq(token.balanceOf(claimant), 0);
     }
@@ -337,10 +338,6 @@ contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
         // Total = 600 blocks (equals CHECKPOINT_PERIOD)
 
         uint256 initialSupply = token.totalSupply();
-        // Reward for committing 100 blocks in a checkpoint period for given inflation rate
-        // Reward for 1st validator = totalSupply * INFLATION_RATE * (blocksCommitted / CHECKPOINT_PERIOD)
-        // Note: this variable is unused, but keep it for now in case we need it
-        // uint256 baseReward = 154712667492044;
 
         // Validator 1 claims for both checkpoints
         vm.startPrank(SUBNET_ROUTE);
