@@ -16,9 +16,9 @@ import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts
 import {ReentrancyGuardUpgradeable} from
     "@openzeppelin/contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol";
 
-/// @title Hoku Token Contract
+/// @title Recall Token Contract
 /// @dev Implements an upgradeable ERC20 token with additional features like pausing and minting
-contract Hoku is
+contract Recall is
     ERC20BurnableUpgradeable,
     AccessControlUpgradeable,
     PausableUpgradeable,
@@ -43,8 +43,8 @@ contract Hoku is
     /// @param its The interchain token service address
     /// @param itsSalt The salt for the interchain token service
     function initialize(string memory prefix, address its, bytes32 itsSalt) public initializer {
-        string memory symbol = string(abi.encodePacked(prefix, "HOKU"));
-        __ERC20_init("Hoku", symbol);
+        string memory symbol = string(abi.encodePacked(prefix, "RECALL"));
+        __ERC20_init("Recall", symbol);
         __AccessControl_init();
         __Pausable_init();
         __ReentrancyGuard_init();

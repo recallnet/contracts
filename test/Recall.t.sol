@@ -5,11 +5,11 @@ import {Options, Upgrades} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
 import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
-import {DeployScript} from "../script/Hoku.s.sol";
-import {Hoku} from "../src/token/Hoku.sol";
+import {DeployScript} from "../script/Recall.s.sol";
+import {Recall} from "../src/token/Recall.sol";
 
-contract HokuTest is Test {
-    Hoku internal token;
+contract RecallTest is Test {
+    Recall internal token;
     address internal user;
     uint256 internal constant MINT_AMOUNT = 1000 * 10 ** 18;
     address internal constant TESTER = address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);

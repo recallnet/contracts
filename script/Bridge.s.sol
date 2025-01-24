@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {Hoku} from "../src/token/Hoku.sol";
+import {Recall} from "../src/token/Recall.sol";
 import {IInterchainTokenService} from
     "@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
@@ -53,11 +53,11 @@ contract BridgeOps is Script {
     function isMinter(address proxyAddress, address addressToCheck) public view {
         console.log("Proxy address: ", proxyAddress);
 
-        // Create Hoku instance
-        Hoku hoku = Hoku(proxyAddress);
+        // Create Recall instance
+        Recall recall = Recall(proxyAddress);
 
         // Check if the given address has the MINTER_ROLE
-        bool hasMinterRole = hoku.hasRole(hoku.MINTER_ROLE(), addressToCheck);
+        bool hasMinterRole = recall.hasRole(recall.MINTER_ROLE(), addressToCheck);
 
         console.log("Address to check: ", addressToCheck);
         console.log("Has MINTER_ROLE: ", hasMinterRole);
@@ -67,14 +67,14 @@ contract BridgeOps is Script {
         console.log("Minting funds to address: ", recipient);
         console.log("Amount: ", amount);
 
-        Hoku hoku = Hoku(proxyAddress);
+        Recall recall = Recall(proxyAddress);
         vm.startBroadcast();
         // Ensure the caller has the MINTER_ROLE
         // solhint-disable-next-line custom-errors
-        require(hoku.hasRole(hoku.MINTER_ROLE(), msg.sender), "Caller is not a minter");
+        require(recall.hasRole(recall.MINTER_ROLE(), msg.sender), "Caller is not a minter");
 
         // Mint tokens to the recipient
-        hoku.mint(recipient, amount);
+        recall.mint(recipient, amount);
         vm.stopBroadcast();
 
         console.log("Minting successful");
@@ -147,7 +147,7 @@ contract BridgeOps is Script {
         console.log("Recipient: ", recipient);
         console.log("Amount: ", amount);
 
-        Hoku hoku = Hoku(proxyAddress);
+        Recall recall = Recall(proxyAddress);
 
         uint256 gasEstimate = estimateGas(destinationChain);
         console.log("Gas estimate result: ", gasEstimate);
@@ -159,18 +159,18 @@ contract BridgeOps is Script {
         vm.startBroadcast();
 
         // Log balance of the sender
-        uint256 senderBalance = hoku.balanceOf(msg.sender);
+        uint256 senderBalance = recall.balanceOf(msg.sender);
         console.log("Sender balance: ", senderBalance);
 
         // Approve the token manager to spend tokens on behalf of the sender
-        hoku.approve(INTERCHAIN_TOKEN_SERVICE, amount);
+        recall.approve(INTERCHAIN_TOKEN_SERVICE, amount);
         // Log the currently approved amount for the its
-        uint256 currentApproval = hoku.allowance(msg.sender, INTERCHAIN_TOKEN_SERVICE);
+        uint256 currentApproval = recall.allowance(msg.sender, INTERCHAIN_TOKEN_SERVICE);
         console.log("Current approval for ITS: ", currentApproval);
 
         vm.breakpoint("a");
         // Perform the interchain transfer with empty metadata
-        hoku.interchainTransfer{value: gasEstimate}(destinationChain, recipientBytes, amount, "");
+        recall.interchainTransfer{value: gasEstimate}(destinationChain, recipientBytes, amount, "");
 
         vm.stopBroadcast();
 
@@ -180,9 +180,9 @@ contract BridgeOps is Script {
     function checkBalance(address proxyAddress, address accountToCheck) public view {
         console.log("Checking balance for address: ", accountToCheck);
 
-        Hoku hoku = Hoku(proxyAddress);
+        Recall recall = Recall(proxyAddress);
         // Get the balance of the account
-        uint256 balance = hoku.balanceOf(accountToCheck);
+        uint256 balance = recall.balanceOf(accountToCheck);
 
         console.log("Balance: ", balance);
     }
@@ -191,16 +191,16 @@ contract BridgeOps is Script {
         console.log("Setting approval for address: ", account);
         console.log("Amount: ", amount);
 
-        Hoku hoku = Hoku(proxyAddress);
+        Recall recall = Recall(proxyAddress);
 
         vm.startBroadcast();
 
-        uint256 currentApproval = hoku.allowance(msg.sender, account);
+        uint256 currentApproval = recall.allowance(msg.sender, account);
         console.log("Current approval: ", currentApproval);
 
-        hoku.approve(account, amount + 1);
+        recall.approve(account, amount + 1);
 
-        currentApproval = hoku.allowance(msg.sender, account);
+        currentApproval = recall.allowance(msg.sender, account);
         console.log("Current approval: ", currentApproval);
 
         vm.stopBroadcast();

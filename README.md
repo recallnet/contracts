@@ -1,9 +1,9 @@
-# Hoku Contracts
+# Recall Contracts
 
 [![License](https://img.shields.io/github/license/hokunet/contracts.svg)](./LICENSE)
 [![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg)](https://github.com/RichardLitt/standard-readme)
 
-> Hoku core Solidity contracts and libraries
+> Recall core Solidity contracts and libraries
 
 ## Table of Contents
 
@@ -33,9 +33,9 @@
 ## Background
 
 This project is built with [Foundry](https://book.getfoundry.sh/) and contains the core contracts
-for Hoku. It includes the following:
+for Recall. It includes the following:
 
-- `Hoku.sol`: An ERC20 token implementation.
+- `Recall.sol`: An ERC20 token implementation.
 - `Faucet.sol`: The accompanying onchain faucet (rate limiter) contract for dripping testnet funds.
 - `CreditManager.sol`: Manage subnet credit, including credit purchases, approvals/rejections, and
   related read-only operations (uses the `LibCredit` and `LibWasm` libraries).
@@ -55,12 +55,12 @@ for Hoku. It includes the following:
 
 ### Deployments
 
-The following contracts are deployed in the testnet environment (Filecoin Calibration or the Hoku
+The following contracts are deployed in the testnet environment (Filecoin Calibration or the Recall
 subnet):
 
 | Contract       | Chain       | Address                                      |
 | -------------- | ----------- | -------------------------------------------- |
-| Hoku (ERC20)   | Calibration | `0x20d8a696091153c4d4816ba1fdefe113f71e0905` |
+| Recall (ERC20) | Calibration | `0x20d8a696091153c4d4816ba1fdefe113f71e0905` |
 | Faucet         | Subnet      | `0x7Aff9112A46D98A455f4d4F93c0e3D2438716A44` |
 | BlobManager    | Subnet      | `0xTODO`                                     |
 | BucketManager  | Subnet      | `0xTODO`                                     |
@@ -101,15 +101,15 @@ pnpm clean
 
 The scripts for deploying contracts are in `script/` directory:
 
-- `Hoku.s.sol`: Deploy the Hoku ERC20 contract.
+- `Recall.s.sol`: Deploy the Recall ERC20 contract.
 - `Faucet.s.sol`: Deploy the faucet contract.
 - `ValidatorGater.s.sol`: Deploy the validator gater contract.
 - `CreditManager.s.sol`: Deploy the credit contract.
 - `BlobManager.s.sol`: Deploy the blobs contract.
 - `BucketManager.s.sol`: Deploy the Bucket Manager contract.
-- `Bridge.s.sol`: Deploy the bridge contract—relevant for the Hoku ERC20 on live chains.
+- `Bridge.s.sol`: Deploy the bridge contract—relevant for the Recall ERC20 on live chains.
 
-> [!NOTE] If you're deploying _to_ the Hoku subnet or Filecoin Calibration, you'll need to
+> [!NOTE] If you're deploying _to_ the Recall subnet or Filecoin Calibration, you'll need to
 > (significantly) bump the gas estimation multiplier by adding a `-g 100000` flag to the
 > `forge script` command.
 
@@ -126,7 +126,7 @@ You can run a script with `forge script`, passing the script path/name and any a
 - `localnet_parent`: Deploy to localnet and the parent (Anvil) node.
 - `localnet_subnet`: Deploy to localnet and the subnet node.
 - `testnet_parent`: Deploy to testnet and the parent network (Filecoin Calibration).
-- `testnet_subnet`: Deploy to testnet and the subnet (Hoku).
+- `testnet_subnet`: Deploy to testnet and the subnet (Recall).
 - `devnet`: Deploy to the devnet network.
 
 The `--target-contract` (`--tc`) should be `DeployScript`, and it takes an argument for the
@@ -141,29 +141,29 @@ execute deployment with the given argument above, and the `--broadcast` flag act
 transaction to the network. Recall that you **must** set `-g 100000` to ensure the gas estimate is
 sufficiently high.
 
-Lastly, if you're deploying the Hoku ERC20, the environment will dictate different token symbols:
+Lastly, if you're deploying the Recall ERC20, the environment will dictate different token symbols:
 
-- Local: prefixes `HOKU` with `l`
-- Testnet: prefixes `HOKU` with `t`
-- Mainnet: uses `HOKU`
+- Local: prefixes `RECALL` with `l`
+- Testnet: prefixes `RECALL` with `t`
+- Mainnet: uses `RECALL`
 
 Mainnet deployments require the address of the Axelar Interchain Token Service on chain you are
 deploying to, which is handled in the ERC20's `DeployScript` logic.
 
 #### Localnet
 
-##### Hoku ERC20
+##### Recall ERC20
 
-Deploy the Hoku ERC20 contract to the localnet parent chain (i.e., `http://localhost:8545`). Note
+Deploy the Recall ERC20 contract to the localnet parent chain (i.e., `http://localhost:8545`). Note
 the `-g` flag is not used here since the gas estimate is sufficiently low on Anvil.
 
 ```shell
-forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url localnet_parent --private-key $PRIVATE_KEY --broadcast -vv
+forge script script/Recall.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url localnet_parent --private-key $PRIVATE_KEY --broadcast -vv
 ```
 
 ##### Faucet
 
-Deploy the Faucet contract to the localnet subnet. The second argument is the initial supply of Hoku
+Deploy the Faucet contract to the localnet subnet. The second argument is the initial supply of Recall
 tokens, owned by the deployer's account which will be transferred to the faucet contract (e.g., 5000
 with 10\*\*18 decimal units).
 
@@ -197,18 +197,18 @@ forge script script/BlobManager.s.sol --tc DeployScript --sig 'run()' --rpc-url 
 
 #### Testnet
 
-##### Hoku ERC20
+##### Recall ERC20
 
-Deploy the Hoku ERC20 contract to the testnet parent chain. Note the `-g` flag _is_ used here (this
+Deploy the Recall ERC20 contract to the testnet parent chain. Note the `-g` flag _is_ used here (this
 differs from the localnet setup above since we're deploying to Filecoin Calibration);
 
 ```shell
-forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_parent --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
+forge script script/Recall.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_parent --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
 ```
 
 ##### Faucet
 
-Deploy the Faucet contract to the testnet subnet. The second argument is the initial supply of Hoku
+Deploy the Faucet contract to the testnet subnet. The second argument is the initial supply of Recall
 tokens, owned by the deployer's account which will be transferred to the faucet contract (e.g., 5000
 with 10\*\*18 decimal units).
 
@@ -249,7 +249,7 @@ If you're trying to simply deploy to an Anvil node (i.e., `http://localhost:8545
 same pattern, or just explicitly set the RPC URL:
 
 ```shell
-forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url http://localhost:8545 --private-key $PRIVATE_KEY --broadcast -vv
+forge script script/Recall.s.sol --tc DeployScript --sig 'run(string)' local --rpc-url http://localhost:8545 --private-key $PRIVATE_KEY --broadcast -vv
 ```
 
 #### Mainnet
@@ -257,21 +257,21 @@ forge script script/Hoku.s.sol --tc DeployScript --sig 'run(string)' local --rpc
 Mainnet is not yet available. The RPC URLs (`mainnet_parent` and `mainnet_subnet`) are placeholders,
 pointing to the same environment as the testnet.
 
-##### Hoku ERC20
+##### Recall ERC20
 
-However, if you'd like to deploy the HOKU ERC20 contract to mainnet Ethereum or Filecoin, you can
+However, if you'd like to deploy the RECALL ERC20 contract to mainnet Ethereum or Filecoin, you can
 use the following. Note these will enable behavior for the Axelar Interchain Token Service.
 
 Deploy to Ethereum:
 
 ```shell
-forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' ethereum --rpc-url https://eth.merkle.io --private-key $PRIVATE_KEY --broadcast -vv
+forge script script/Recall.s.sol:DeployScript --sig 'run(string)' ethereum --rpc-url https://eth.merkle.io --private-key $PRIVATE_KEY --broadcast -vv
 ```
 
 And for Filecoin:
 
 ```shell
-forge script script/Hoku.s.sol:DeployScript --sig 'run(string)' filecoin --rpc-url https://api.node.glif.io/rpc/v1 --private-key $PRIVATE_KEY --broadcast -vv
+forge script script/Recall.s.sol:DeployScript --sig 'run(string)' filecoin --rpc-url https://api.node.glif.io/rpc/v1 --private-key $PRIVATE_KEY --broadcast -vv
 ```
 
 ## Development
@@ -670,14 +670,14 @@ export BUCKETS=0x314512a8692245cf507ac6E9d0eB805EA820d9a8
 
 The account you use to create buckets should have the following:
 
-- A HOKU token balance in the subnet (e.g., from the faucet at:
+- A RECALL token balance in the subnet (e.g., from the faucet at:
   [https://faucet.hoku.sh](https://faucet.hoku.sh)). You can verify this with the
   [Hoku CLI](https://github.com/hokunet/rust-hoku): `hoku account info`
 - A credit balance in the subnet. You can verify this with `hoku credit balance`. If you don't have
   credits, you can buy them with the Credits contract above, or run the `hoku credit buy <amount>`
   command.
 
-Creating a bucket will cost native HOKU tokens, and writing to it will cost credit.
+Creating a bucket will cost native RECALL tokens, and writing to it will cost credit.
 
 ##### Create a bucket
 

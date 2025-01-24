@@ -5,7 +5,7 @@ import {IValidatorRewarder} from "../interfaces/IValidatorRewarder.sol";
 
 import {Consensus, SubnetID} from "../types/CommonTypes.sol";
 import {SubnetIDHelper} from "../util/SubnetIDHelper.sol";
-import {Hoku} from "./Hoku.sol";
+import {Recall} from "./Recall.sol";
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
@@ -19,7 +19,7 @@ import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 /// @dev The rewarder is called by the subnet actor when a validator claims rewards.
 contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgradeable {
     using SubnetIDHelper for SubnetID;
-    using SafeERC20 for Hoku;
+    using SafeERC20 for Recall;
 
     // ========== STATE VARIABLES ==========
 
@@ -30,7 +30,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     SubnetID public subnet;
 
     /// @notice The token that this rewarder mints
-    Hoku public token;
+    Recall public token;
 
     /// @notice The latest checkpoint height that rewards can be claimed for
     /// @dev Using uint64 to match Filecoin's epoch height type and save gas when interacting with the network
@@ -40,7 +40,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @dev The checkpoint period is set when the subnet is created.
     uint256 public checkpointPeriod;
 
-    /// @notice The supply of HOKU tokens at each checkpoint
+    /// @notice The supply of RECALL tokens at each checkpoint
     mapping(uint64 checkpointHeight => uint256 totalSupply) public checkpointToSupply;
 
     /// @notice The inflation rate for the subnet
@@ -66,15 +66,15 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     // ========== INITIALIZER ==========
 
     /// @notice Initializes the rewarder
-    /// @param hokuToken The address of the HOKU token contract
-    function initialize(address hokuToken) public initializer {
-        if (hokuToken == address(0)) {
-            revert InvalidTokenAddress(hokuToken);
+    /// @param recallToken The address of the RECALL token contract
+    function initialize(address recallToken) public initializer {
+        if (recallToken == address(0)) {
+            revert InvalidTokenAddress(recallToken);
         }
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         _active = true;
-        token = Hoku(hokuToken);
+        token = Recall(recallToken);
     }
 
     /// @notice Sets the subnet and checkpoint period
@@ -149,7 +149,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
                 revert InvalidCheckpointHeight(claimedCheckpointHeight);
             }
 
-            // Get the current supply of HOKU tokens
+            // Get the current supply of RECALL tokens
             uint256 currentSupply = token.totalSupply();
 
             // Set the supply for the checkpoint and update latest claimed checkpoint
