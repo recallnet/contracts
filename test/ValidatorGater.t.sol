@@ -112,8 +112,7 @@ contract ValidatorGaterTest is Test {
     }
 
     function testUnactiveGater() public {
-        address validator = address(4);
-        // Must be possible to desactivate the gater
+        // Must be possible to deactivate the gater
         vm.expectRevert();
         gater.setActive(false); // Not the owner
         assertEq(gater.isActive(), true);
@@ -122,15 +121,35 @@ contract ValidatorGaterTest is Test {
         gater.setActive(false);
         assertEq(gater.isActive(), false);
 
-        // Must not execute functions if inactive
+        // Test all functions with whenActive modifier
         vm.startPrank(owner);
+
+        // Test approve
+        vm.expectRevert(ValidatorGater.ContractNotActive.selector);
         gater.approve(validator1, 10, 10);
 
-        (uint256 min, uint256 max) = gater.allowed(validator);
-        assertEq(min, 0);
-        assertEq(max, 0);
+        // Test revoke
+        vm.expectRevert(ValidatorGater.ContractNotActive.selector);
+        gater.revoke(validator1);
+
+        // Test setSubnet
+        vm.expectRevert(ValidatorGater.ContractNotActive.selector);
+        gater.setSubnet(subnet);
+
+        // Test isAllow
+        vm.expectRevert(ValidatorGater.ContractNotActive.selector);
+        gater.isAllow(validator1, 100);
+
+        // Test interceptPowerDelta
+        vm.expectRevert(ValidatorGater.ContractNotActive.selector);
+        gater.interceptPowerDelta(subnet, validator1, 0, 100);
 
         vm.stopPrank();
+
+        // Verify storage state remains unchanged
+        (uint256 min, uint256 max) = gater.allowed(validator1);
+        assertEq(min, 0);
+        assertEq(max, 0);
     }
 
     function testSubnetManagerIntegration() public {

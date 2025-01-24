@@ -20,6 +20,10 @@ error InvalidFunding(address from, uint256 value);
 /// @param value The amount of tokens funded
 event Funding(address indexed from, uint256 value);
 
+/// @dev Error thrown when a transfer fails
+/// @param recipient The address of the recipient
+error TransferFailed(address recipient);
+
 /// @title Faucet Contract
 /// @dev A simple faucet contract for distributing tokens
 contract Faucet is Ownable {
@@ -27,7 +31,7 @@ contract Faucet is Ownable {
     mapping(string => uint256) internal _nextRequestAt;
 
     /// @dev Amount of tokens to drip per request
-    uint256 internal _dripAmount = 18;
+    uint256 internal _dripAmount = 5 ether;
 
     /// @dev Initializes the Faucet contract
     /// @dev Sets the contract deployer as the initial owner
@@ -48,7 +52,7 @@ contract Faucet is Ownable {
     /// @dev Allows users to fund the faucet
     /// @dev Reverts if the funding amount is 0 or less
     function fund() external payable {
-        if (msg.value <= 0) {
+        if (msg.value == 0) {
             revert InvalidFunding(msg.sender, msg.value);
         }
 
@@ -60,20 +64,25 @@ contract Faucet is Ownable {
     /// @param recipient The address to receive the tokens
     /// @param keys Array of keys to identify the recipient used in the _nextRequestAt mapping
     function drip(address payable recipient, string[] calldata keys) external onlyOwner {
-        uint256 keysLength = keys.length;
         uint256 amount = _dripAmount;
-        for (uint256 i = 0; i < keysLength; i++) {
-            if (_nextRequestAt[keys[i]] > block.timestamp) {
-                revert TryLater();
-            }
-        }
+
         if (address(this).balance < amount) {
             revert FaucetEmpty();
         }
-        for (uint256 i = 0; i < keysLength; i++) {
+
+        uint256 keysLength = keys.length;
+        for (uint256 i; i < keysLength; ++i) {
+            if (_nextRequestAt[keys[i]] > block.timestamp) {
+                revert TryLater();
+            }
             _nextRequestAt[keys[i]] = block.timestamp + (12 hours);
         }
-        recipient.transfer(amount);
+
+        // Handle transfer result
+        (bool success,) = recipient.call{value: amount}("");
+        if (!success) {
+            revert TransferFailed(recipient);
+        }
     }
 
     /// @dev Sets the amount of tokens to distribute per request

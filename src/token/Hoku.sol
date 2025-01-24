@@ -30,8 +30,8 @@ contract Hoku is
     address internal _interchainTokenService;
     bytes32 internal _itsSalt;
 
-    bytes32 public ADMIN_ROLE; // solhint-disable-line var-name-mixedcase
-    bytes32 public MINTER_ROLE; // solhint-disable-line var-name-mixedcase
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE"); // solhint-disable-line var-name-mixedcase
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE"); // solhint-disable-line var-name-mixedcase
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -52,10 +52,6 @@ contract Hoku is
         _interchainTokenService = its;
         _itsSalt = itsSalt;
         deployer = msg.sender;
-
-        // Initialize roles
-        ADMIN_ROLE = keccak256("ADMIN_ROLE");
-        MINTER_ROLE = keccak256("MINTER_ROLE");
 
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
