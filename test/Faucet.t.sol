@@ -6,9 +6,9 @@ import {Test, Vm} from "forge-std/Test.sol";
 import {console2 as console} from "forge-std/console2.sol";
 
 import {DeployScript as FaucetDeployer} from "../script/Faucet.s.sol";
-import {DeployScript as TokenDeployer} from "../script/Hoku.s.sol";
+import {DeployScript as TokenDeployer} from "../script/Recall.s.sol";
 import {Faucet, TryLater} from "../src/token/Faucet.sol";
-import {Hoku} from "../src/token/Hoku.sol";
+import {Recall} from "../src/token/Recall.sol";
 
 contract FaucetTest is Test {
     Faucet internal faucet;
@@ -18,6 +18,7 @@ contract FaucetTest is Test {
     address internal constant TESTER = address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
     uint256 internal constant MINT_AMOUNT = 1000 * 10 ** 18;
     string[] internal keys = ["test1", "test2"];
+    Recall internal token;
 
     function setUp() public virtual {
         chain = vm.createWallet("chain");

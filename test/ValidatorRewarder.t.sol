@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {DeployScript as HokuDeployScript} from "../script/Hoku.s.sol";
+import {DeployScript as RecallDeployScript} from "../script/Recall.s.sol";
 import {DeployScript as ValidatorRewarderDeployScript} from "../script/ValidatorRewarder.s.sol";
-import {Hoku} from "../src/token/Hoku.sol";
+import {Recall} from "../src/token/Recall.sol";
 import {ValidatorRewarder} from "../src/token/ValidatorRewarder.sol";
 
 import {Consensus, SubnetID} from "../src/types/CommonTypes.sol";
@@ -17,7 +17,7 @@ abstract contract ValidatorRewarderTestBase is Test {
 
     ValidatorRewarder internal rewarder;
     address internal rewarderOwner;
-    Hoku internal token;
+    Recall internal token;
     address internal subnetActor;
 
     // Constants
@@ -29,9 +29,9 @@ abstract contract ValidatorRewarderTestBase is Test {
     function setUp() public virtual {
         subnetActor = address(0x456);
 
-        // Deploy Hoku token
-        HokuDeployScript hokuDeployer = new HokuDeployScript();
-        token = hokuDeployer.run("local");
+        // Deploy Recall token
+        RecallDeployScript recallDeployer = new RecallDeployScript();
+        token = recallDeployer.run("local");
 
         // Create subnet for initialization
         SubnetID memory subnet = createSubnet();
@@ -40,8 +40,7 @@ abstract contract ValidatorRewarderTestBase is Test {
         ValidatorRewarderDeployScript rewarderDeployer = new ValidatorRewarderDeployScript();
         rewarder = rewarderDeployer.run(address(token));
         rewarderOwner = rewarder.owner();
-
-        // Grant MINTER_ROLE to Rewarder for Hoku tokens
+        // Grant MINTER_ROLE to Rewarder for Recall tokens
         vm.startPrank(token.deployer());
         token.grantRole(token.MINTER_ROLE(), address(rewarder));
         vm.stopPrank();
@@ -51,7 +50,7 @@ abstract contract ValidatorRewarderTestBase is Test {
         rewarder.setSubnet(subnet, 600);
         vm.stopPrank();
 
-        // Mint initial supply of Hoku tokens to a random address
+        // Mint initial supply of Recall tokens to a random address
         vm.startPrank(rewarderOwner);
         token.mint(address(0x888), 1000e18);
         // Set subnet
