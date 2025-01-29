@@ -296,7 +296,11 @@ contract LibWasmTest is Test {
         );
         bytes memory expectedError = abi.encodeWithSelector(InvalidValue.selector, "Length exceeds max size of 255");
         vm.expectRevert(expectedError);
-        LibWasm.encodeCborBytesArray(data);
+        this.externalEncodeCborBytesArray(data); // Call through external function
+    }
+
+    function externalEncodeCborBytesArray(bytes memory data) external pure returns (bytes memory) {
+        return LibWasm.encodeCborBytesArray(data);
     }
 
     function testEncodeCborIrohNodeId() public pure {
@@ -362,7 +366,11 @@ contract LibWasmTest is Test {
         bytes memory expectedError = abi.encodeWithSelector(InvalidValue.selector, "value * 1e18 overflows uint256");
         vm.expectRevert(expectedError);
         value = 1000000000000000000000000000000000000000000000000000000000000000000000000;
-        result = LibWasm.encodeCborUint256AsBytes(value, true);
+        this.externalEncodeCborUint256AsBytes(value, true);
+    }
+
+    function externalEncodeCborUint256AsBytes(uint256 value, bool padding) external pure returns (bytes memory) {
+        return LibWasm.encodeCborUint256AsBytes(value, padding);
     }
 
     function testDecodeCborByteStringToUint64() public pure {
