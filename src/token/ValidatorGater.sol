@@ -35,6 +35,7 @@ contract ValidatorGater is IValidatorGater, UUPSUpgradeable, OwnableUpgradeable 
 
     function initialize() public initializer {
         __Ownable_init(msg.sender);
+        __UUPSUpgradeable_init();
         _active = true;
     }
 
