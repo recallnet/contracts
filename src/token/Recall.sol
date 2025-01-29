@@ -111,8 +111,8 @@ contract Recall is
     {
         uint256 _allowance = allowance(sender, spender);
         if (_allowance != type(uint256).max) {
+            require(_allowance >= amount, "ERC20: insufficient allowance");
             _approve(sender, spender, _allowance - amount, false);
-        }
     }
 
     /**
