@@ -112,7 +112,7 @@ contract Recall is
     {
         uint256 _allowance = allowance(sender, spender);
         if (_allowance != type(uint256).max) {
-            _approve(sender, spender, _allowance - amount);
+            _approve(sender, spender, _allowance - amount, false);
         }
     }
 
