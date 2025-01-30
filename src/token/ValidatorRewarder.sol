@@ -32,28 +32,22 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @notice The token that this rewarder mints
     Recall public token;
 
-    /// @notice The latest checkpoint height that rewards can be claimed for
-    /// @dev Using uint64 to match Filecoin's epoch height type and save gas when interacting with the network
-    uint64 public latestClaimedCheckpoint;
-
     /// @notice The bottomup checkpoint period for the subnet.
     /// @dev The checkpoint period is set when the subnet is created.
     uint256 public checkpointPeriod;
 
-    /// @notice The supply of RECALL tokens at each checkpoint
-    mapping(uint64 checkpointHeight => uint256 totalSupply) public checkpointToSupply;
-
-    /// @notice The inflation rate for the subnet
-    /// @dev The rate is expressed as a decimal*1e18.
-    /// @dev For example 5% APY is 0.0000928276004952% yield per checkpoint period.
-    /// @dev This is expressed as 928_276_004_952 or 0.000000928276004952*1e18.
-    uint256 public constant INFLATION_RATE = 928_276_004_952;
+    /// @notice The number of blocks required to generate 1 new HOKU token (with 18 decimals)
+    uint256 public constant BLOCKS_PER_TOKEN = 3;
 
     // ========== EVENTS & ERRORS ==========
 
     event ActiveStateChange(bool active, address account);
     event SubnetUpdated(SubnetID subnet, uint256 checkpointPeriod);
-    event CheckpointClaimed(uint64 indexed checkpointHeight, address indexed validator, uint256 amount);
+    /// @notice Emitted when a validator claims their rewards for a checkpoint
+    /// @param checkpointHeight The height of the checkpoint for which rewards are claimed
+    /// @param validator The address of the validator claiming rewards
+    /// @param amount The amount of tokens claimed as reward
+    event RewardsClaimed(uint64 indexed checkpointHeight, address indexed validator, uint256 amount);
 
     error SubnetMismatch(SubnetID id);
     error InvalidClaimNotifier(address notifier);
@@ -136,83 +130,52 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
             revert InvalidClaimNotifier(msg.sender);
         }
 
-        // When the supply for the checkpoint is 0, it means that this is the first claim
-        // for this checkpoint.
-        // In this case we will set the supply for the checkpoint and
-        // calculate the inflation and mint the rewards to the rewarder and the first claimant.
-        // Otherwise, we know the supply for the checkpoint.
-        // We will calculate the rewards and transfer them to the other claimants for this checkpoint.
-        uint256 supplyAtCheckpoint = checkpointToSupply[claimedCheckpointHeight];
-        if (supplyAtCheckpoint == 0) {
-            // Check that the checkpoint height is valid.
-            if (!validateCheckpointHeight(claimedCheckpointHeight)) {
-                revert InvalidCheckpointHeight(claimedCheckpointHeight);
-            }
-
-            // Get the current supply of RECALL tokens
-            uint256 currentSupply = token.totalSupply();
-
-            // Set the supply for the checkpoint and update latest claimed checkpoint
-            checkpointToSupply[claimedCheckpointHeight] = currentSupply;
-            latestClaimedCheckpoint = claimedCheckpointHeight;
-
-            // Calculate rewards
-            uint256 supplyDelta = calculateInflationForCheckpoint(currentSupply);
-            uint256 validatorShare = calculateValidatorShare(data.blocksCommitted, supplyDelta);
-
-            // Perform external interactions after state updates
-            token.mint(address(this), supplyDelta - validatorShare);
-            token.mint(data.validator, validatorShare);
-            emit CheckpointClaimed(claimedCheckpointHeight, data.validator, validatorShare);
-        } else {
-            // Calculate the supply delta for the checkpoint
-            uint256 supplyDelta = calculateInflationForCheckpoint(supplyAtCheckpoint);
-            // Calculate the validator's share of the supply delta
-            uint256 validatorShare = calculateValidatorShare(data.blocksCommitted, supplyDelta);
-            // Transfer the validator's share of the supply delta to the validator
-            token.safeTransfer(data.validator, validatorShare);
-            emit CheckpointClaimed(claimedCheckpointHeight, data.validator, validatorShare);
+        // Check that the checkpoint height is valid
+        if (!validateCheckpointHeight(claimedCheckpointHeight)) {
+            revert InvalidCheckpointHeight(claimedCheckpointHeight);
         }
+
+        // Calculate rewards for this checkpoint
+        uint256 newTokens = calculateNewTokensForCheckpoint();
+        uint256 validatorShare = calculateValidatorShare(data.blocksCommitted, newTokens);
+
+        // Mint the validator's share directly
+        token.mint(data.validator, validatorShare);
+        emit RewardsClaimed(claimedCheckpointHeight, data.validator, validatorShare);
     }
 
     // ========== INTERNAL FUNCTIONS ==========
 
-    /// @notice The internal method to calculate the supply delta for a checkpoint
-    /// @param supply The token supply at the checkpoint
-    /// @return The supply delta, i.e. the amount of new tokens minted for the checkpoint
-    function calculateInflationForCheckpoint(uint256 supply) internal pure returns (uint256) {
-        UD60x18 supplyFixed = ud(supply);
-        UD60x18 inflationRateFixed = ud(INFLATION_RATE);
-        UD60x18 result = supplyFixed.mul(inflationRateFixed);
-        return result.unwrap();
+    /// @notice Calculates the total number of new tokens to be minted for a checkpoint
+    /// @return The number of new tokens to be minted (in base units with 18 decimals)
+    function calculateNewTokensForCheckpoint() internal view returns (uint256) {
+        UD60x18 blocksPerToken = ud(BLOCKS_PER_TOKEN);
+        UD60x18 period = ud(checkpointPeriod);
+        UD60x18 oneToken = ud(1 ether);
+        
+        // Calculate (checkpointPeriod * 1 ether) / BLOCKS_PER_TOKEN using fixed-point math
+        return period.mul(oneToken).div(blocksPerToken).unwrap();
     }
 
-    /// @notice The internal method to calculate the validator's share of the supply delta
+    /// @notice The internal method to calculate the validator's share of the new tokens
     /// @param blocksCommitted The number of blocks committed by the validator
-    /// @param supplyDelta The supply delta, i.e. the amount of new tokens minted for the checkpoint
-    /// @return The validator's share of the supply delta
-    function calculateValidatorShare(uint256 blocksCommitted, uint256 supplyDelta) internal view returns (uint256) {
-        UD60x18 blocksFixed = ud(blocksCommitted);
-        UD60x18 deltaFixed = ud(supplyDelta);
-        UD60x18 periodFixed = ud(checkpointPeriod);
-        UD60x18 share = blocksFixed.div(periodFixed);
-        UD60x18 result = share.mul(deltaFixed);
+    /// @param totalNewTokens The total number of new tokens for the checkpoint
+    /// @return The validator's share of the new tokens
+    function calculateValidatorShare(uint256 blocksCommitted, uint256 totalNewTokens) internal view returns (uint256) {
+        UD60x18 blocks = ud(blocksCommitted);
+        UD60x18 tokens = ud(totalNewTokens);
+        UD60x18 period = ud(checkpointPeriod);
+        UD60x18 share = blocks.div(period);
+        UD60x18 result = share.mul(tokens);
         return result.unwrap();
     }
 
     /// @notice Validates that the claimed checkpoint height is valid
     /// @param claimedCheckpointHeight The height of the checkpoint that the validator is claiming for
     /// @return True if the checkpoint height is valid, false otherwise
-    /// @dev When the latest claimable checkpoint is not set (0), it means that _this_ is the first ever claim.
-    /// @dev In this case, we need to ensure the first claim is at the first checkpoint period.
-    /// @dev Otherwise, we must ensure that the claimed checkpoint is the next expected checkpoint.
+    /// @dev Ensures the checkpoint height is a multiple of the checkpoint period
     function validateCheckpointHeight(uint64 claimedCheckpointHeight) internal view returns (bool) {
-        if (latestClaimedCheckpoint == 0) {
-            // First claim must be at the first checkpoint period
-            return claimedCheckpointHeight == checkpointPeriod;
-        }
-        // Subsequent claims must be at the next checkpoint
-        return claimedCheckpointHeight == latestClaimedCheckpoint + checkpointPeriod;
+        return claimedCheckpointHeight > 0 && claimedCheckpointHeight % checkpointPeriod == 0;
     }
 
     /// @dev Function that should revert when `msg.sender` is not authorized to upgrade the contract
