@@ -255,7 +255,7 @@ contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
         Consensus.ValidatorData memory validatorData = createValidatorData(claimant, 300);
 
         uint256 initialSupply = token.totalSupply();
-        
+
         // Claim at checkpoint 600
         vm.startPrank(SUBNET_ROUTE);
         rewarder.notifyValidClaim(createSubnet(), 600, validatorData);

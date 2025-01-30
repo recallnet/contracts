@@ -14,7 +14,7 @@ contract ValidatorRewarderFFITest is ValidatorRewarderTestBase {
     }
 
     function testRewardCalculationWithFFI() public {
-        uint256 initialSupply = token.totalSupply();        
+        uint256 initialSupply = token.totalSupply();
         uint256 blocks = 52560 * 5; // 5 years
         uint256 checkpointPeriod = 600;
         uint256 numCheckpoints = blocks / checkpointPeriod;
@@ -25,9 +25,9 @@ contract ValidatorRewarderFFITest is ValidatorRewarderTestBase {
         claimants[2] = address(0x333);
 
         uint256[] memory blocksCommitted = new uint256[](3);
-        blocksCommitted[0] = 100;  // 1/6 of blocks
-        blocksCommitted[1] = 200;  // 1/3 of blocks
-        blocksCommitted[2] = 300;  // 1/2 of blocks
+        blocksCommitted[0] = 100; // 1/6 of blocks
+        blocksCommitted[1] = 200; // 1/3 of blocks
+        blocksCommitted[2] = 300; // 1/2 of blocks
 
         // Calculate expected total tokens for all blocks (in base units)
         uint256 totalBlocks = blocks;
@@ -44,9 +44,9 @@ contract ValidatorRewarderFFITest is ValidatorRewarderTestBase {
 
             // Run python script to calculate validator shares
             uint256[] memory params = new uint256[](3);
-            params[0] = checkpointTokens;  // total tokens for checkpoint (in base units)
-            params[1] = checkpointPeriod;  // checkpoint period
-            params[2] = 0;                 // blocks committed (set per validator)
+            params[0] = checkpointTokens; // total tokens for checkpoint (in base units)
+            params[1] = checkpointPeriod; // checkpoint period
+            params[2] = 0; // blocks committed (set per validator)
 
             string memory jsonStr;
 
@@ -62,9 +62,7 @@ contract ValidatorRewarderFFITest is ValidatorRewarderTestBase {
                 // Submit claim
                 vm.prank(SUBNET_ROUTE);
                 rewarder.notifyValidClaim(
-                    createSubnet(), 
-                    currentCheckpoint, 
-                    createValidatorData(claimants[j], blocksCommitted[j])
+                    createSubnet(), currentCheckpoint, createValidatorData(claimants[j], blocksCommitted[j])
                 );
 
                 uint256 actualReward = token.balanceOf(claimants[j]) - balanceBefore;
@@ -74,10 +72,7 @@ contract ValidatorRewarderFFITest is ValidatorRewarderTestBase {
                     actualReward,
                     expectedValidatorShare,
                     1000, // Allow for difference of up to 1000 base units
-                    string.concat(
-                        "Validator reward mismatch at checkpoint ", 
-                        vm.toString(currentCheckpoint)
-                    )
+                    string.concat("Validator reward mismatch at checkpoint ", vm.toString(currentCheckpoint))
                 );
             }
         }
@@ -103,9 +98,7 @@ contract ValidatorRewarderFFITest is ValidatorRewarderTestBase {
         vm.ffi(makeExecutable);
     }
 
-    function runPythonScript(string memory scriptPath, uint256[] memory params) 
-        internal returns (string memory) 
-    {
+    function runPythonScript(string memory scriptPath, uint256[] memory params) internal returns (string memory) {
         string[] memory inputs = new string[](params.length + 1);
         inputs[0] = scriptPath;
 

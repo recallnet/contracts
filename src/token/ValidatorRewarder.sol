@@ -152,7 +152,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
         UD60x18 blocksPerToken = ud(BLOCKS_PER_TOKEN);
         UD60x18 period = ud(checkpointPeriod);
         UD60x18 oneToken = ud(1 ether);
-        
+
         // Calculate (checkpointPeriod * 1 ether) / BLOCKS_PER_TOKEN using fixed-point math
         return period.mul(oneToken).div(blocksPerToken).unwrap();
     }
