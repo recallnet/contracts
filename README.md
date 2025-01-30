@@ -1,6 +1,6 @@
 # Recall Contracts
 
-[![License](https://img.shields.io/github/license/hokunet/contracts.svg)](./LICENSE)
+[![License](https://img.shields.io/github/license/recallnet/contracts.svg)](./LICENSE)
 [![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg)](https://github.com/RichardLitt/standard-readme)
 
 > Recall core Solidity contracts and libraries
@@ -67,7 +67,7 @@ subnet):
 | CreditManager  | Subnet      | `0xTODO`                                     |
 | ValidatorGater | Subnet      | `0x880126f3134EdFBa4f1a65827D5870f021bb7124` |
 
-To get testnet tokens, visit: [https://faucet.hoku.sh](https://faucet.hoku.sh). Also, you can check
+To get testnet tokens, visit: [https://faucet.recall.network](https://faucet.recall.network). Also, you can check
 out the `foundry.toml` file to see the RPC URLs for each network (described in more detail below).
 
 ## Usage
@@ -78,7 +78,7 @@ First, clone the repo, and be sure `foundry` is installed on your machine (see
 [here](https://book.getfoundry.sh/getting-started/installation)):
 
 ```shell
-git clone https://github.com/hokunet/contracts.git
+git clone https://github.com/recallnet/contracts.git
 cd contracts
 ```
 
@@ -671,10 +671,10 @@ export BUCKETS=0x314512a8692245cf507ac6E9d0eB805EA820d9a8
 The account you use to create buckets should have the following:
 
 - A RECALL token balance in the subnet (e.g., from the faucet at:
-  [https://faucet.hoku.sh](https://faucet.hoku.sh)). You can verify this with the
-  [Hoku CLI](https://github.com/hokunet/rust-hoku): `hoku account info`
-- A credit balance in the subnet. You can verify this with `hoku credit balance`. If you don't have
-  credits, you can buy them with the Credits contract above, or run the `hoku credit buy <amount>`
+  [https://faucet.recall.network](https://faucet.recall.network)). You can verify this with the
+  [Recall CLI](https://github.com/recallnet/rust-recall): `recall account info`
+- A credit balance in the subnet. You can verify this with `recall credit balance`. If you don't have
+  credits, you can buy them with the Credits contract above, or run the `recall credit buy <amount>`
   command.
 
 Creating a bucket will cost native RECALL tokens, and writing to it will cost credit.
@@ -804,7 +804,7 @@ curl http://localhost:8001/v1/node | jq '.node_id'
 ```
 
 Or on testnet, you'd replace the URL with public bucket API endpoint
-`https://object-api-ignition-0.hoku.sh`.
+`https://object-api-ignition-0.recall.network`.
 
 ##### Delete an object
 
@@ -1018,7 +1018,7 @@ curl http://localhost:8001/v1/node | jq '.node_id'
 ```
 
 Or on testnet, you'd replace the URL with public bucket API endpoint
-`https://object-api-ignition-0.hoku.sh`.
+`https://object-api-ignition-0.recall.network`.
 
 ##### Delete a blob
 

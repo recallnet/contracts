@@ -6,7 +6,7 @@ import {Account, Balance, CreditApproval, CreditStats} from "../types/BlobTypes.
 import {LibBlob} from "./LibBlob.sol";
 
 /// @title Credits Contract
-/// @dev Implementation of the Hoku Blobs actor EVM interface. See {ICredit} for details.
+/// @dev Implementation of the Recall Blobs actor EVM interface. See {ICredit} for details.
 contract CreditManager is ICreditManager {
     /// @dev See {ICreditManager-getAccount}.
     function getAccount(address addr) external view returns (Account memory account) {

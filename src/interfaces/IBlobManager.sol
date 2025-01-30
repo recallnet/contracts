@@ -3,9 +3,9 @@ pragma solidity ^0.8.26;
 
 import {AddBlobParams, Blob, BlobStatus, BlobTuple, StorageStats, SubnetStats} from "../types/BlobTypes.sol";
 
-/// @dev Hoku Blobs actor EVM interface for managing and querying information about blogs/storage.
+/// @dev Recall Blobs actor EVM interface for managing and querying information about blogs/storage.
 /// See Rust implementation for details:
-/// https://github.com/hokunet/ipc/blob/develop/fendermint/actors/blobs/src/actor.rs
+/// https://github.com/recallnet/ipc/blob/develop/fendermint/actors/blobs/src/actor.rs
 interface IBlobManager {
     /// @dev Emitted when a blob is added.
     event AddBlob(address indexed caller, address indexed sponsor, string blobHash, string subscriptionId);

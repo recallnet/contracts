@@ -115,7 +115,7 @@ contract ValidatorRewarderFFITest is ValidatorRewarderTestBase {
         // After all checkpoints are processed, verify total increase matches
         uint256 actualTotalIncrease = token.totalSupply() - initialSupply;
         // due to rounding in each checkpoint, accumulated error over 5 years is 45,773,118
-        // i.e. we print 0.000_000_000_045_679_254 HOKU more than expected!
+        // i.e. we print 0.000_000_000_045_679_254 RECALL more than expected!
         assertApproxEqAbs(
             actualTotalIncrease,
             expectedTotalIncrease,

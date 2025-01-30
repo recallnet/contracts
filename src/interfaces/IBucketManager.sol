@@ -3,9 +3,9 @@ pragma solidity ^0.8.26;
 
 import {AddObjectParams, KeyValue, Machine, ObjectValue, Query} from "../types/BucketTypes.sol";
 
-/// @dev Hoku Bucket actor EVM interface for managing objects, and querying object or storage stats.
+/// @dev Recall Bucket actor EVM interface for managing objects, and querying object or storage stats.
 /// See Rust implementation for details:
-/// https://github.com/hokunet/ipc/blob/develop/fendermint/actors/objectstore/src/actor.rs
+/// https://github.com/recallnet/ipc/blob/develop/fendermint/actors/objectstore/src/actor.rs
 interface IBucketManager {
     /// @dev Emitted when a bucket is created.
     /// @param owner The owner.

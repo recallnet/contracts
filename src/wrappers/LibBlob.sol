@@ -22,11 +22,11 @@ import {KeyValue} from "../types/CommonTypes.sol";
 import {InvalidValue, LibWasm} from "./LibWasm.sol";
 
 /// @title Blobs Library
-/// @dev Utility functions for interacting with the Hoku Blobs actor.
+/// @dev Utility functions for interacting with the Recall Blobs actor.
 library LibBlob {
     using LibWasm for *;
 
-    // Constants for the actor and method IDs of the Hoku Blobs actor
+    // Constants for the actor and method IDs of the Recall Blobs actor
     uint64 internal constant ACTOR_ID = 66;
 
     // User methods

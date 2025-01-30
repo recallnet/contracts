@@ -1,7 +1,7 @@
 {
   "name": "contracts",
   "version": "0.0.0",
-  "description": "Hoku core contracts",
+  "description": "Recall core contracts",
   "main": "index.js",
   "scripts": {
     "test": "forge test --ffi",
