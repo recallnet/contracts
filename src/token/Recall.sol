@@ -110,9 +110,12 @@ contract Recall is
         override(ERC20Upgradeable, InterchainTokenStandard)
     {
         uint256 _allowance = allowance(sender, spender);
-        if (_allowance != type(uint256).max) {
-            require(_allowance >= amount, "ERC20: insufficient allowance");
+
+        if (_allowance < amount) {
+            revert ERC20InsufficientAllowance(spender, _allowance, amount);
+        } else if (_allowance != type(uint256).max) {
             _approve(sender, spender, _allowance - amount, false);
+        }
     }
 
     /**
