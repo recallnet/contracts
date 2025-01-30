@@ -156,4 +156,54 @@ contract RecallTest is Test {
         vm.prank(user);
         token.transfer(address(0x456), 100);
     }
+
+    function testPauserRolePermissions() public {
+        address pauser = address(0x789);
+        bytes32 pauserRole = token.PAUSER_ROLE();
+        bytes32 adminRole = token.ADMIN_ROLE();
+
+        // Grant PAUSER_ROLE to new address
+        vm.prank(TESTER);
+        token.grantRole(pauserRole, pauser);
+
+        // Pauser can pause
+        vm.prank(pauser);
+        token.pause();
+        assertTrue(token.paused());
+
+        // Pauser cannot unpause (only ADMIN can)
+        vm.prank(pauser);
+        vm.expectRevert(abi.encodeWithSignature("AccessControlUnauthorizedAccount(address,bytes32)", pauser, adminRole));
+        token.unpause();
+
+        // Random address cannot pause
+        vm.prank(user);
+        vm.expectRevert(abi.encodeWithSignature("AccessControlUnauthorizedAccount(address,bytes32)", user, pauserRole));
+        token.pause();
+
+        // Admin can unpause
+        vm.prank(TESTER);
+        token.unpause();
+        assertFalse(token.paused());
+    }
+
+    function testRemoveAdminPauserRole() public {
+        bytes32 pauserRole = token.PAUSER_ROLE();
+
+        // Initially admin can pause
+        vm.prank(TESTER);
+        token.pause();
+        assertTrue(token.paused());
+
+        // Remove PAUSER_ROLE from admin
+        vm.prank(TESTER);
+        token.revokeRole(pauserRole, TESTER);
+
+        // Admin can no longer pause after role removal
+        vm.prank(TESTER);
+        vm.expectRevert(
+            abi.encodeWithSignature("AccessControlUnauthorizedAccount(address,bytes32)", TESTER, pauserRole)
+        );
+        token.pause();
+    }
 }

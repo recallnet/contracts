@@ -31,6 +31,7 @@ contract Recall is
     bytes32 internal _itsSalt;
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE"); // solhint-disable-line var-name-mixedcase
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE"); // solhint-disable-line var-name-mixedcase
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE"); // solhint-disable-line var-name-mixedcase
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -55,7 +56,9 @@ contract Recall is
 
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
+        _grantRole(PAUSER_ROLE, msg.sender);
         _setRoleAdmin(MINTER_ROLE, ADMIN_ROLE);
+        _setRoleAdmin(PAUSER_ROLE, ADMIN_ROLE);
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
     }
 
@@ -67,7 +70,7 @@ contract Recall is
     }
 
     /// @dev Pauses all token transfers
-    function pause() external onlyRole(ADMIN_ROLE) {
+    function pause() external onlyRole(PAUSER_ROLE) {
         _pause();
     }
 
