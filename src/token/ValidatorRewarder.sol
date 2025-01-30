@@ -36,7 +36,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @dev The checkpoint period is set when the subnet is created.
     uint256 public checkpointPeriod;
 
-    /// @notice The number of blocks required to generate 1 new HOKU token (with 18 decimals)
+    /// @notice The number of blocks required to generate 1 new token (with 18 decimals)
     uint256 public constant BLOCKS_PER_TOKEN = 3;
 
     // ========== EVENTS & ERRORS ==========
@@ -139,7 +139,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
         uint256 newTokens = calculateNewTokensForCheckpoint();
         uint256 validatorShare = calculateValidatorShare(data.blocksCommitted, newTokens);
 
-        // Mint the validator's share directly
+        // Mint the validator's share
         token.mint(data.validator, validatorShare);
         emit RewardsClaimed(claimedCheckpointHeight, data.validator, validatorShare);
     }

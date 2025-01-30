@@ -262,9 +262,9 @@ contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
         vm.stopPrank();
 
         // For 600 blocks checkpoint period:
-        // Total new tokens = 600/3 = 200 HOKU
+        // Total new tokens = 600/3 = 200
         // Validator committed 300/600 blocks = 50% of blocks
-        // Expected reward = 200 * 0.5 = 100 HOKU
+        // Expected reward = 200 * 0.5 = 100
         uint256 expectedReward = 100 ether;
         assertApproxEqAbs(token.balanceOf(claimant), expectedReward, 1000);
         assertEq(token.totalSupply() - initialSupply, expectedReward);
@@ -290,15 +290,15 @@ contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
         }
         vm.stopPrank();
 
-        // Total new tokens = 600/3 = 200 HOKU
-        // Validator 1 should get: 200 * (100/600) ≈ 33.33 HOKU
-        // Validator 2 should get: 200 * (200/600) ≈ 66.67 HOKU
-        // Validator 3 should get: 200 * (300/600) = 100 HOKU
+        // Total new tokens = 600/3 = 200
+        // Validator 1 should get: 200 * (100/600) ≈ 33.33
+        // Validator 2 should get: 200 * (200/600) ≈ 66.67
+        // Validator 3 should get: 200 * (300/600) = 100
         assertApproxEqAbs(token.balanceOf(claimants[0]), 33333333333333333333, 1000);
         assertApproxEqAbs(token.balanceOf(claimants[1]), 66666666666666666666, 1000);
         assertApproxEqAbs(token.balanceOf(claimants[2]), 100000000000000000000, 1000);
 
-        // Total minted should be 200 HOKU
+        // Total minted should be 200
         assertApproxEqAbs(token.totalSupply() - initialSupply, 200 ether, 1000);
     }
 
@@ -316,10 +316,10 @@ contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
         vm.stopPrank();
 
         // For each checkpoint:
-        // Total new tokens = 600/3 = 200 HOKU
+        // Total new tokens = 600/3 = 200
         // Validator committed 300/600 blocks = 50% of blocks
-        // Expected reward per checkpoint = 200 * 0.5 = 100 HOKU
-        // Total expected for 3 checkpoints = 300 HOKU
+        // Expected reward per checkpoint = 200 * 0.5 = 100
+        // Total expected for 3 checkpoints = 300
         uint256 expectedTotalReward = 300 ether;
         assertApproxEqAbs(token.balanceOf(claimant), expectedTotalReward, 1000);
         assertEq(token.totalSupply() - initialSupply, expectedTotalReward);
