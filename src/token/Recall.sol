@@ -13,8 +13,6 @@ import {ERC20BurnableUpgradeable} from
     "@openzeppelin/contracts-upgradeable/contracts/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/utils/PausableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from
-    "@openzeppelin/contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol";
 
 /// @title Recall Token Contract
 /// @dev Implements an upgradeable ERC20 token with additional features like pausing and minting
@@ -22,7 +20,6 @@ contract Recall is
     ERC20BurnableUpgradeable,
     AccessControlUpgradeable,
     PausableUpgradeable,
-    ReentrancyGuardUpgradeable,
     UUPSUpgradeable,
     InterchainTokenStandard
 {
@@ -48,7 +45,6 @@ contract Recall is
         __ERC20_init("Recall", symbol);
         __AccessControl_init();
         __Pausable_init();
-        __ReentrancyGuard_init();
         __UUPSUpgradeable_init();
         _interchainTokenService = its;
         _itsSalt = itsSalt;
@@ -114,7 +110,10 @@ contract Recall is
         override(ERC20Upgradeable, InterchainTokenStandard)
     {
         uint256 _allowance = allowance(sender, spender);
-        if (_allowance != type(uint256).max) {
+
+        if (_allowance < amount) {
+            revert ERC20InsufficientAllowance(spender, _allowance, amount);
+        } else if (_allowance != type(uint256).max) {
             _approve(sender, spender, _allowance - amount, false);
         }
     }
