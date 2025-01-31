@@ -79,10 +79,11 @@ contract ValidatorRewarderFFITest is ValidatorRewarderTestBase {
 
         // After all checkpoints are processed, verify total minted amount
         uint256 actualTotalMinted = token.totalSupply() - initialSupply;
+        assertLe(actualTotalMinted, expectedTotalTokens, "Total minted tokens should be less than or equal to expected");
         assertApproxEqAbs(
             actualTotalMinted,
-            expectedTotalTokens,
-            100000, // Allow for difference of up to 100000 base units or 0.0000000000001 tokens
+            expectedTotalTokens, // Allow for difference of up to 100000 base units or 0.0000000000001 tokens in 5 years
+            100000,
             "Total minted tokens should match expected"
         );
 
