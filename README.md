@@ -141,12 +141,6 @@ execute deployment with the given argument above, and the `--broadcast` flag act
 transaction to the network. Recall that you **must** set `-g 100000` to ensure the gas estimate is
 sufficiently high.
 
-Lastly, if you're deploying the Recall ERC20, the environment will dictate different token symbols:
-
-- Local: prefixes `RECALL` with `l`
-- Testnet: prefixes `RECALL` with `t`
-- Mainnet: uses `RECALL`
-
 Mainnet deployments require the address of the Axelar Interchain Token Service on chain you are
 deploying to, which is handled in the ERC20's `DeployScript` logic.
 
@@ -163,9 +157,9 @@ forge script script/Recall.s.sol --tc DeployScript --sig 'run(string)' local --r
 
 ##### Faucet
 
-Deploy the Faucet contract to the localnet subnet. The second argument is the initial supply of Recall
-tokens, owned by the deployer's account which will be transferred to the faucet contract (e.g., 5000
-with 10\*\*18 decimal units).
+Deploy the Faucet contract to the localnet subnet. The second argument is the initial supply of
+Recall tokens, owned by the deployer's account which will be transferred to the faucet contract
+(e.g., 5000 with 10\*\*18 decimal units).
 
 ```shell
 PRIVATE_KEY=<0x...> forge script script/Faucet.s.sol --tc DeployScript --sig 'run(uint256)' 5000000000000000000000 --rpc-url localnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
@@ -199,8 +193,8 @@ forge script script/BlobManager.s.sol --tc DeployScript --sig 'run()' --rpc-url 
 
 ##### Recall ERC20
 
-Deploy the Recall ERC20 contract to the testnet parent chain. Note the `-g` flag _is_ used here (this
-differs from the localnet setup above since we're deploying to Filecoin Calibration);
+Deploy the Recall ERC20 contract to the testnet parent chain. Note the `-g` flag _is_ used here
+(this differs from the localnet setup above since we're deploying to Filecoin Calibration);
 
 ```shell
 forge script script/Recall.s.sol --tc DeployScript --sig 'run(string)' testnet --rpc-url testnet_parent --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
@@ -208,9 +202,9 @@ forge script script/Recall.s.sol --tc DeployScript --sig 'run(string)' testnet -
 
 ##### Faucet
 
-Deploy the Faucet contract to the testnet subnet. The second argument is the initial supply of Recall
-tokens, owned by the deployer's account which will be transferred to the faucet contract (e.g., 5000
-with 10\*\*18 decimal units).
+Deploy the Faucet contract to the testnet subnet. The second argument is the initial supply of
+Recall tokens, owned by the deployer's account which will be transferred to the faucet contract
+(e.g., 5000 with 10\*\*18 decimal units).
 
 ```shell
 forge script script/Faucet.s.sol --tc DeployScript --sig 'run(uint256)' 5000000000000000000000 --rpc-url testnet_subnet --private-key $PRIVATE_KEY --broadcast -g 100000 -vv
