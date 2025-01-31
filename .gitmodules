@@ -25,3 +25,6 @@
 [submodule "lib/prb-math"]
 	path = lib/prb-math
 	url = https://github.com/PaulRBerg/prb-math
+[submodule "lib/solidity-cborutils"]
+	path = lib/solidity-cborutils
+	url = https://github.com/smartcontractkit/solidity-cborutils
