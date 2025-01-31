@@ -67,7 +67,7 @@ subnet):
 | CreditManager  | Subnet      | `0xTODO`                                     |
 | ValidatorGater | Subnet      | `0x880126f3134EdFBa4f1a65827D5870f021bb7124` |
 
-To get testnet tokens, visit: [https://faucet.recall.network](https://faucet.recall.network). Also, you can check
+To get testnet tokens, visit: [https://faucet.node-0.testnet.recall.network](https://faucet.node-0.testnet.recall.network). Also, you can check
 out the `foundry.toml` file to see the RPC URLs for each network (described in more detail below).
 
 ## Usage
@@ -671,7 +671,7 @@ export BUCKETS=0x314512a8692245cf507ac6E9d0eB805EA820d9a8
 The account you use to create buckets should have the following:
 
 - A RECALL token balance in the subnet (e.g., from the faucet at:
-  [https://faucet.recall.network](https://faucet.recall.network)). You can verify this with the
+  [https://faucet.node-0.testnet.recall.network](https://faucet.node-0.testnet.recall.network)). You can verify this with the
   [Recall CLI](https://github.com/recallnet/rust-recall): `recall account info`
 - A credit balance in the subnet. You can verify this with `recall credit balance`. If you don't have
   credits, you can buy them with the Credits contract above, or run the `recall credit buy <amount>`
@@ -804,7 +804,7 @@ curl http://localhost:8001/v1/node | jq '.node_id'
 ```
 
 Or on testnet, you'd replace the URL with public bucket API endpoint
-`https://object-api-ignition-0.recall.network`.
+`https://objects.node-0.testnet.recall.network`.
 
 ##### Delete an object
 
@@ -1018,7 +1018,7 @@ curl http://localhost:8001/v1/node | jq '.node_id'
 ```
 
 Or on testnet, you'd replace the URL with public bucket API endpoint
-`https://object-api-ignition-0.recall.network`.
+`https://objects.node-0.testnet.recall.network`.
 
 ##### Delete a blob
 

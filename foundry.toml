@@ -31,8 +31,8 @@ wrap_comments = true
 localnet_parent = "http://127.0.0.1:8545"
 localnet_subnet = "http://127.0.0.1:8645"
 testnet_parent = "https://api.calibration.node.glif.io/rpc/v1"
-testnet_subnet = "https://evm-ignition-0.recall.network"
+testnet_subnet = "https://evm.node-0.testnet.recall.network"
 devnet = "http://127.0.0.1:8545"
 # Note: placeholder; mainnet is not available yet
 mainnet_parent = "https://api.calibration.node.glif.io/rpc/v1"
-mainnet_subnet = "https://evm-ignition-0.recall.network"
+mainnet_subnet = "https://evm.node-0.testnet.recall.network"
