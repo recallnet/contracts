@@ -22,19 +22,9 @@ contract DeployScript is Script {
     function run(string memory network) public returns (Recall) {
         vm.startBroadcast();
 
-        string memory prefix = "";
-        if (Strings.equal(network, "local")) {
-            prefix = "l";
-        } else if (Strings.equal(network, "testnet")) {
-            prefix = "t";
-        } else if (!Strings.equal(network, "ethereum") && !Strings.equal(network, "filecoin")) {
-            // solhint-disable-next-line custom-errors
-            revert("Unsupported network.");
-        }
-
         bytes32 itsSalt = keccak256("RECALL_SALT");
         proxyAddress = Upgrades.deployUUPSProxy(
-            "Recall.sol", abi.encodeCall(Recall.initialize, (prefix, INTERCHAIN_TOKEN_SERVICE, itsSalt))
+            "Recall.sol", abi.encodeCall(Recall.initialize, (INTERCHAIN_TOKEN_SERVICE, itsSalt))
         );
 
         // Check implementation

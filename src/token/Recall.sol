@@ -37,12 +37,10 @@ contract Recall is
     }
 
     /// @dev Initializes the contract with the given environment
-    /// @param prefix The prefix for the symbol
     /// @param its The interchain token service address
     /// @param itsSalt The salt for the interchain token service
-    function initialize(string memory prefix, address its, bytes32 itsSalt) public initializer {
-        string memory symbol = string(abi.encodePacked(prefix, "RECALL"));
-        __ERC20_init("Recall", symbol);
+    function initialize(address its, bytes32 itsSalt) public initializer {
+        __ERC20_init("Recall", "RECALL");
         __AccessControl_init();
         __Pausable_init();
         __UUPSUpgradeable_init();
