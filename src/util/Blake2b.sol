@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 /// @dev Implementation of the BLAKE2b hashing algorithm.
 /// See Rust implementation: https://github.com/oconnor663/blake2_simd/blob/master/blake2b/src/lib.rs
 /// TODO: this is very costly and must be optimized, handled by WASM, or fully offchain. However, with the following
-/// issue, it'll remove the need for this altogether: https://github.com/hokunet/rust-hoku/issues/39
+/// issue, it'll remove the need for this altogether: https://github.com/recallnet/rust-recall/issues/39
 library Blake2b {
     uint64 private constant OUTBYTES = 64;
     uint64 private constant BLOCKBYTES = 128;

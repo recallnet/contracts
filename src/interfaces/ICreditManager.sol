@@ -3,9 +3,9 @@ pragma solidity ^0.8.26;
 
 import {Account, Balance, CreditApproval, CreditStats} from "../types/BlobTypes.sol";
 
-/// @dev Hoku Blobs actor EVM interface for managing and querying information about credit.
+/// @dev Recall Blobs actor EVM interface for managing and querying information about credit.
 /// See Rust implementation for details:
-/// https://github.com/hokunet/ipc/blob/develop/fendermint/actors/blobs/src/actor.rs
+/// https://github.com/recallnet/ipc/blob/develop/fendermint/actors/blobs/src/actor.rs
 interface ICreditManager {
     /// @dev Emitted when an account approves credits.
     event ApproveCredit(

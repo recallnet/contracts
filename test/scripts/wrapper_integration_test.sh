@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script should be used to run ad-hoc integration tests for the Hoku wrappers. It assumes that
+# This script should be used to run ad-hoc integration tests for the Recall wrappers. It assumes that
 # you have the localnet running on your machine, and the accounts and RPCs are hardcoded with the
 # values below. It will deploy the contracts, run the tests, and print the results to the console.
 
@@ -24,10 +24,10 @@ echo "- Iroh source: $SOURCE"
 TEMP_FILE=$(mktemp)
 echo "hello" > $TEMP_FILE
 
-# Create a bucket with the `hoku` CLI; this seeds the network with the blob for future tests
+# Create a bucket with the `recall` CLI; this seeds the network with the blob for future tests
 OBJECT_KEY="hello/world"
-BUCKET_ADDR=$(HOKU_PRIVATE_KEY=$PRIVATE_KEY HOKU_NETWORK=localnet hoku bucket create | jq '.address' | tr -d '"')
-create_object_response=$(HOKU_PRIVATE_KEY=$PRIVATE_KEY HOKU_NETWORK=localnet hoku bu add --address $BUCKET_ADDR --key $OBJECT_KEY $TEMP_FILE)
+BUCKET_ADDR=$(RECALL_PRIVATE_KEY=$PRIVATE_KEY RECALL_NETWORK=localnet recall bucket create | jq '.address' | tr -d '"')
+create_object_response=$(RECALL_PRIVATE_KEY=$PRIVATE_KEY RECALL_NETWORK=localnet recall bu add --address $BUCKET_ADDR --key $OBJECT_KEY $TEMP_FILE)
 SIZE=$(echo $create_object_response | jq '.object.size')
 BLOB_HASH=$(echo $create_object_response | jq '.object.hash' | tr -d '"')
 

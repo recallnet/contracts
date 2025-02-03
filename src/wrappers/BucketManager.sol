@@ -7,7 +7,7 @@ import {LibBucket} from "./LibBucket.sol";
 import {LibWasm} from "./LibWasm.sol";
 
 /// @title Bucket Manager Contract
-/// @dev Implementation of the Hoku Bucket actor EVM interface. See {IBucketManager} for details.
+/// @dev Implementation of the Recall Bucket actor EVM interface. See {IBucketManager} for details.
 contract BucketManager is IBucketManager {
     /// @dev See {IBucketManager-createBucket}.
     function createBucket() external {

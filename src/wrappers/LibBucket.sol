@@ -15,11 +15,11 @@ import {
 import {InvalidValue, LibWasm} from "./LibWasm.sol";
 
 /// @title Bucket Library
-/// @dev Utility functions for interacting with the Hoku Bucket actor.
+/// @dev Utility functions for interacting with the Recall Bucket actor.
 library LibBucket {
     using LibWasm for *;
 
-    // Constants for the actor and method IDs of the Hoku ADM actor
+    // Constants for the actor and method IDs of the Recall ADM actor
     uint64 internal constant ADM_ACTOR_ID = 17;
     // Methods that don't interact with an instance of a Bucket contract
     uint64 internal constant METHOD_CREATE_EXTERNAL = 1214262202;
@@ -157,7 +157,7 @@ library LibBucket {
         encoded[1] = params.key.encodeCborBytes();
         encoded[2] = params.blobHash.encodeCborBlobHashOrNodeId();
         // TODO: this currently is hardcoded to a 32 byte array of all zeros, but should use the method above
-        // Once https://github.com/hokunet/ipc/issues/300 is merged, this'll need to change
+        // Once https://github.com/recallnet/ipc/issues/300 is merged, this'll need to change
         encoded[3] = bytes(params.recoveryHash).length == 0
             ? hex"0000000000000000000000000000000000000000000000000000000000000000".encodeCborFixedArray()
             : params.recoveryHash.encodeCborBlobHashOrNodeId();
