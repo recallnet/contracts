@@ -47,8 +47,8 @@ echo "Using BlobManager: $BLOBS"
 # Test addBlob
 echo
 echo "Testing addBlob..."
-output=$(cast send --rpc-url $ETH_RPC_URL $BLOBS "addBlob((address,string,string,string,string,uint64,uint64))" \
-    "(0x0000000000000000000000000000000000000000,$SOURCE,$BLOB_HASH,\"\",\"\",$SIZE,0)" \
+output=$(cast send --rpc-url $ETH_RPC_URL $BLOBS "addBlob((address,string,string,string,string,uint64,uint64,address))" \
+    "(0x0000000000000000000000000000000000000000,$SOURCE,$BLOB_HASH,\"\",\"\",$SIZE,0,$EVM_ADDRESS)" \
     --private-key $PRIVATE_KEY)
 if [ "$output" = "0x" ]; then
     echo "addBlob failed"

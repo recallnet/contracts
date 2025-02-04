@@ -67,8 +67,10 @@ subnet):
 | CreditManager  | Subnet      | `0xTODO`                                     |
 | ValidatorGater | Subnet      | `0x880126f3134EdFBa4f1a65827D5870f021bb7124` |
 
-To get testnet tokens, visit: [https://faucet.node-0.testnet.recall.network](https://faucet.node-0.testnet.recall.network). Also, you can check
-out the `foundry.toml` file to see the RPC URLs for each network (described in more detail below).
+To get testnet tokens, visit:
+[https://faucet.node-0.testnet.recall.network](https://faucet.node-0.testnet.recall.network). Also,
+you can check out the `foundry.toml` file to see the RPC URLs for each network (described in more
+detail below).
 
 ## Usage
 
@@ -665,11 +667,12 @@ export BUCKETS=0x314512a8692245cf507ac6E9d0eB805EA820d9a8
 The account you use to create buckets should have the following:
 
 - A RECALL token balance in the subnet (e.g., from the faucet at:
-  [https://faucet.node-0.testnet.recall.network](https://faucet.node-0.testnet.recall.network)). You can verify this with the
-  [Recall CLI](https://github.com/recallnet/rust-recall): `recall account info`
-- A credit balance in the subnet. You can verify this with `recall credit balance`. If you don't have
-  credits, you can buy them with the Credits contract above, or run the `recall credit buy <amount>`
-  command.
+  [https://faucet.node-0.testnet.recall.network](https://faucet.node-0.testnet.recall.network)). You
+  can verify this with the [Recall CLI](https://github.com/recallnet/rust-recall):
+  `recall account info`
+- A credit balance in the subnet. You can verify this with `recall credit balance`. If you don't
+  have credits, you can buy them with the Credits contract above, or run the
+  `recall credit buy <amount>` command.
 
 Creating a bucket will cost native RECALL tokens, and writing to it will cost credit.
 
@@ -979,6 +982,7 @@ In the example below, we've already staged this data offchain and are using the 
   string).
 - `ttl`: Blob time-to-live epochs. If specified as `0`, the auto-debitor maintains about one hour of
   credits as an ongoing commitment.
+- `from`: The address of the account to use for the transaction.
 
 This all gets passed as a single `AddBlobParams` struct to the `addBlob` method:
 
@@ -991,17 +995,18 @@ struct AddBlobParams {
     string subscriptionId; // use `""` for the default, or pass a string value
     uint64 size; // 6
     uint64 ttl; // 0 (which is interpreted as null)
+    address from; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
 }
 ```
 
 We then pass this as a single parameter to the `add` method:
 
 ```sh
-cast send --rpc-url $ETH_RPC_URL $BLOBS "addBlob((address,string,string,string,string,uint64,uint64))" '(0x0000000000000000000000000000000000000000,"cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","","",6,0)' --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $BLOBS "addBlob((address,string,string,string,string,uint64,uint64,address))" "(0x0000000000000000000000000000000000000000,"cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq",\"\",\"\",6,0,$EVM_ADDRESS)" --private-key $PRIVATE_KEY
 ```
 
-To include a custom subscription ID, you would replace the empty string (which indicates `Default`)
-in the call above, like so: `(...,"rzgh...","","my_custom_id",6,0)`.
+To include a custom subscription ID, you would replace the empty string (which indicates `default`)
+in the call above, like so: `(...,"rzgh...","","my_custom_id",6,0,...)`.
 
 If you're wondering where to get the `source` storage bucket's node ID (the example's
 `cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq`), you can find it with a `curl` request. On
