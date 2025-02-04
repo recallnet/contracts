@@ -317,7 +317,7 @@ library LibBlob {
     /// @param params The parameters for adding a blob.
     /// @return encoded The encoded parameters.
     function encodeAddBlobParams(AddBlobParams memory params) internal pure returns (bytes memory) {
-        bytes[] memory encoded = new bytes[](7);
+        bytes[] memory encoded = new bytes[](8);
         encoded[0] = params.sponsor == address(0) ? LibWasm.encodeCborNull() : params.sponsor.encodeCborAddress();
         encoded[1] = params.source.encodeCborBlobHashOrNodeId();
         encoded[2] = params.blobHash.encodeCborBlobHashOrNodeId();
@@ -328,6 +328,7 @@ library LibBlob {
         encoded[4] = encodeSubscriptionId(params.subscriptionId);
         encoded[5] = params.size.encodeCborUint64();
         encoded[6] = params.ttl == 0 ? LibWasm.encodeCborNull() : params.ttl.encodeCborUint64();
+        encoded[7] = params.from.encodeCborAddress();
         return encoded.encodeCborArray();
     }
 
