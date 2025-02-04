@@ -1037,7 +1037,7 @@ You can overwrite a blob you've created with the following, passing the old blob
 the new blob's parameters.
 
 ```sh
-cast send --rpc-url $ETH_RPC_URL $BLOBS "overwriteBlob(string,(address,string,string,string,string,uint64,uint64))" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" '(0x0000000000000000000000000000000000000000,"cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","","",6,0)' --private-key $PRIVATE_KEY
+cast send --rpc-url $ETH_RPC_URL $BLOBS "overwriteBlob(string,(address,string,string,string,string,uint64,uint64,adderss))" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq" '(0x0000000000000000000000000000000000000000,"cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq","rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq","","",6,0,0x90F79bf6EB2c4f870365E785982E1f101E93b906)' --private-key $PRIVATE_KEY
 ```
 
 This will emit an `OverwriteBlob` event and overwrite the blob in the network.

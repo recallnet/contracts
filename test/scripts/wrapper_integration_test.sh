@@ -161,9 +161,9 @@ echo "Output: $DECODED_SUBNET_STATS"
 # Test overwriteBlob
 echo
 echo "Testing overwriteBlob..."
-output=$(cast send --rpc-url $ETH_RPC_URL $BLOBS "overwriteBlob(string,(address,string,string,string,string,uint64,uint64))" \
+output=$(cast send --rpc-url $ETH_RPC_URL $BLOBS "overwriteBlob(string,(address,string,string,string,string,uint64,uint64,address))" \
     "$BLOB_HASH" \
-    "($ZERO_ADDR,$SOURCE,$BLOB_HASH,\"\",\"\",$SIZE,0)" \
+    "($ZERO_ADDR,$SOURCE,$BLOB_HASH,\"\",\"\",$SIZE,0,$EVM_ADDRESS)" \
     --private-key $PRIVATE_KEY)
 if [ "$output" = "0x" ]; then
     echo "overwriteBlob failed"
