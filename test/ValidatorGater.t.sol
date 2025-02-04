@@ -83,9 +83,10 @@ contract ValidatorGaterTest is Test {
         assertFalse(gater.isAllow(validator1, 101)); // Above range
     }
 
-    function testFailUnauthorizedApprove() public {
+    function testRevertWhenUnauthorizedApprove() public {
         // Non-owner should not be able to approve a validator
         vm.prank(validator2); // validator2 is not the owner
+        vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", validator2));
         gater.approve(validator1, 10, 100);
     }
 

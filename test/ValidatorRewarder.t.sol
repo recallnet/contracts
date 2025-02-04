@@ -80,7 +80,7 @@ contract ValidatorRewarderInitialStateTest is ValidatorRewarderTestBase {
         assertTrue(rewarder.isActive());
         assertEq(rewarder.subnet(), createSubnet().root);
         assertEq(address(rewarder.token()), address(token));
-        assertEq(rewarder.INFLATION_RATE(), 928_276_004_952);
+        assertEq(rewarder.BLOCKS_PER_TOKEN(), 3);
     }
 }
 
@@ -200,7 +200,6 @@ contract ValidatorRewarderBasicClaimTest is ValidatorRewarderTestBase {
         address claimant = address(0x999);
         Consensus.ValidatorData memory validatorData = createValidatorData(claimant, 100);
         uint256 initialSupply = token.totalSupply();
-        uint256 initialRewarderBalance = token.balanceOf(address(rewarder));
         uint256 initialClaimantBalance = token.balanceOf(claimant);
 
         // Pause the token
@@ -214,9 +213,8 @@ contract ValidatorRewarderBasicClaimTest is ValidatorRewarderTestBase {
         rewarder.notifyValidClaim(createSubnet(), 600, validatorData);
         vm.stopPrank();
 
-        // Verify no tokens were minted or transferred
+        // Verify no tokens were minted
         assertEq(token.totalSupply(), initialSupply, "Total supply should not change");
-        assertEq(token.balanceOf(address(rewarder)), initialRewarderBalance, "Rewarder balance should not change");
         assertEq(token.balanceOf(claimant), initialClaimantBalance, "Claimant balance should not change");
     }
 
@@ -231,7 +229,6 @@ contract ValidatorRewarderBasicClaimTest is ValidatorRewarderTestBase {
 
         // Record balances before pausing
         uint256 supplyBeforePause = token.totalSupply();
-        uint256 rewarderBalanceBeforePause = token.balanceOf(address(rewarder));
         uint256 claimantBalanceBeforePause = token.balanceOf(claimant);
 
         // Pause the token
@@ -247,160 +244,84 @@ contract ValidatorRewarderBasicClaimTest is ValidatorRewarderTestBase {
 
         // Verify no tokens were transferred
         assertEq(token.totalSupply(), supplyBeforePause, "Total supply should not change");
-        assertEq(token.balanceOf(address(rewarder)), rewarderBalanceBeforePause, "Rewarder balance should not change");
         assertEq(token.balanceOf(claimant), claimantBalanceBeforePause, "Claimant balance should not change");
     }
 }
 
 // Complex claim notification tests
 contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
-    function testNotifyValidClaimFirstClaim() public {
+    function testNotifyValidClaimSingleValidator() public {
         address claimant = address(0x999);
-        Consensus.ValidatorData memory validatorData = createValidatorData(claimant, 50);
+        Consensus.ValidatorData memory validatorData = createValidatorData(claimant, 300);
 
         uint256 initialSupply = token.totalSupply();
 
-        // Check initial state
-        assertTrue(rewarder.isActive());
-        assertEq(rewarder.latestClaimedCheckpoint(), 0);
-        assertEq(token.balanceOf(address(rewarder)), 0);
-        assertEq(token.totalSupply(), initialSupply);
-
-        // First claim: should be at checkpoint 600 (checkpoint period)
+        // Claim at checkpoint 600
         vm.startPrank(SUBNET_ROUTE);
         rewarder.notifyValidClaim(createSubnet(), 600, validatorData);
         vm.stopPrank();
 
-        // Verify rewards
-        assertApproxEqAbs(token.balanceOf(claimant), 77356333746022, 1000);
-        assertApproxEqAbs(token.balanceOf(address(rewarder)), 850919671206244, 1000);
-
-        // Verify total inflation
-        uint256 totalInflation = token.totalSupply() - initialSupply;
-        assertApproxEqAbs(totalInflation, 850919671206244 + 77356333746022, 1000);
-
-        // Verify checkpoint
-        assertEq(rewarder.latestClaimedCheckpoint(), 600);
-
-        // Test invalid next checkpoint
-        vm.startPrank(SUBNET_ROUTE);
-        vm.expectRevert(abi.encodeWithSelector(ValidatorRewarder.InvalidCheckpointHeight.selector, 2400));
-        rewarder.notifyValidClaim(createSubnet(), 2400, validatorData);
-        vm.stopPrank();
+        // For 600 blocks checkpoint period:
+        // Total new tokens = 600/3 = 200
+        // Validator committed 300/600 blocks = 50% of blocks
+        // Expected reward = 200 * 0.5 = 100
+        uint256 expectedReward = 100 ether;
+        assertApproxEqAbs(token.balanceOf(claimant), expectedReward, 1000);
+        assertEq(token.totalSupply() - initialSupply, expectedReward);
     }
 
-    function testNotifyValidClaimSubsequentClaims() public {
+    function testNotifyValidClaimMultipleValidators() public {
         address[] memory claimants = new address[](3);
         claimants[0] = address(0x111);
         claimants[1] = address(0x222);
         claimants[2] = address(0x333);
 
         uint256[] memory blocks = new uint256[](3);
-        blocks[0] = 100;
-        blocks[1] = 200;
-        blocks[2] = 300;
-
-        // First claim: should be at checkpoint 600 (checkpoint period)
-        vm.startPrank(SUBNET_ROUTE);
-        rewarder.notifyValidClaim(createSubnet(), 600, createValidatorData(claimants[0], blocks[0]));
-        vm.stopPrank();
-        assertApproxEqAbs(token.balanceOf(claimants[0]), 154712667492044, 1000);
-
-        // Second claim
-        vm.startPrank(SUBNET_ROUTE);
-        rewarder.notifyValidClaim(createSubnet(), 600, createValidatorData(claimants[1], blocks[1]));
-        vm.stopPrank();
-        assertApproxEqAbs(token.balanceOf(claimants[1]), 309425334984088, 1000);
-
-        // Third claim
-        vm.startPrank(SUBNET_ROUTE);
-        rewarder.notifyValidClaim(createSubnet(), 600, createValidatorData(claimants[2], blocks[2]));
-        vm.stopPrank();
-        assertApproxEqAbs(token.balanceOf(claimants[2]), 464138002476133, 1000);
-
-        // Verify rewarder is drained
-        assertApproxEqAbs(token.balanceOf(address(rewarder)), 0, 1000);
-    }
-
-    function testNotifyValidClaimConcurrentClaims() public {
-        // Setup claimants
-        address[] memory claimants = new address[](3);
-        claimants[0] = address(0x111);
-        claimants[1] = address(0x222);
-        claimants[2] = address(0x333);
-
-        // Each validator commits different number of blocks
-        uint256[] memory blocksCommitted = new uint256[](3);
-        blocksCommitted[0] = 100; // Validator 1: 100 blocks
-        blocksCommitted[1] = 200; // Validator 2: 200 blocks
-        blocksCommitted[2] = 300; // Validator 3: 300 blocks
-        // Total = 600 blocks (equals CHECKPOINT_PERIOD)
+        blocks[0] = 100; // 1/6 of blocks
+        blocks[1] = 200; // 1/3 of blocks
+        blocks[2] = 300; // 1/2 of blocks
 
         uint256 initialSupply = token.totalSupply();
 
-        // Validator 1 claims for both checkpoints
+        // All validators claim for the same checkpoint
         vm.startPrank(SUBNET_ROUTE);
-        rewarder.notifyValidClaim(createSubnet(), 600, createValidatorData(claimants[0], blocksCommitted[0]));
-        assertApproxEqAbs(token.balanceOf(claimants[0]), 154712667492044, 1000);
-
-        rewarder.notifyValidClaim(createSubnet(), 1200, createValidatorData(claimants[0], blocksCommitted[0]));
-        assertApproxEqAbs(token.balanceOf(claimants[0]), 154712667492044 + 154712811108101, 1000);
-        vm.stopPrank();
-
-        // Validator 2 claims for both checkpoints
-        vm.startPrank(SUBNET_ROUTE);
-        rewarder.notifyValidClaim(createSubnet(), 600, createValidatorData(claimants[1], blocksCommitted[1]));
-        assertApproxEqAbs(token.balanceOf(claimants[1]), 154712667492044 * 2, 1000);
-
-        rewarder.notifyValidClaim(createSubnet(), 1200, createValidatorData(claimants[1], blocksCommitted[1]));
-        assertApproxEqAbs(token.balanceOf(claimants[1]), (154712667492044 * 2) + (154712811108101 * 2), 1000);
-        vm.stopPrank();
-
-        // Validator 3 claims for both checkpoints
-        vm.startPrank(SUBNET_ROUTE);
-        rewarder.notifyValidClaim(createSubnet(), 600, createValidatorData(claimants[2], blocksCommitted[2]));
-        assertApproxEqAbs(token.balanceOf(claimants[2]), 154712667492044 * 3, 1000);
-
-        rewarder.notifyValidClaim(createSubnet(), 1200, createValidatorData(claimants[2], blocksCommitted[2]));
-        assertApproxEqAbs(token.balanceOf(claimants[2]), (154712667492044 * 3) + (154712811108101 * 3), 1000);
-        vm.stopPrank();
-
-        // Verify total rewards distributed
-        uint256 totalRewards = 0;
         for (uint256 i = 0; i < claimants.length; i++) {
-            totalRewards += token.balanceOf(claimants[i]);
+            rewarder.notifyValidClaim(createSubnet(), 600, createValidatorData(claimants[i], blocks[i]));
         }
-        uint256 totalInflation = token.totalSupply() - initialSupply;
-        assertApproxEqAbs(totalRewards, totalInflation, 1000);
+        vm.stopPrank();
 
-        // Verify rewarder has no remaining balance
-        assertApproxEqAbs(token.balanceOf(address(rewarder)), 0, 1000);
+        // Total new tokens = 600/3 = 200
+        // Validator 1 should get: 200 * (100/600) ≈ 33.33
+        // Validator 2 should get: 200 * (200/600) ≈ 66.67
+        // Validator 3 should get: 200 * (300/600) = 100
+        assertApproxEqAbs(token.balanceOf(claimants[0]), 33333333333333333333, 1000);
+        assertApproxEqAbs(token.balanceOf(claimants[1]), 66666666666666666666, 1000);
+        assertApproxEqAbs(token.balanceOf(claimants[2]), 100000000000000000000, 1000);
+
+        // Total minted should be 200
+        assertApproxEqAbs(token.totalSupply() - initialSupply, 200 ether, 1000);
     }
 
-    function testNotifyValidClaimMustBeSequential() public {
+    function testNotifyValidClaimMultipleCheckpoints() public {
         address claimant = address(0x999);
-        Consensus.ValidatorData memory validatorData = createValidatorData(claimant, 50);
+        Consensus.ValidatorData memory validatorData = createValidatorData(claimant, 300);
 
-        // Try to claim for checkpoint 1200 before 600
-        vm.startPrank(SUBNET_ROUTE);
-        vm.expectRevert(abi.encodeWithSelector(ValidatorRewarder.InvalidCheckpointHeight.selector, 1200));
-        rewarder.notifyValidClaim(createSubnet(), 1200, validatorData);
-        vm.stopPrank();
+        uint256 initialSupply = token.totalSupply();
 
-        // First claim must be at checkpoint 600
-        vm.startPrank(SUBNET_ROUTE);
-        vm.expectRevert(abi.encodeWithSelector(ValidatorRewarder.InvalidCheckpointHeight.selector, 300));
-        rewarder.notifyValidClaim(createSubnet(), 300, validatorData);
-        vm.stopPrank();
-
-        // Correct sequence: first claim at 600
+        // Claim for three consecutive checkpoints
         vm.startPrank(SUBNET_ROUTE);
         rewarder.notifyValidClaim(createSubnet(), 600, validatorData);
-        assertEq(rewarder.latestClaimedCheckpoint(), 600);
-
-        // Then claim at 1200
         rewarder.notifyValidClaim(createSubnet(), 1200, validatorData);
-        assertEq(rewarder.latestClaimedCheckpoint(), 1200);
+        rewarder.notifyValidClaim(createSubnet(), 1800, validatorData);
         vm.stopPrank();
+
+        // For each checkpoint:
+        // Total new tokens = 600/3 = 200
+        // Validator committed 300/600 blocks = 50% of blocks
+        // Expected reward per checkpoint = 200 * 0.5 = 100
+        // Total expected for 3 checkpoints = 300
+        uint256 expectedTotalReward = 300 ether;
+        assertApproxEqAbs(token.balanceOf(claimant), expectedTotalReward, 1000);
+        assertEq(token.totalSupply() - initialSupply, expectedTotalReward);
     }
 }
