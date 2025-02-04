@@ -35,7 +35,11 @@ contract DeployScript is Script {
 
         console.log("Deployer: ", recall.deployer());
 
-        if (Strings.equal(network, "filecoin") || Strings.equal(network, "ethereum")) {
+        if (
+            Strings.equal(network, "filecoin") || Strings.equal(network, "ethereum") || Strings.equal(network, "base")
+                || Strings.equal(network, "filecoin-2") // Calibration testnet
+                || Strings.equal(network, "base-sepolia") // Base sepolia testnet
+        ) {
             console.log("Deploying token manager");
             IInterchainTokenService itsContract = IInterchainTokenService(INTERCHAIN_TOKEN_SERVICE);
             bytes memory params = abi.encode(abi.encodePacked(recall.deployer()), address(recall));
@@ -52,6 +56,27 @@ contract DeployScript is Script {
         vm.stopBroadcast();
 
         return recall;
+    }
+
+    function setDefaultRoles(address proxy, address admin, address minter, address pauser) public {
+        vm.startBroadcast();
+        Recall recall = Recall(proxy);
+
+        // Only grant new roles if different from current
+        // Grant new roles and revoke old ones if different
+        if (msg.sender != minter) {
+            recall.grantRole(recall.MINTER_ROLE(), minter);
+            recall.revokeRole(recall.MINTER_ROLE(), msg.sender);
+        }
+        if (msg.sender != pauser) {
+            recall.grantRole(recall.PAUSER_ROLE(), pauser);
+            recall.revokeRole(recall.PAUSER_ROLE(), msg.sender);
+        }
+        if (msg.sender != admin) {
+            recall.grantRole(recall.ADMIN_ROLE(), admin);
+            recall.revokeRole(recall.ADMIN_ROLE(), msg.sender);
+        }
+        vm.stopBroadcast();
     }
 }
 
