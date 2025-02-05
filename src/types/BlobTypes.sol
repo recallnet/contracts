@@ -149,6 +149,7 @@ struct AddBlobParams {
     string subscriptionId;
     uint64 size;
     uint64 ttl;
+    address from;
 }
 
 /// @dev Blob information and status.
