@@ -12,6 +12,7 @@ PRIVATE_KEY="${PRIVATE_KEY:-0x7c852118294e51e653712a81e05800f419141751be58f605c3
 OBJECT_API_URL="${OBJECT_API_URL:-http://localhost:8001}"
 EVM_ADDRESS=$(cast wallet address $PRIVATE_KEY)
 SOURCE=$(curl -X GET $OBJECT_API_URL/v1/node | jq '.node_id' | tr -d '"')
+ZERO_ADDR="0x0000000000000000000000000000000000000000"
 DIVIDER=$'\n============================\n'
 
 echo "Running tests with environment:"
@@ -28,8 +29,8 @@ echo "hello" > $TEMP_FILE
 OBJECT_KEY="hello/world"
 BUCKET_ADDR=$(RECALL_PRIVATE_KEY=$PRIVATE_KEY RECALL_NETWORK=localnet recall bucket create | jq '.address' | tr -d '"')
 create_object_response=$(RECALL_PRIVATE_KEY=$PRIVATE_KEY RECALL_NETWORK=localnet recall bu add --address $BUCKET_ADDR --key $OBJECT_KEY $TEMP_FILE)
-SIZE=$(echo $create_object_response | jq '.object.size')
-BLOB_HASH=$(echo $create_object_response | jq '.object.hash' | tr -d '"')
+SIZE=6
+BLOB_HASH="rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq"
 
 echo -e "$DIVIDER"
 echo "Running BlobManager integration tests..."
@@ -47,8 +48,8 @@ echo "Using BlobManager: $BLOBS"
 # Test addBlob
 echo
 echo "Testing addBlob..."
-output=$(cast send --rpc-url $ETH_RPC_URL $BLOBS "addBlob((address,string,string,string,string,uint64,uint64))" \
-    "(0x0000000000000000000000000000000000000000,$SOURCE,$BLOB_HASH,\"\",\"\",$SIZE,0)" \
+output=$(cast send --rpc-url $ETH_RPC_URL $BLOBS "addBlob((address,string,string,string,string,uint64,uint64,address))" \
+    "($ZERO_ADDR,$SOURCE,$BLOB_HASH,\"\",\"\",$SIZE,0,$EVM_ADDRESS)" \
     --private-key $PRIVATE_KEY)
 if [ "$output" = "0x" ]; then
     echo "addBlob failed"
@@ -71,7 +72,7 @@ echo "Output: $DECODED_BLOB"
 echo
 echo "Testing getBlobStatus..."
 output=$(cast call --rpc-url $ETH_RPC_URL $BLOBS "getBlobStatus(address,string,string)" \
-    "0x0000000000000000000000000000000000000000" "$BLOB_HASH" "")
+    "$ZERO_ADDR" "$BLOB_HASH" "")
 if [ "$output" = "0x" ]; then
     echo "getBlobStatus failed"
     exit 1
@@ -160,9 +161,9 @@ echo "Output: $DECODED_SUBNET_STATS"
 # Test overwriteBlob
 echo
 echo "Testing overwriteBlob..."
-output=$(cast send --rpc-url $ETH_RPC_URL $BLOBS "overwriteBlob(string,(address,string,string,string,string,uint64,uint64))" \
+output=$(cast send --rpc-url $ETH_RPC_URL $BLOBS "overwriteBlob(string,(address,string,string,string,string,uint64,uint64,address))" \
     "$BLOB_HASH" \
-    "(0x0000000000000000000000000000000000000000,$SOURCE,$BLOB_HASH,\"\",\"\",$SIZE,0)" \
+    "($ZERO_ADDR,$SOURCE,$BLOB_HASH,\"\",\"\",$SIZE,0,$EVM_ADDRESS)" \
     --private-key $PRIVATE_KEY)
 if [ "$output" = "0x" ]; then
     echo "overwriteBlob failed"
@@ -174,7 +175,7 @@ echo "Output: $output"
 echo
 echo "Testing deleteBlob..."
 output=$(cast send --rpc-url $ETH_RPC_URL $BLOBS "deleteBlob(address,string,string)" \
-    "0x0000000000000000000000000000000000000000" "$BLOB_HASH" "" \
+    "$ZERO_ADDR" "$BLOB_HASH" "" \
     --private-key $PRIVATE_KEY)
 if [ "$output" = "0x" ]; then
     echo "deleteBlob failed"
