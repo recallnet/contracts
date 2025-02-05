@@ -120,15 +120,16 @@ contract ValidatorRewarderSubnetTest is ValidatorRewarderTestBase {
 
     function testInitializeWithInvalidPeriod() public {
         // Deploy a new instance without initialization
-        ValidatorRewarder newRewarder = new ValidatorRewarder();
+        ValidatorRewarderDeployScript rewarderDeployer = new ValidatorRewarderDeployScript();
+        ValidatorRewarder newRewarder = rewarderDeployer.run(address(token));
         SubnetID memory subnet = createSubnet();
 
-        // Initialize with token
-        newRewarder.initialize(address(token));
-
         // Try to set subnet with invalid period
+        address newRewarderOwner = newRewarder.owner();
+        vm.startPrank(newRewarderOwner);
         vm.expectRevert(abi.encodeWithSelector(ValidatorRewarder.InvalidCheckpointPeriod.selector, 0));
         newRewarder.setSubnet(subnet, 0);
+        vm.stopPrank();
     }
 
     function testSetSubnetNotOwner() public {

@@ -57,6 +57,11 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     error InvalidValidatorAddress(address validator);
     error ContractNotActive();
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // ========== INITIALIZER ==========
 
     /// @notice Initializes the rewarder
