@@ -70,7 +70,9 @@ interface IBlobManager {
     /// @param subscriber The address of the subscriber.
     /// @param blobHash Blob blake3 hash to delete.
     /// @param subscriptionId Identifier used to differentiate blob additions for the same subscriber.
-    function deleteBlob(address subscriber, string memory blobHash, string memory subscriptionId) external;
+    /// @param from The address of the account that is deleting the blob.
+    function deleteBlob(address subscriber, string memory blobHash, string memory subscriptionId, address from)
+        external;
 
     /// @dev Overwrite a blob in storage.
     /// @param oldHash The blake3 hash of the blob to be deleted.

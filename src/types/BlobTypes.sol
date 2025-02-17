@@ -141,6 +141,7 @@ struct StorageStats {
 /// @param size Blob size.
 /// @param ttl Blob time-to-live epochs. If not specified, the auto-debitor maintains about one hour of credits as an
 /// ongoing commitment.
+/// @param from Address of the entity adding the blob.
 struct AddBlobParams {
     address sponsor;
     string source;

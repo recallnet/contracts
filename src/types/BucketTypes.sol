@@ -82,6 +82,7 @@ struct Machine {
 /// @param ttl (uint64): The object time-to-live epochs.
 /// @param metadata (KeyValue[]): The object metadata.
 /// @param overwrite (bool): Whether to overwrite a key if it already exists.
+/// @param from (address): Account address that initiated the call
 struct AddObjectParams {
     string source;
     string key;
@@ -91,4 +92,5 @@ struct AddObjectParams {
     uint64 ttl;
     KeyValue[] metadata;
     bool overwrite;
+    address from;
 }

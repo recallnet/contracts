@@ -46,7 +46,8 @@ contract BucketManager is IBucketManager {
         string memory key,
         string memory blobHash,
         string memory recoveryHash,
-        uint64 size
+        uint64 size,
+        address from
     ) external {
         AddObjectParams memory params = AddObjectParams({
             source: source,
@@ -56,7 +57,8 @@ contract BucketManager is IBucketManager {
             size: size,
             ttl: 0, // No expiration
             metadata: new KeyValue[](0), // No metadata
-            overwrite: false // Do not overwrite
+            overwrite: false, // Do not overwrite
+            from: from
         });
         LibBucket.addObject(bucket, params);
         emit AddObject(msg.sender, bucket, key);
@@ -69,8 +71,8 @@ contract BucketManager is IBucketManager {
     }
 
     /// @dev See {IBucketManager-deleteObject}.
-    function deleteObject(address bucket, string memory key) external {
-        LibBucket.deleteObject(bucket, key);
+    function deleteObject(address bucket, string memory key, address from) external {
+        LibBucket.deleteObject(bucket, key, from);
         emit DeleteObject(msg.sender, bucket, key);
     }
 

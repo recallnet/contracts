@@ -152,7 +152,7 @@ library LibBucket {
     /// @param params The add params.
     /// @return encoded The CBOR encoded add params.
     function encodeAddObjectParams(AddObjectParams memory params) internal pure returns (bytes memory) {
-        bytes[] memory encoded = new bytes[](8);
+        bytes[] memory encoded = new bytes[](9);
         encoded[0] = params.source.encodeCborBlobHashOrNodeId();
         encoded[1] = params.key.encodeCborBytes();
         encoded[2] = params.blobHash.encodeCborBlobHashOrNodeId();
@@ -165,6 +165,18 @@ library LibBucket {
         encoded[5] = params.ttl == 0 ? LibWasm.encodeCborNull() : params.ttl.encodeCborUint64();
         encoded[6] = params.metadata.encodeCborKeyValueMap();
         encoded[7] = params.overwrite.encodeCborBool();
+        encoded[8] = params.from.encodeCborAddress();
+        return encoded.encodeCborArray();
+    }
+
+    /// @dev Encode a CBOR encoded delete object params.
+    /// @param key The key of the object to delete.
+    /// @param from The address of the account that is deleting the object.
+    /// @return encoded The CBOR encoded delete object params.
+    function encodeDeleteObjectParams(string memory key, address from) internal pure returns (bytes memory) {
+        bytes[] memory encoded = new bytes[](2);
+        encoded[0] = key.encodeCborBytes();
+        encoded[1] = from.encodeCborAddress();
         return encoded.encodeCborArray();
     }
 
@@ -246,9 +258,10 @@ library LibBucket {
     /// @dev Delete an object from the bucket.
     /// @param bucket The bucket.
     /// @param key The object key.
-    function deleteObject(address bucket, string memory key) external {
+    /// @param from The address of the account that is deleting the object.
+    function deleteObject(address bucket, string memory key, address from) external {
         uint64 bucketAddr = bucket.addressToActorId();
-        bytes memory params = key.encodeCborBytes();
+        bytes memory params = encodeDeleteObjectParams(key, from);
         LibWasm.writeToWasmActor(bucketAddr, METHOD_DELETE_OBJECT, params);
     }
 

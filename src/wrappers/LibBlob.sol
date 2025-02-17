@@ -447,12 +447,6 @@ library LibBlob {
         return decodeBlob(data);
     }
 
-    function getBlob2(string memory blobHash) external view returns (bytes memory data) {
-        bytes memory params = blobHash.encodeCborBlobHashOrNodeId();
-        data = LibWasm.readFromWasmActor(ACTOR_ID, METHOD_GET_BLOB, params);
-        return data;
-    }
-
     /// @dev Get the status of a blob.
     /// @param subscriber The address of the subscriber.
     /// @param blobHash The hash of the blob.
@@ -565,11 +559,15 @@ library LibBlob {
     /// @param subscriber The address of the subscriber.
     /// @param blobHash The hash of the blob.
     /// @param subscriptionId The subscription ID.
-    function deleteBlob(address subscriber, string memory blobHash, string memory subscriptionId) external {
-        bytes[] memory encoded = new bytes[](3);
+    /// @param from Account address that initiated the deletion.
+    function deleteBlob(address subscriber, string memory blobHash, string memory subscriptionId, address from)
+        external
+    {
+        bytes[] memory encoded = new bytes[](4);
         encoded[0] = subscriber == address(0) ? LibWasm.encodeCborNull() : subscriber.encodeCborAddress();
         encoded[1] = blobHash.encodeCborBlobHashOrNodeId();
         encoded[2] = encodeSubscriptionId(subscriptionId);
+        encoded[3] = from.encodeCborAddress();
         bytes memory params = encoded.encodeCborArray();
         // Note: response bytes are always empty
         LibWasm.writeToWasmActor(ACTOR_ID, METHOD_DELETE_BLOB, params);
