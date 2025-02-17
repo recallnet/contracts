@@ -76,6 +76,14 @@ contract BucketManager is IBucketManager {
         emit DeleteObject(msg.sender, bucket, key);
     }
 
+    /// @dev See {IBucketManager-updateObjectMetadata}.
+    function updateObjectMetadata(address bucket, string memory key, KeyValue[] memory metadata, address from)
+        external
+    {
+        LibBucket.updateObjectMetadata(bucket, key, metadata, from);
+        emit UpdateObjectMetadata(msg.sender, bucket, key);
+    }
+
     /// @dev See {IBucketManager-getObject}.
     function getObject(address bucket, string memory key) external view returns (ObjectValue memory) {
         return LibBucket.getObject(bucket, key);

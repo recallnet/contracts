@@ -240,6 +240,21 @@ if [ "$output" = "0x" ]; then
 fi
 echo "Output: $output"
 
+# Test updateObjectMetadata
+echo
+echo "Testing updateObjectMetadata..."
+output=$(cast send --rpc-url $ETH_RPC_URL $BUCKETS "updateObjectMetadata(address,string,(string,string)[],address)" \
+    $BUCKET_ADDR \
+    "hello/world" \
+    '[("alias","foo")]' \
+    $EVM_ADDRESS \
+    --private-key $PRIVATE_KEY)
+if [ "$output" = "0x" ]; then
+    echo "updateObjectMetadata failed"
+    exit 1
+fi
+echo "Output: $output"
+
 # Test getObject
 echo
 echo "Testing getObject..."

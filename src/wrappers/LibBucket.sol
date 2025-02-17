@@ -31,6 +31,7 @@ library LibBucket {
     uint64 internal constant METHOD_DELETE_OBJECT = 4237275016;
     uint64 internal constant METHOD_GET_OBJECT = 1894890866;
     uint64 internal constant METHOD_LIST_OBJECTS = 572676265;
+    uint64 internal constant METHOD_UPDATE_OBJECT_METADATA = 540229491;
 
     /// @dev Decode a CBOR encoded list.
     /// @param data The CBOR encoded list.
@@ -200,6 +201,23 @@ library LibBucket {
         return encoded.encodeCborArray();
     }
 
+    /// @dev Encode a CBOR encoded update object metadata params.
+    /// @param key The key of the object to update.
+    /// @param metadata The metadata.
+    /// @param from The address of the account that is updating the metadata.
+    /// @return encoded The CBOR encoded update object metadata params.
+    function encodeUpdateObjectMetadataParams(string memory key, KeyValue[] memory metadata, address from)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        bytes[] memory encoded = new bytes[](3);
+        encoded[0] = key.encodeCborBytes();
+        encoded[1] = metadata.encodeCborKeyValueMap();
+        encoded[2] = from.encodeCborAddress();
+        return encoded.encodeCborArray();
+    }
+
     /// @dev Convert a kind to a string.
     /// @param kind The kind.
     /// @return string The string representation of the kind.
@@ -263,6 +281,19 @@ library LibBucket {
         uint64 bucketAddr = bucket.addressToActorId();
         bytes memory params = encodeDeleteObjectParams(key, from);
         LibWasm.writeToWasmActor(bucketAddr, METHOD_DELETE_OBJECT, params);
+    }
+
+    /// @dev Update the metadata of an object.
+    /// @param bucket The bucket.
+    /// @param key The object key.
+    /// @param metadata The metadata.
+    /// @param from The address of the account that is updating the metadata.
+    function updateObjectMetadata(address bucket, string memory key, KeyValue[] memory metadata, address from)
+        external
+    {
+        uint64 bucketAddr = bucket.addressToActorId();
+        bytes memory params = encodeUpdateObjectMetadataParams(key, metadata, from);
+        LibWasm.writeToWasmActor(bucketAddr, METHOD_UPDATE_OBJECT_METADATA, params);
     }
 
     /// @dev Get an object from the bucket.

@@ -172,4 +172,15 @@ contract LibBucketTest is Test {
             LibBucket.encodeDeleteObjectParams("hello/world", 0x90F79bf6EB2c4f870365E785982E1f101E93b906);
         assertEq(encoded, hex"824b68656c6c6f2f776f726c6456040a90f79bf6eb2c4f870365e785982e1f101e93b906");
     }
+
+    function testEncodeUpdateObjectMetadataParams() public pure {
+        KeyValue[] memory metadata = new KeyValue[](1);
+        metadata[0] = KeyValue("alias", "foo");
+        bytes memory encoded = LibBucket.encodeUpdateObjectMetadataParams(
+            "hello/world", metadata, 0x90F79bf6EB2c4f870365E785982E1f101E93b906
+        );
+        assertEq(
+            encoded, hex"834b68656c6c6f2f776f726c64a165616c69617363666f6f56040a90f79bf6eb2c4f870365e785982e1f101e93b906"
+        );
+    }
 }

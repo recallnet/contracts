@@ -24,6 +24,12 @@ interface IBucketManager {
     /// @param key The object key.
     event DeleteObject(address indexed owner, address indexed bucket, string key);
 
+    /// @dev Emitted when the metadata of an object is updated.
+    /// @param owner The owner.
+    /// @param bucket The bucket's robust t2 address.
+    /// @param key The object key.
+    event UpdateObjectMetadata(address indexed owner, address indexed bucket, string key);
+
     /// @dev Create a bucket. Uses the sender as the owner.
     function createBucket() external;
 
@@ -73,6 +79,14 @@ interface IBucketManager {
     /// @param key The key.
     /// @param from The address of the account that is deleting the object.
     function deleteObject(address bucket, string memory key, address from) external;
+
+    /// @dev Update the metadata of an object.
+    /// @param bucket The bucket.
+    /// @param key The key.
+    /// @param metadata The metadata.
+    /// @param from The address of the account that is updating the metadata.
+    function updateObjectMetadata(address bucket, string memory key, KeyValue[] memory metadata, address from)
+        external;
 
     /// @dev Get an object from a bucket.
     /// @param bucket The bucket.
