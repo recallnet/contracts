@@ -31,19 +31,16 @@ contract CreditManager is ICreditManager {
     /// @dev See {ICreditManager-approveCredit}.
     function approveCredit(address to) external {
         LibBlob.approveCredit(msg.sender, to, new address[](0), 0, 0, 0);
-        emit ApproveCredit(msg.sender, to, new address[](0), 0, 0, 0);
     }
 
     /// @dev See {ICreditManager-approveCredit}.
     function approveCredit(address from, address to) external {
         LibBlob.approveCredit(from, to, new address[](0), 0, 0, 0);
-        emit ApproveCredit(from, to, new address[](0), 0, 0, 0);
     }
 
     /// @dev See {ICreditManager-approveCredit}.
     function approveCredit(address from, address to, address[] memory caller) external {
         LibBlob.approveCredit(from, to, caller, 0, 0, 0);
-        emit ApproveCredit(from, to, caller, 0, 0, 0);
     }
 
     /// @dev See {ICreditManager-approveCredit}.
@@ -56,42 +53,35 @@ contract CreditManager is ICreditManager {
         uint64 ttl
     ) external {
         LibBlob.approveCredit(from, to, caller, creditLimit, gasFeeLimit, ttl);
-        emit ApproveCredit(from, to, caller, creditLimit, gasFeeLimit, ttl);
     }
 
     /// @dev See {ICreditManager-buyCredit}.
     function buyCredit() external payable {
         LibBlob.buyCredit(msg.sender);
-        emit BuyCredit(msg.sender, msg.value);
     }
 
     /// @dev See {ICreditManager-buyCredit}.
     function buyCredit(address recipient) external payable {
         LibBlob.buyCredit(recipient);
-        emit BuyCredit(recipient, msg.value);
     }
 
     /// @dev See {ICreditManager-revokeCredit}.
     function revokeCredit(address to) external {
         LibBlob.revokeCredit(msg.sender, to, address(0));
-        emit RevokeCredit(msg.sender, to, address(0));
     }
 
     /// @dev See {ICreditManager-revokeCredit}.
     function revokeCredit(address from, address to) external {
         LibBlob.revokeCredit(from, to, address(0));
-        emit RevokeCredit(from, to, address(0));
     }
 
     /// @dev See {ICreditManager-revokeCredit}.
     function revokeCredit(address from, address to, address caller) external {
         LibBlob.revokeCredit(from, to, caller);
-        emit RevokeCredit(from, to, caller);
     }
 
     /// @dev See {ICreditManager-setAccountSponsor}.
     function setAccountSponsor(address from, address sponsor) external {
         LibBlob.setAccountSponsor(from, sponsor);
-        emit SetAccountSponsor(from, sponsor);
     }
 }

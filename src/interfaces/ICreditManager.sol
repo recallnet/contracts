@@ -7,20 +7,6 @@ import {Account, Balance, CreditApproval, CreditStats} from "../types/BlobTypes.
 /// See Rust implementation for details:
 /// https://github.com/recallnet/ipc/blob/develop/fendermint/actors/blobs/src/actor.rs
 interface ICreditManager {
-    /// @dev Emitted when an account approves credits.
-    event ApproveCredit(
-        address indexed from, address indexed to, address[] caller, uint256 creditLimit, uint256 gasFeeLimit, uint64 ttl
-    );
-
-    /// @dev Emitted when an account buys credits.
-    event BuyCredit(address indexed addr, uint256 amount);
-
-    /// @dev Emitted when an account sets the credit sponsor.
-    event SetAccountSponsor(address indexed from, address indexed sponsor);
-
-    /// @dev Emitted when an account revokes credits.
-    event RevokeCredit(address indexed from, address indexed to, address indexed caller);
-
     /// @dev Get the credit account for an address.
     /// @param addr The address of the account.
     /// @return account The credit account for the address.

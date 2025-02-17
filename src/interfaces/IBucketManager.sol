@@ -7,29 +7,6 @@ import {AddObjectParams, KeyValue, Machine, ObjectValue, Query} from "../types/B
 /// See Rust implementation for details:
 /// https://github.com/recallnet/ipc/blob/develop/fendermint/actors/objectstore/src/actor.rs
 interface IBucketManager {
-    /// @dev Emitted when a bucket is created.
-    /// @param owner The owner.
-    /// @param data The CBOR encoded response—array with two values including the bucket's ID and robust (t2) addresses.
-    event CreateBucket(address indexed owner, bytes data);
-
-    /// @dev Emitted when an object is added to a bucket.
-    /// @param owner The owner.
-    /// @param bucket The bucket's robust t2 address.
-    /// @param key The object key.
-    event AddObject(address indexed owner, address indexed bucket, string key);
-
-    /// @dev Emitted when an object is removed from a bucket.
-    /// @param owner The owner.
-    /// @param bucket The bucket's robust t2 address.
-    /// @param key The object key.
-    event DeleteObject(address indexed owner, address indexed bucket, string key);
-
-    /// @dev Emitted when the metadata of an object is updated.
-    /// @param owner The owner.
-    /// @param bucket The bucket's robust t2 address.
-    /// @param key The object key.
-    event UpdateObjectMetadata(address indexed owner, address indexed bucket, string key);
-
     /// @dev Create a bucket. Uses the sender as the owner.
     function createBucket() external;
 

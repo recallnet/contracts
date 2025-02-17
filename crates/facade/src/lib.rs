@@ -67,12 +67,15 @@ pub mod blobs {
     use fvm_shared::address::Address;
 
     pub fn blob_added(
+        subscriber: Address,
         hash: &[u8; 32],
         size: u64,
         expiry: u64,
         bytes_used: u64,
     ) -> Result<IBlobsFacadeEvents> {
+        let subscriber: H160 = subscriber.try_into()?;
         Ok(IBlobsFacadeEvents::BlobAdded(BlobAdded {
+            subscriber: subscriber.into(),
             hash: hash.into(),
             size: U256::from(size),
             expiry: U256::from(expiry),
@@ -107,11 +110,14 @@ pub mod blobs {
     }
 
     pub fn blob_deleted(
+        subscriber: Address,
         hash: &[u8; 32],
         size: u64,
         bytes_released: u64,
     ) -> Result<IBlobsFacadeEvents> {
+        let subscriber: H160 = subscriber.try_into()?;
         Ok(IBlobsFacadeEvents::BlobDeleted(BlobDeleted {
+            subscriber: subscriber.into(),
             hash: hash.into(),
             size: U256::from(size),
             bytesReleased: U256::from(bytes_released),
@@ -124,7 +130,7 @@ mod bucket_facade;
 #[cfg(feature = "bucket")]
 pub mod bucket {
     use crate::bucket_facade::ibucketfacade::IBucketFacade::{
-        IBucketFacadeEvents, ObjectAdded, ObjectDeleted,
+        IBucketFacadeEvents, ObjectAdded, ObjectDeleted, ObjectMetadataUpdated,
     };
     use anyhow::Result;
     use std::collections::HashMap;
@@ -140,6 +146,19 @@ pub mod bucket {
             blobHash: blob_hash.into(),
             metadata: metadata.into(),
         }))
+    }
+
+    pub fn object_metadata_updated(
+        key: Vec<u8>,
+        metadata: &HashMap<String, String>,
+    ) -> Result<IBucketFacadeEvents> {
+        let metadata = fvm_ipld_encoding::to_vec(metadata)?;
+        Ok(IBucketFacadeEvents::ObjectMetadataUpdated(
+            ObjectMetadataUpdated {
+                key: key.into(),
+                metadata: metadata.into(),
+            },
+        ))
     }
 
     pub fn object_deleted(key: Vec<u8>, blob_hash: &[u8; 32]) -> Result<IBucketFacadeEvents> {

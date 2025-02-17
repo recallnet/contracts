@@ -12,21 +12,18 @@ contract BucketManager is IBucketManager {
     /// @dev See {IBucketManager-createBucket}.
     function createBucket() external {
         KeyValue[] memory metadata = new KeyValue[](0);
-        bytes memory data = LibBucket.createBucket(msg.sender, metadata);
-        emit CreateBucket(msg.sender, data);
+        LibBucket.createBucket(msg.sender, metadata);
     }
 
     /// @dev See {IBucketManager-createBucket}.
     function createBucket(address owner) external {
         KeyValue[] memory metadata = new KeyValue[](0);
-        bytes memory data = LibBucket.createBucket(owner, metadata);
-        emit CreateBucket(owner, data);
+        LibBucket.createBucket(owner, metadata);
     }
 
     /// @dev See {IBucketManager-createBucket}.
     function createBucket(address owner, KeyValue[] memory metadata) external {
-        bytes memory data = LibBucket.createBucket(owner, metadata);
-        emit CreateBucket(owner, data);
+        LibBucket.createBucket(owner, metadata);
     }
 
     /// @dev See {IBucketManager-listBuckets}.
@@ -61,19 +58,16 @@ contract BucketManager is IBucketManager {
             from: from
         });
         LibBucket.addObject(bucket, params);
-        emit AddObject(msg.sender, bucket, key);
     }
 
     /// @dev See {IBucketManager-addObject}.
     function addObject(address bucket, AddObjectParams memory params) external {
         LibBucket.addObject(bucket, params);
-        emit AddObject(msg.sender, bucket, params.key);
     }
 
     /// @dev See {IBucketManager-deleteObject}.
     function deleteObject(address bucket, string memory key, address from) external {
         LibBucket.deleteObject(bucket, key, from);
-        emit DeleteObject(msg.sender, bucket, key);
     }
 
     /// @dev See {IBucketManager-updateObjectMetadata}.
@@ -81,7 +75,6 @@ contract BucketManager is IBucketManager {
         external
     {
         LibBucket.updateObjectMetadata(bucket, key, metadata, from);
-        emit UpdateObjectMetadata(msg.sender, bucket, key);
     }
 
     /// @dev See {IBucketManager-getObject}.
