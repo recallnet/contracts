@@ -26,6 +26,7 @@
     - [Methods](#methods-1)
     - [Examples](#examples-1)
     - [Query objects](#query-objects)
+    - [Update object metadata](#update-object-metadata)
   - [Blobs contract](#blobs-contract)
     - [Methods](#methods-2)
   - [Testing](#testing)
@@ -635,13 +636,13 @@ The following methods are available on the credit contract, shown with their fun
   metadata.
 - `listBuckets()`: List all buckets for the sender.
 - `listBuckets(address)`: List all buckets for the specified address.
-- `addObject(address,string,string,string,uint64)`: Add an object to a bucket and associated object
-  upload parameters. The first value is the bucket address, the subsequent values are all of the
-  "required" values in `AddObjectParams` (`source` node ID, `key`, `blobHash`, and `size`).
-- `addObject(address,(string,string,string,string,uint64,uint64,(string,string)[],bool))`: Add an
-  object to a bucket (first value) and associated object upload parameters (second value) as the
-  `AddObjectParams` struct, described in more detail below.
-- `deleteObject(address,string)`: Remove an object from a bucket.
+- `addObject(address,string,string,string,uint64,address)`: Add an object to a bucket and associated
+  object upload parameters. The first value is the bucket address, the subsequent values are all of
+  the "required" values in `AddObjectParams` (`source` node ID, `key`, `blobHash`, and `size`).
+- `addObject(address,(string,string,string,string,uint64,uint64,(string,string)[],bool,address))`:
+  Add an object to a bucket (first value) and associated object upload parameters (second value) as
+  the `AddObjectParams` struct, described in more detail below.
+- `deleteObject(address,string,address)`: Remove an object from a bucket.
 - `getObject(address,string)`: Get an object from a bucket.
 - `queryObjects(address)`: Query the bucket (hex address) with no prefix (defaults to `/` delimiter
   and the default offset and limit in the underlying WASM layer).
@@ -653,6 +654,8 @@ The following methods are available on the credit contract, shown with their fun
   limit.
 - `queryObjects(address,string,string,uint64,uint64)`: Query the bucket with a prefix, delimiter,
   offset, and limit.
+- `updateObjectMetadata(address,string,(string,string)[],address)`: Update the metadata of an
+  object.
 
 #### Examples
 
@@ -914,6 +917,14 @@ struct KeyValue {
 }
 ```
 
+#### Update object metadata
+
+You can update the metadata of an existing object with the following command:
+
+```sh
+cast send --rpc-url $ETH_RPC_URL $BUCKETS "updateObjectMetadata(address,string,(string,string)[],address)" $BUCKET_ADDR "hello/world" '[("alias","foo")]' $EVM_ADDRESS --private-key $PRIVATE_KEY
+```
+
 ### Blobs contract
 
 You can interact with the existing blobs contract on the testnet via the address above. If you're
@@ -941,7 +952,7 @@ accepts "optional" arguments. All of the method parameters and return types can 
 - `addBlob(AddBlobParams memory params)`: Store a blob directly on the network. This is described in
   more detail below, and it involves a two-step approach with first staging data with the blob
   storage node, and then passing related values onchain.
-- `deleteBlob(address,string,string)`: Delete a blob from the network, passing the sponsor's
+- `deleteBlob(address,string,string,address)`: Delete a blob from the network, passing the sponsor's
   address, the blob hash, and the subscription ID (either `""` if none was originally provided, or
   the string that was chosen during `addBlob`).
 - `overwriteBlob(string,AddBlobParams memory)`: Overwrite a blob from the network, passing the old

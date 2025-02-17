@@ -174,8 +174,8 @@ echo "Output: $output"
 # Test deleteBlob
 echo
 echo "Testing deleteBlob..."
-output=$(cast send --rpc-url $ETH_RPC_URL $BLOBS "deleteBlob(address,string,string)" \
-    "$ZERO_ADDR" "$BLOB_HASH" "" \
+output=$(cast send --rpc-url $ETH_RPC_URL $BLOBS "deleteBlob(address,string,string,address)" \
+    "$ZERO_ADDR" "$BLOB_HASH" "" "$EVM_ADDRESS" \
     --private-key $PRIVATE_KEY)
 if [ "$output" = "0x" ]; then
     echo "deleteBlob failed"
@@ -229,13 +229,28 @@ echo "Output: $DECODED_BUCKETS"
 echo
 echo "Testing addObject()..."
 OBJECT_KEY="hello/test"
-PARAMS="(\"$SOURCE\",\"$OBJECT_KEY\",\"$BLOB_HASH\",\"\",$SIZE,0,[],false)"
-output=$(cast send --rpc-url $ETH_RPC_URL $BUCKETS "addObject(address,(string,string,string,string,uint64,uint64,(string,string)[],bool))" \
+PARAMS="(\"$SOURCE\",\"$OBJECT_KEY\",\"$BLOB_HASH\",\"\",$SIZE,0,[],false,$EVM_ADDRESS)"
+output=$(cast send --rpc-url $ETH_RPC_URL $BUCKETS "addObject(address,(string,string,string,string,uint64,uint64,(string,string)[],bool,address))" \
     "$BUCKET_ADDR" \
     "$PARAMS" \
     --private-key $PRIVATE_KEY)
 if [ "$output" = "0x" ]; then
     echo "addObject failed"
+    exit 1
+fi
+echo "Output: $output"
+
+# Test updateObjectMetadata
+echo
+echo "Testing updateObjectMetadata..."
+output=$(cast send --rpc-url $ETH_RPC_URL $BUCKETS "updateObjectMetadata(address,string,(string,string)[],address)" \
+    $BUCKET_ADDR \
+    "hello/world" \
+    '[("alias","foo")]' \
+    $EVM_ADDRESS \
+    --private-key $PRIVATE_KEY)
+if [ "$output" = "0x" ]; then
+    echo "updateObjectMetadata failed"
     exit 1
 fi
 echo "Output: $output"
@@ -276,7 +291,7 @@ echo "Query with prefix: $DECODED_QUERY_PREFIX"
 # Test deleteObject
 echo
 echo "Testing deleteObject..."
-output=$(cast send --rpc-url $ETH_RPC_URL $BUCKETS "deleteObject(address,string)" $BUCKET_ADDR "hello/world" --private-key $PRIVATE_KEY)
+output=$(cast send --rpc-url $ETH_RPC_URL $BUCKETS "deleteObject(address,string,address)" $BUCKET_ADDR "hello/world" $EVM_ADDRESS --private-key $PRIVATE_KEY)
 if [ "$output" = "0x" ]; then
     echo "deleteObject failed"
     exit 1

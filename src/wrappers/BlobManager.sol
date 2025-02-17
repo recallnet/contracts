@@ -62,8 +62,10 @@ contract BlobManager is IBlobManager {
     }
 
     /// @dev See {IBlobManager-deleteBlob}.
-    function deleteBlob(address subscriber, string memory blobHash, string memory subscriptionId) external {
-        LibBlob.deleteBlob(subscriber, blobHash, subscriptionId);
+    function deleteBlob(address subscriber, string memory blobHash, string memory subscriptionId, address from)
+        external
+    {
+        LibBlob.deleteBlob(subscriber, blobHash, subscriptionId, from);
         emit DeleteBlob(msg.sender, subscriber, blobHash, subscriptionId);
     }
 
