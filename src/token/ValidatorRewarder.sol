@@ -4,13 +4,11 @@ pragma solidity ^0.8.26;
 import {IValidatorRewarder} from "../interfaces/IValidatorRewarder.sol";
 
 import {Consensus, SubnetID} from "../types/CommonTypes.sol";
-import {SubnetIDHelper} from "../util/SubnetIDHelper.sol";
 import {Recall} from "./Recall.sol";
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 
 /// @title ValidatorRewarder
@@ -18,9 +16,6 @@ import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 /// @dev The rewarder is responsible for distributing the inflation to the validators.
 /// @dev The rewarder is called by the subnet actor when a validator claims rewards.
 contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgradeable {
-    using SubnetIDHelper for SubnetID;
-    using SafeERC20 for Recall;
-
     // ========== STATE VARIABLES ==========
 
     /// @notice Indicates whether the rewarder is active or not
