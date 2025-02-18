@@ -7,15 +7,6 @@ import {AddBlobParams, Blob, BlobStatus, BlobTuple, StorageStats, SubnetStats} f
 /// See Rust implementation for details:
 /// https://github.com/recallnet/ipc/blob/develop/fendermint/actors/blobs/src/actor.rs
 interface IBlobManager {
-    /// @dev Emitted when a blob is added.
-    event AddBlob(address indexed caller, address indexed sponsor, string blobHash, string subscriptionId);
-
-    /// @dev Emitted when a blob is deleted.
-    event DeleteBlob(address indexed caller, address indexed subscriber, string blobHash, string subscriptionId);
-
-    /// @dev Emitted when a blob is overwritten.
-    event OverwriteBlob(address indexed caller, string oldHash, string newHash, string subscriptionId);
-
     /// @dev Get a list of added blobs.
     /// @param size Maximum number of added blobs to return.
     /// @return blobs List of added blobs.

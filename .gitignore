@@ -17,6 +17,8 @@ docs/
 .env
 
 settings.json
-
 .DS_Store
 node_modules/
+target/
+.idea
+.vscode

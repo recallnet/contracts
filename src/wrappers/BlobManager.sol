@@ -58,7 +58,6 @@ contract BlobManager is IBlobManager {
     /// @dev See {IBlobManager-addBlob}.
     function addBlob(AddBlobParams memory params) external {
         LibBlob.addBlob(params);
-        emit AddBlob(msg.sender, params.sponsor, params.blobHash, params.subscriptionId);
     }
 
     /// @dev See {IBlobManager-deleteBlob}.
@@ -66,12 +65,10 @@ contract BlobManager is IBlobManager {
         external
     {
         LibBlob.deleteBlob(subscriber, blobHash, subscriptionId, from);
-        emit DeleteBlob(msg.sender, subscriber, blobHash, subscriptionId);
     }
 
     /// @dev See {IBlobManager-overwriteBlob}.
     function overwriteBlob(string memory oldHash, AddBlobParams memory params) external {
         LibBlob.overwriteBlob(oldHash, params);
-        emit OverwriteBlob(msg.sender, oldHash, params.blobHash, params.subscriptionId);
     }
 }
