@@ -12,11 +12,15 @@ interface IConfigFacade {
     /// @param blobCreditDebitInterval Epoch interval at which to debit all credit accounts.
     /// @param blobMinTtl The minimum epoch duration a blob can be stored.
     /// @param blobDefaultTtl The default epoch duration a blob is stored.
+    /// @param blobDeleteBatchSize The number of blobs to delete in a single batch.
+    /// @param accountDebitBatchSize The number of accounts to debit in a single batch.
     event ConfigSet(
         uint256 blobCapacity,
         uint256 tokenCreditRate,
         uint256 blobCreditDebitInterval,
         uint256 blobMinTtl,
-        uint256 blobDefaultTtl
+        uint256 blobDefaultTtl,
+        uint256 blobDeleteBatchSize,
+        uint256 accountDebitBatchSize
     );
 }
