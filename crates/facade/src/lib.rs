@@ -194,6 +194,8 @@ pub mod config {
         blob_credit_debit_interval: u64,
         blob_min_ttl: u64,
         blob_default_ttl: u64,
+        blob_delete_batch_size: u64,
+        account_debit_batch_size: u64,
     ) -> Result<IConfigFacadeEvents> {
         Ok(IConfigFacadeEvents::ConfigSet(ConfigSet {
             blobCapacity: U256::from(blob_capacity),
@@ -201,6 +203,8 @@ pub mod config {
             blobCreditDebitInterval: U256::from(blob_credit_debit_interval),
             blobMinTtl: U256::from(blob_min_ttl),
             blobDefaultTtl: U256::from(blob_default_ttl),
+            blobDeleteBatchSize: U256::from(blob_delete_batch_size),
+            accountDebitBatchSize: U256::from(account_debit_batch_size),
         }))
     }
 }
