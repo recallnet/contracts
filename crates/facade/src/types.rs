@@ -11,7 +11,7 @@ use fvm_shared::{
     bigint::{BigInt, BigUint, Sign as BigSign},
     ActorID,
 };
-use ipc_types::ActorError;
+use fil_actors_runtime::ActorError;
 
 const EAM_ACTOR_ID: ActorID = 10;
 
