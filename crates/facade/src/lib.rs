@@ -61,12 +61,29 @@ pub mod blobs {
     use crate::blobs_facade::iblobsfacade::IBlobsFacade::{
         BlobAdded, BlobDeleted, BlobFinalized, BlobPending, IBlobsFacadeEvents,
     };
+    use crate::blobs_facade::iblobsfacade::IBlobsFacade;
     use crate::types::H160;
     use alloy_primitives::U256;
     use anyhow::Result;
     use fvm_shared::address::Address;
+    use alloy_sol_types::SolCall;
 
-    pub fn blob_added(
+    pub struct getPendingBytesCount {}
+
+    impl getPendingBytesCount {
+        pub const SELECTOR: [u8; 4] = IBlobsFacade::getPendingBytesCountCall::SELECTOR;
+        pub fn abi_decode_input(input_data: Vec<u8>) {
+            let g = IBlobsFacade::getPendingBytesCountCall::abi_decode(&input_data, true);
+            // GARBAGE
+        }
+
+        pub fn abi_encode_result(value: u64) -> Vec<u8> {
+            let return_value = IBlobsFacade::getPendingBytesCountReturn { _0: value };
+            IBlobsFacade::getPendingBytesCountCall::abi_encode_returns(&return_value.into())
+        }
+    }
+
+    pub fn blob_adde
         subscriber: Address,
         hash: &[u8; 32],
         size: u64,

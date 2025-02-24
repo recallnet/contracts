@@ -29,4 +29,6 @@ interface IBlobsFacade {
     /// @param size Blob size.
     /// @param bytesReleased Network capacity bytes released.
     event BlobDeleted(address indexed subscriber, bytes32 hash, uint256 size, uint256 bytesReleased);
+
+    function getPendingBytesCount() external view returns (uint64);
 }

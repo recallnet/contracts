@@ -5,13 +5,38 @@ use std::fmt;
 
 use alloy_primitives::{Address, Sign, I256, U256};
 use anyhow::anyhow;
+use fvm_ipld_encoding::{strict_bytes, tuple::*};
 use fvm_shared::{
     address::{Address as FvmAddress, Payload},
     bigint::{BigInt, BigUint, Sign as BigSign},
     ActorID,
 };
+use ipc_types::ActorError;
 
 const EAM_ACTOR_ID: ActorID = 10;
+
+#[derive(Default, Serialize_tuple, Deserialize_tuple)]
+#[serde(transparent)]
+pub struct InvokeContractParams {
+    #[serde(with = "strict_bytes")]
+    pub input_data: Vec<u8>,
+}
+
+impl InvokeContractParams {
+    pub fn selector(&self) -> Result<[u8; 4], ActorError> {
+        self.input_data
+            .get(0..4)
+            .and_then(|s| s.try_into().ok())
+            .ok_or(ActorError::illegal_argument(format!("No selector extracted")))
+    }
+}
+
+#[derive(Serialize_tuple, Deserialize_tuple)]
+#[serde(transparent)]
+pub struct InvokeContractReturn {
+    #[serde(with = "strict_bytes")]
+    pub output_data: Vec<u8>,
+}
 
 /// Fixed-size uninterpreted hash type with 20 bytes (160 bits) size.
 pub struct H160([u8; 20]);
