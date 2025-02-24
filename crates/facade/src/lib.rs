@@ -83,7 +83,7 @@ pub mod blobs {
         }
     }
 
-    pub fn blob_adde
+    pub fn blob_added(
         subscriber: Address,
         hash: &[u8; 32],
         size: u64,
