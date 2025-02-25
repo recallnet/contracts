@@ -63,9 +63,11 @@ contract BridgeOps is Script {
         bytes memory params = abi.encodePacked(msg.sender);
         bytes memory addressBytes = abi.encodePacked(recallAddress);
 
+        vm.startBroadcast();
         itsContract.linkToken(
             itsSalt, network, addressBytes, ITokenManagerType.TokenManagerType.MINT_BURN_FROM, params, 0
         );
+        vm.stopBroadcast();
     }
 
     /// @notice Step 2 of the linkToken process
@@ -79,8 +81,10 @@ contract BridgeOps is Script {
         address tokenManager = itsContract.tokenManagerAddress(recallItsTokenId);
         console.log("Token manager: ", tokenManager);
 
+        vm.startBroadcast();
         // Grant minter role to token manager
         recall.grantRole(recall.MINTER_ROLE(), tokenManager);
+        vm.stopBroadcast();
     }
 
     function isMinter(address proxyAddress, address addressToCheck) public view {
