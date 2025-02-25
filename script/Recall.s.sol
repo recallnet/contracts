@@ -42,8 +42,8 @@ contract DeployScript is Script {
         ) {
             console.log("Deploying token manager");
             IInterchainTokenService itsContract = IInterchainTokenService(INTERCHAIN_TOKEN_SERVICE);
-            bytes memory params = abi.encode(abi.encodePacked(recall.deployer()), address(recall));
-            itsContract.deployTokenManager(itsSalt, "", ITokenManagerType.TokenManagerType.MINT_BURN_FROM, params, 0);
+            bytes memory linkParams = abi.encodePacked(recall.deployer());
+            itsContract.linkToken(itsSalt, network, address(recall), ITokenManagerType.TokenManagerType.MINT_BURN_FROM, linkParams, 0);
             bytes32 itsTokenId = recall.interchainTokenId();
 
             console.log("Recall Interchain Token ID: ", Strings.toHexString(uint256(itsTokenId), 32));
