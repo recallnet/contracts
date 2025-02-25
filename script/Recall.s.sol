@@ -15,7 +15,7 @@ contract DeployScript is Script {
         return proxyAddress;
     }
 
-    function run(string memory network) public returns (Recall) {
+    function run() public returns (Recall) {
         vm.startBroadcast();
 
         bytes32 itsSalt = keccak256("RECALL_SALT");
