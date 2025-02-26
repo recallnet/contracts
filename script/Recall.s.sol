@@ -3,10 +3,6 @@
 pragma solidity ^0.8.26;
 
 import {Recall} from "../src/token/Recall.sol";
-import {IInterchainTokenService} from
-    "@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol";
-import {ITokenManagerType} from "@axelar-network/interchain-token-service/contracts/interfaces/ITokenManagerType.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {Options, Upgrades} from "@openzeppelin/foundry-upgrades/Upgrades.sol";
 import {Script, console} from "forge-std/Script.sol";
 
@@ -19,7 +15,7 @@ contract DeployScript is Script {
         return proxyAddress;
     }
 
-    function run(string memory network) public returns (Recall) {
+    function run() public returns (Recall) {
         vm.startBroadcast();
 
         bytes32 itsSalt = keccak256("RECALL_SALT");
@@ -35,24 +31,6 @@ contract DeployScript is Script {
 
         console.log("Deployer: ", recall.deployer());
 
-        if (
-            Strings.equal(network, "filecoin") || Strings.equal(network, "ethereum") || Strings.equal(network, "base")
-                || Strings.equal(network, "filecoin-2") // Calibration testnet
-                || Strings.equal(network, "base-sepolia") // Base sepolia testnet
-        ) {
-            console.log("Deploying token manager");
-            IInterchainTokenService itsContract = IInterchainTokenService(INTERCHAIN_TOKEN_SERVICE);
-            bytes memory params = abi.encode(abi.encodePacked(recall.deployer()), address(recall));
-            itsContract.deployTokenManager(itsSalt, "", ITokenManagerType.TokenManagerType.MINT_BURN_FROM, params, 0);
-            bytes32 itsTokenId = recall.interchainTokenId();
-
-            console.log("Recall Interchain Token ID: ", Strings.toHexString(uint256(itsTokenId), 32));
-            address tokenManager = itsContract.tokenManagerAddress(itsTokenId);
-            console.log("Token manager: ", tokenManager);
-
-            // Grant minter role to token manager
-            recall.grantRole(recall.MINTER_ROLE(), tokenManager);
-        }
         vm.stopBroadcast();
 
         return recall;

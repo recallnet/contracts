@@ -4,6 +4,7 @@ pragma solidity ^0.8.26;
 import {Recall} from "../src/token/Recall.sol";
 import {IInterchainTokenService} from
     "@axelar-network/interchain-token-service/contracts/interfaces/IInterchainTokenService.sol";
+import {ITokenManagerType} from "@axelar-network/interchain-token-service/contracts/interfaces/ITokenManagerType.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {Script, console} from "forge-std/Script.sol";
 
@@ -49,6 +50,42 @@ you want to transfer 1 token, use 1000000000000000000.*/
 
 contract BridgeOps is Script {
     using Strings for string;
+
+    /// @notice Step 1 of the linkToken process
+    /// @dev This function should be called on the source chain (e.g. Base) to link a token
+    /// already deployed on a destination chain (e.g. Ethereum)
+    /// @param recallAddress The address of the recall contract on the destination chain
+    /// @param network The network to link the token to
+    function linkTokenStep1(address recallAddress, string memory network) public {
+        bytes32 itsSalt = keccak256("RECALL_SALT");
+        IInterchainTokenService itsContract = IInterchainTokenService(INTERCHAIN_TOKEN_SERVICE);
+
+        bytes memory params = abi.encodePacked(msg.sender);
+        bytes memory addressBytes = abi.encodePacked(recallAddress);
+
+        vm.startBroadcast();
+        itsContract.linkToken(
+            itsSalt, network, addressBytes, ITokenManagerType.TokenManagerType.MINT_BURN_FROM, params, 0
+        );
+        vm.stopBroadcast();
+    }
+
+    /// @notice Step 2 of the linkToken process
+    /// @dev This function should be called on the destination chain (e.g. Ethereum) after the
+    /// x-chain link has been finalized from step 1
+    /// @param recallAddress The address of the recall contract on the destination chain
+    /// @param recallItsTokenId The interchain token ID of the recall contract on the source chain
+    function linkTokenStep2(address recallAddress, bytes32 recallItsTokenId) public {
+        Recall recall = Recall(recallAddress);
+        IInterchainTokenService itsContract = IInterchainTokenService(INTERCHAIN_TOKEN_SERVICE);
+        address tokenManager = itsContract.tokenManagerAddress(recallItsTokenId);
+        console.log("Token manager: ", tokenManager);
+
+        vm.startBroadcast();
+        // Grant minter role to token manager
+        recall.grantRole(recall.MINTER_ROLE(), tokenManager);
+        vm.stopBroadcast();
+    }
 
     function isMinter(address proxyAddress, address addressToCheck) public view {
         console.log("Proxy address: ", proxyAddress);

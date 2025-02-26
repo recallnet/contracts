@@ -31,7 +31,7 @@ abstract contract ValidatorRewarderTestBase is Test {
 
         // Deploy Recall token
         RecallDeployScript recallDeployer = new RecallDeployScript();
-        token = recallDeployer.run("local");
+        token = recallDeployer.run();
 
         // Create subnet for initialization
         SubnetID memory subnet = createSubnet();

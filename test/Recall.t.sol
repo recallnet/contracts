@@ -19,7 +19,7 @@ contract RecallTest is Test {
 
     function setUp() public {
         DeployScript deployer = new DeployScript();
-        token = deployer.run("local");
+        token = deployer.run();
 
         user = address(0x123);
     }
