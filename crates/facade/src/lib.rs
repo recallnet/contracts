@@ -70,11 +70,6 @@ pub mod blobs {
     impl getPendingBytesCount {
         pub const SELECTOR: [u8; 4] = getPendingBytesCountCall::SELECTOR;
 
-        pub fn abi_decode_input(input_data: Vec<u8>) {
-            // let g = IBlobsFacade::getPendingBytesCountCall::abi_decode(&input_data, true);
-            // GARBAGE
-        }
-
         pub fn abi_encode_result(value: u64) -> Vec<u8> {
             getPendingBytesCountCall::abi_encode_returns(&(value,))
         }
