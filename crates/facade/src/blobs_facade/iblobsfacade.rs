@@ -10,6 +10,7 @@ interface IBlobsFacade {
 
     function getPendingBlobsCount() external view returns (uint64);
     function getPendingBytesCount() external view returns (uint64);
+    function getStorageUsage(address addr) external view returns (uint256);
 }
 ```
 
@@ -38,6 +39,25 @@ interface IBlobsFacade {
         "name": "",
         "type": "uint64",
         "internalType": "uint64"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getStorageUsage",
+    "inputs": [
+      {
+        "name": "addr",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"
@@ -1067,12 +1087,144 @@ function getPendingBytesCount() external view returns (uint64);
             }
         }
     };
+    /**Function with signature `getStorageUsage(address)` and selector `0xbf1a5af7`.
+```solidity
+function getStorageUsage(address addr) external view returns (uint256);
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct getStorageUsageCall {
+        #[allow(missing_docs)]
+        pub addr: ::alloy_sol_types::private::Address,
+    }
+    ///Container type for the return parameters of the [`getStorageUsage(address)`](getStorageUsageCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct getStorageUsageReturn {
+        #[allow(missing_docs)]
+        pub _0: ::alloy_sol_types::private::primitives::aliases::U256,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use ::alloy_sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = (::alloy_sol_types::sol_data::Address,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (::alloy_sol_types::private::Address,);
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<getStorageUsageCall> for UnderlyingRustTuple<'_> {
+                fn from(value: getStorageUsageCall) -> Self {
+                    (value.addr,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for getStorageUsageCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self { addr: tuple.0 }
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = (::alloy_sol_types::sol_data::Uint<256>,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (
+                ::alloy_sol_types::private::primitives::aliases::U256,
+            );
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<getStorageUsageReturn>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: getStorageUsageReturn) -> Self {
+                    (value._0,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for getStorageUsageReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self { _0: tuple.0 }
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for getStorageUsageCall {
+            type Parameters<'a> = (::alloy_sol_types::sol_data::Address,);
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = getStorageUsageReturn;
+            type ReturnTuple<'a> = (::alloy_sol_types::sol_data::Uint<256>,);
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "getStorageUsage(address)";
+            const SELECTOR: [u8; 4] = [191u8, 26u8, 90u8, 247u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                (
+                    <::alloy_sol_types::sol_data::Address as alloy_sol_types::SolType>::tokenize(
+                        &self.addr,
+                    ),
+                )
+            }
+            #[inline]
+            fn abi_decode_returns(
+                data: &[u8],
+                validate: bool,
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data, validate)
+                    .map(Into::into)
+            }
+        }
+    };
     ///Container for all the [`IBlobsFacade`](self) function calls.
     pub enum IBlobsFacadeCalls {
         #[allow(missing_docs)]
         getPendingBlobsCount(getPendingBlobsCountCall),
         #[allow(missing_docs)]
         getPendingBytesCount(getPendingBytesCountCall),
+        #[allow(missing_docs)]
+        getStorageUsage(getStorageUsageCall),
     }
     #[automatically_derived]
     impl IBlobsFacadeCalls {
@@ -1084,6 +1236,7 @@ function getPendingBytesCount() external view returns (uint64);
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
             [117u8, 37u8, 249u8, 109u8],
+            [191u8, 26u8, 90u8, 247u8],
             [231u8, 146u8, 62u8, 187u8],
         ];
     }
@@ -1091,7 +1244,7 @@ function getPendingBytesCount() external view returns (uint64);
     impl alloy_sol_types::SolInterface for IBlobsFacadeCalls {
         const NAME: &'static str = "IBlobsFacadeCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 2usize;
+        const COUNT: usize = 3usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
@@ -1100,6 +1253,9 @@ function getPendingBytesCount() external view returns (uint64);
                 }
                 Self::getPendingBytesCount(_) => {
                     <getPendingBytesCountCall as alloy_sol_types::SolCall>::SELECTOR
+                }
+                Self::getStorageUsage(_) => {
+                    <getStorageUsageCall as alloy_sol_types::SolCall>::SELECTOR
                 }
             }
         }
@@ -1134,6 +1290,19 @@ function getPendingBytesCount() external view returns (uint64);
                             .map(IBlobsFacadeCalls::getPendingBytesCount)
                     }
                     getPendingBytesCount
+                },
+                {
+                    fn getStorageUsage(
+                        data: &[u8],
+                        validate: bool,
+                    ) -> alloy_sol_types::Result<IBlobsFacadeCalls> {
+                        <getStorageUsageCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                                validate,
+                            )
+                            .map(IBlobsFacadeCalls::getStorageUsage)
+                    }
+                    getStorageUsage
                 },
                 {
                     fn getPendingBlobsCount(
@@ -1172,6 +1341,11 @@ function getPendingBytesCount() external view returns (uint64);
                         inner,
                     )
                 }
+                Self::getStorageUsage(inner) => {
+                    <getStorageUsageCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
             }
         }
         #[inline]
@@ -1185,6 +1359,12 @@ function getPendingBytesCount() external view returns (uint64);
                 }
                 Self::getPendingBytesCount(inner) => {
                     <getPendingBytesCountCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
+                Self::getStorageUsage(inner) => {
+                    <getStorageUsageCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )

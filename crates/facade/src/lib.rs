@@ -58,12 +58,13 @@ pub mod blob_reader {
 mod blobs_facade;
 #[cfg(feature = "blobs")]
 pub mod blobs {
-    use crate::blobs_facade::iblobsfacade::IBlobsFacade::{getPendingBlobsCountCall, getPendingBytesCountCall, BlobAdded, BlobDeleted, BlobFinalized, BlobPending, IBlobsFacadeEvents};
+    use crate::blobs_facade::iblobsfacade::IBlobsFacade::{getPendingBlobsCountCall, getPendingBytesCountCall, getStorageUsageCall, BlobAdded, BlobDeleted, BlobFinalized, BlobPending, IBlobsFacadeEvents};
     use crate::types::H160;
     use alloy_primitives::U256;
     use anyhow::Result;
     use fvm_shared::address::Address;
     use alloy_sol_types::SolCall;
+    use fil_actors_runtime::{actor_error, ActorError};
 
     pub struct getPendingBytesCount {}
 
@@ -82,6 +83,22 @@ pub mod blobs {
 
         pub fn abi_encode_result(value: u64) -> Vec<u8> {
             getPendingBlobsCountCall::abi_encode_returns(&(value,))
+        }
+    }
+
+    pub struct getStorageUsage {}
+
+    impl getStorageUsage {
+        pub const SELECTOR: [u8; 4] = getStorageUsageCall::SELECTOR;
+
+        pub fn abi_decode_input(bytes: &[u8]) -> Result<getStorageUsageCall, ActorError> {
+            getStorageUsageCall::abi_decode(bytes, true).map_err(|err| {
+                actor_error!(illegal_argument, format!("Invalid parameters {}", err))
+            })
+        }
+
+        pub fn abi_encode_result(value: u64) -> Vec<u8> {
+            getStorageUsage::abi_encode_result(value)
         }
     }
 

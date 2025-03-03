@@ -37,4 +37,9 @@ interface IBlobsFacade {
     /// @dev Get the total count of pending blobs.
     /// @return Total number of pending blobs.
     function getPendingBlobsCount() external view returns (uint64);
+
+    /// @dev Get the storage usage for an account.
+    /// @param addr The address of the account.
+    /// @return usage The storage usage showing total size of all blobs managed by the account.
+    function getStorageUsage(address addr) external view returns (uint256);
 }
