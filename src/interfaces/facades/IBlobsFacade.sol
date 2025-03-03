@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
+import "../../types/BlobTypes.sol";
+
 interface IBlobsFacade {
     /// @dev Emitted when a blob is added.
     /// @param subscriber Blob subscriber address.
@@ -42,4 +44,8 @@ interface IBlobsFacade {
     /// @param addr The address of the account.
     /// @return usage The storage usage showing total size of all blobs managed by the account.
     function getStorageUsage(address addr) external view returns (uint256);
+
+    /// @dev Get the storage stats for the subnet.
+    /// @return stats The storage stats including capacity and blob counts.
+    function getStorageStats() external view returns (StorageStats memory stats);
 }
