@@ -58,7 +58,7 @@ pub mod blob_reader {
 mod blobs_facade;
 #[cfg(feature = "blobs")]
 pub mod blobs {
-    use crate::blobs_facade::iblobsfacade::IBlobsFacade::{getPendingBytesCountCall, BlobAdded, BlobDeleted, BlobFinalized, BlobPending, IBlobsFacadeEvents};
+    use crate::blobs_facade::iblobsfacade::IBlobsFacade::{getPendingBlobsCountCall, getPendingBytesCountCall, BlobAdded, BlobDeleted, BlobFinalized, BlobPending, IBlobsFacadeEvents};
     use crate::types::H160;
     use alloy_primitives::U256;
     use anyhow::Result;
@@ -72,6 +72,16 @@ pub mod blobs {
 
         pub fn abi_encode_result(value: u64) -> Vec<u8> {
             getPendingBytesCountCall::abi_encode_returns(&(value,))
+        }
+    }
+
+    pub struct getPendingBlobsCount {}
+
+    impl getPendingBlobsCount {
+        pub const SELECTOR: [u8; 4] = getPendingBlobsCountCall::SELECTOR;
+
+        pub fn abi_encode_result(value: u64) -> Vec<u8> {
+            getPendingBlobsCountCall::abi_encode_returns(&(value,))
         }
     }
 

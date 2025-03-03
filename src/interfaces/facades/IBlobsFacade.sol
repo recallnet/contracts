@@ -33,4 +33,8 @@ interface IBlobsFacade {
     /// @dev Get the total size in bytes of pending blobs.
     /// @return Total size of pending blobs in bytes.
     function getPendingBytesCount() external view returns (uint64);
+
+    /// @dev Get the total count of pending blobs.
+    /// @return Total number of pending blobs.
+    function getPendingBlobsCount() external view returns (uint64);
 }
