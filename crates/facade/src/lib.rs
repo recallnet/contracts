@@ -68,9 +68,9 @@ pub mod blobs {
 
     pub use crate::blobs_facade::iblobsfacade::IBlobsFacade::{StorageStats};
 
-    pub struct getPendingBytesCount {}
+    pub mod get_pending_bytes_count {
+        use super::*;
 
-    impl getPendingBytesCount {
         pub const SELECTOR: [u8; 4] = getPendingBytesCountCall::SELECTOR;
 
         pub fn abi_encode_result(value: u64) -> Vec<u8> {
@@ -78,37 +78,31 @@ pub mod blobs {
         }
     }
 
-    pub struct getPendingBlobsCount {}
-
-    impl getPendingBlobsCount {
+    pub mod get_pending_blobs_count {
+        use super::*;
         pub const SELECTOR: [u8; 4] = getPendingBlobsCountCall::SELECTOR;
-
         pub fn abi_encode_result(value: u64) -> Vec<u8> {
             getPendingBlobsCountCall::abi_encode_returns(&(value,))
         }
     }
 
-    pub struct getStorageUsage {}
-
-    impl getStorageUsage {
+    pub mod get_storage_usage {
+        use super::*;
         pub const SELECTOR: [u8; 4] = getStorageUsageCall::SELECTOR;
-
         pub fn abi_decode_input(bytes: &[u8]) -> Result<getStorageUsageCall, ActorError> {
             getStorageUsageCall::abi_decode(bytes, true).map_err(|err| {
                 actor_error!(illegal_argument, format!("Invalid parameters {}", err))
             })
         }
-
         pub fn abi_encode_result(value: u64) -> Vec<u8> {
-            getStorageUsage::abi_encode_result(value)
+            let u256 = U256::from(value);
+            getStorageUsageCall::abi_encode_returns(&(u256,))
         }
     }
 
-    pub struct getStorageStats {}
-
-    impl getStorageStats {
+    pub mod get_storage_stats {
+        use super::*;
         pub const SELECTOR: [u8; 4] = getStorageStatsCall::SELECTOR;
-
         pub fn abi_encode_result(value: StorageStats) -> Vec<u8> {
             getStorageStatsCall::abi_encode_returns(&(value,))
         }
