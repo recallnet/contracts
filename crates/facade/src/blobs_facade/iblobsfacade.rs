@@ -13,6 +13,21 @@ interface IBlobsFacade {
         uint64 numAdded;
         uint64 bytesAdded;
     }
+    struct SubnetStats {
+        uint256 balance;
+        uint64 capacityFree;
+        uint64 capacityUsed;
+        uint256 creditSold;
+        uint256 creditCommitted;
+        uint256 creditDebited;
+        uint256 tokenCreditRate;
+        uint64 numAccounts;
+        uint64 numBlobs;
+        uint64 numAdded;
+        uint64 bytesAdded;
+        uint64 numResolving;
+        uint64 bytesResolving;
+    }
 
     event BlobAdded(address indexed subscriber, bytes32 hash, uint256 size, uint256 expiry, uint256 bytesUsed);
     event BlobDeleted(address indexed subscriber, bytes32 hash, uint256 size, uint256 bytesReleased);
@@ -23,6 +38,7 @@ interface IBlobsFacade {
     function getPendingBytesCount() external view returns (uint64);
     function getStorageStats() external view returns (StorageStats memory stats);
     function getStorageUsage(address addr) external view returns (uint256);
+    function getSubnetStats() external view returns (SubnetStats memory stats);
 }
 ```
 
@@ -125,6 +141,86 @@ interface IBlobsFacade {
         "name": "",
         "type": "uint256",
         "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getSubnetStats",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "stats",
+        "type": "tuple",
+        "internalType": "struct SubnetStats",
+        "components": [
+          {
+            "name": "balance",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "capacityFree",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "capacityUsed",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "creditSold",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "creditCommitted",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "creditDebited",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "tokenCreditRate",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "numAccounts",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "numBlobs",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "numAdded",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "bytesAdded",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "numResolving",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "bytesResolving",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ]
       }
     ],
     "stateMutability": "view"
@@ -627,6 +723,505 @@ struct StorageStats { uint64 capacityFree; uint64 capacityUsed; uint64 numBlobs;
                     64,
                 > as alloy_sol_types::EventTopic>::encode_topic_preimage(
                     &rust.bytesAdded,
+                    out,
+                );
+            }
+            #[inline]
+            fn encode_topic(
+                rust: &Self::RustType,
+            ) -> alloy_sol_types::abi::token::WordToken {
+                let mut out = alloy_sol_types::private::Vec::new();
+                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    rust,
+                    &mut out,
+                );
+                alloy_sol_types::abi::token::WordToken(
+                    alloy_sol_types::private::keccak256(out),
+                )
+            }
+        }
+    };
+    /**```solidity
+struct SubnetStats { uint256 balance; uint64 capacityFree; uint64 capacityUsed; uint256 creditSold; uint256 creditCommitted; uint256 creditDebited; uint256 tokenCreditRate; uint64 numAccounts; uint64 numBlobs; uint64 numAdded; uint64 bytesAdded; uint64 numResolving; uint64 bytesResolving; }
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct SubnetStats {
+        #[allow(missing_docs)]
+        pub balance: ::alloy_sol_types::private::primitives::aliases::U256,
+        #[allow(missing_docs)]
+        pub capacityFree: u64,
+        #[allow(missing_docs)]
+        pub capacityUsed: u64,
+        #[allow(missing_docs)]
+        pub creditSold: ::alloy_sol_types::private::primitives::aliases::U256,
+        #[allow(missing_docs)]
+        pub creditCommitted: ::alloy_sol_types::private::primitives::aliases::U256,
+        #[allow(missing_docs)]
+        pub creditDebited: ::alloy_sol_types::private::primitives::aliases::U256,
+        #[allow(missing_docs)]
+        pub tokenCreditRate: ::alloy_sol_types::private::primitives::aliases::U256,
+        #[allow(missing_docs)]
+        pub numAccounts: u64,
+        #[allow(missing_docs)]
+        pub numBlobs: u64,
+        #[allow(missing_docs)]
+        pub numAdded: u64,
+        #[allow(missing_docs)]
+        pub bytesAdded: u64,
+        #[allow(missing_docs)]
+        pub numResolving: u64,
+        #[allow(missing_docs)]
+        pub bytesResolving: u64,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use ::alloy_sol_types as alloy_sol_types;
+        #[doc(hidden)]
+        type UnderlyingSolTuple<'a> = (
+            ::alloy_sol_types::sol_data::Uint<256>,
+            ::alloy_sol_types::sol_data::Uint<64>,
+            ::alloy_sol_types::sol_data::Uint<64>,
+            ::alloy_sol_types::sol_data::Uint<256>,
+            ::alloy_sol_types::sol_data::Uint<256>,
+            ::alloy_sol_types::sol_data::Uint<256>,
+            ::alloy_sol_types::sol_data::Uint<256>,
+            ::alloy_sol_types::sol_data::Uint<64>,
+            ::alloy_sol_types::sol_data::Uint<64>,
+            ::alloy_sol_types::sol_data::Uint<64>,
+            ::alloy_sol_types::sol_data::Uint<64>,
+            ::alloy_sol_types::sol_data::Uint<64>,
+            ::alloy_sol_types::sol_data::Uint<64>,
+        );
+        #[doc(hidden)]
+        type UnderlyingRustTuple<'a> = (
+            ::alloy_sol_types::private::primitives::aliases::U256,
+            u64,
+            u64,
+            ::alloy_sol_types::private::primitives::aliases::U256,
+            ::alloy_sol_types::private::primitives::aliases::U256,
+            ::alloy_sol_types::private::primitives::aliases::U256,
+            ::alloy_sol_types::private::primitives::aliases::U256,
+            u64,
+            u64,
+            u64,
+            u64,
+            u64,
+            u64,
+        );
+        #[cfg(test)]
+        #[allow(dead_code, unreachable_patterns)]
+        fn _type_assertion(
+            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+        ) {
+            match _t {
+                alloy_sol_types::private::AssertTypeEq::<
+                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                >(_) => {}
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<SubnetStats> for UnderlyingRustTuple<'_> {
+            fn from(value: SubnetStats) -> Self {
+                (
+                    value.balance,
+                    value.capacityFree,
+                    value.capacityUsed,
+                    value.creditSold,
+                    value.creditCommitted,
+                    value.creditDebited,
+                    value.tokenCreditRate,
+                    value.numAccounts,
+                    value.numBlobs,
+                    value.numAdded,
+                    value.bytesAdded,
+                    value.numResolving,
+                    value.bytesResolving,
+                )
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<UnderlyingRustTuple<'_>> for SubnetStats {
+            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                Self {
+                    balance: tuple.0,
+                    capacityFree: tuple.1,
+                    capacityUsed: tuple.2,
+                    creditSold: tuple.3,
+                    creditCommitted: tuple.4,
+                    creditDebited: tuple.5,
+                    tokenCreditRate: tuple.6,
+                    numAccounts: tuple.7,
+                    numBlobs: tuple.8,
+                    numAdded: tuple.9,
+                    bytesAdded: tuple.10,
+                    numResolving: tuple.11,
+                    bytesResolving: tuple.12,
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolValue for SubnetStats {
+            type SolType = Self;
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::private::SolTypeValue<Self> for SubnetStats {
+            #[inline]
+            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
+                (
+                    <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::tokenize(&self.balance),
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::tokenize(&self.capacityFree),
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::tokenize(&self.capacityUsed),
+                    <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::tokenize(&self.creditSold),
+                    <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::tokenize(&self.creditCommitted),
+                    <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::tokenize(&self.creditDebited),
+                    <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::tokenize(&self.tokenCreditRate),
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::tokenize(&self.numAccounts),
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::tokenize(&self.numBlobs),
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::tokenize(&self.numAdded),
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::tokenize(&self.bytesAdded),
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::tokenize(&self.numResolving),
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::tokenize(&self.bytesResolving),
+                )
+            }
+            #[inline]
+            fn stv_abi_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
+            }
+            #[inline]
+            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
+                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
+            }
+            #[inline]
+            fn stv_abi_encode_packed_to(
+                &self,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
+            }
+            #[inline]
+            fn stv_abi_packed_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolType for SubnetStats {
+            type RustType = Self;
+            type Token<'a> = <UnderlyingSolTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
+            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::ENCODED_SIZE;
+            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
+            #[inline]
+            fn valid_token(token: &Self::Token<'_>) -> bool {
+                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
+            }
+            #[inline]
+            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
+                let tuple = <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::detokenize(token);
+                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolStruct for SubnetStats {
+            const NAME: &'static str = "SubnetStats";
+            #[inline]
+            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
+                alloy_sol_types::private::Cow::Borrowed(
+                    "SubnetStats(uint256 balance,uint64 capacityFree,uint64 capacityUsed,uint256 creditSold,uint256 creditCommitted,uint256 creditDebited,uint256 tokenCreditRate,uint64 numAccounts,uint64 numBlobs,uint64 numAdded,uint64 bytesAdded,uint64 numResolving,uint64 bytesResolving)",
+                )
+            }
+            #[inline]
+            fn eip712_components() -> alloy_sol_types::private::Vec<
+                alloy_sol_types::private::Cow<'static, str>,
+            > {
+                alloy_sol_types::private::Vec::new()
+            }
+            #[inline]
+            fn eip712_encode_type() -> alloy_sol_types::private::Cow<'static, str> {
+                <Self as alloy_sol_types::SolStruct>::eip712_root_type()
+            }
+            #[inline]
+            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
+                [
+                    <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.balance)
+                        .0,
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.capacityFree)
+                        .0,
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.capacityUsed)
+                        .0,
+                    <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.creditSold)
+                        .0,
+                    <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.creditCommitted,
+                        )
+                        .0,
+                    <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.creditDebited)
+                        .0,
+                    <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.tokenCreditRate,
+                        )
+                        .0,
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.numAccounts)
+                        .0,
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.numBlobs)
+                        .0,
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.numAdded)
+                        .0,
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.bytesAdded)
+                        .0,
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.numResolving)
+                        .0,
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.bytesResolving,
+                        )
+                        .0,
+                ]
+                    .concat()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::EventTopic for SubnetStats {
+            #[inline]
+            fn topic_preimage_length(rust: &Self::RustType) -> usize {
+                0usize
+                    + <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.balance,
+                    )
+                    + <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.capacityFree,
+                    )
+                    + <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.capacityUsed,
+                    )
+                    + <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.creditSold,
+                    )
+                    + <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.creditCommitted,
+                    )
+                    + <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.creditDebited,
+                    )
+                    + <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.tokenCreditRate,
+                    )
+                    + <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.numAccounts,
+                    )
+                    + <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.numBlobs,
+                    )
+                    + <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.numAdded,
+                    )
+                    + <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.bytesAdded,
+                    )
+                    + <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.numResolving,
+                    )
+                    + <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.bytesResolving,
+                    )
+            }
+            #[inline]
+            fn encode_topic_preimage(
+                rust: &Self::RustType,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                out.reserve(
+                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    256,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.balance,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    64,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.capacityFree,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    64,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.capacityUsed,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    256,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.creditSold,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    256,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.creditCommitted,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    256,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.creditDebited,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    256,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.tokenCreditRate,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    64,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.numAccounts,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    64,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.numBlobs,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    64,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.numAdded,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    64,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.bytesAdded,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    64,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.numResolving,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    64,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.bytesResolving,
                     out,
                 );
             }
@@ -1773,6 +2368,129 @@ function getStorageUsage(address addr) external view returns (uint256);
             }
         }
     };
+    /**Function with signature `getSubnetStats()` and selector `0x67f6c710`.
+```solidity
+function getSubnetStats() external view returns (SubnetStats memory stats);
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct getSubnetStatsCall {}
+    ///Container type for the return parameters of the [`getSubnetStats()`](getSubnetStatsCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct getSubnetStatsReturn {
+        #[allow(missing_docs)]
+        pub stats: <SubnetStats as ::alloy_sol_types::SolType>::RustType,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use ::alloy_sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<getSubnetStatsCall> for UnderlyingRustTuple<'_> {
+                fn from(value: getSubnetStatsCall) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for getSubnetStatsCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {}
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = (SubnetStats,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (
+                <SubnetStats as ::alloy_sol_types::SolType>::RustType,
+            );
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<getSubnetStatsReturn>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: getSubnetStatsReturn) -> Self {
+                    (value.stats,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for getSubnetStatsReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self { stats: tuple.0 }
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for getSubnetStatsCall {
+            type Parameters<'a> = ();
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = getSubnetStatsReturn;
+            type ReturnTuple<'a> = (SubnetStats,);
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "getSubnetStats()";
+            const SELECTOR: [u8; 4] = [103u8, 246u8, 199u8, 16u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                ()
+            }
+            #[inline]
+            fn abi_decode_returns(
+                data: &[u8],
+                validate: bool,
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data, validate)
+                    .map(Into::into)
+            }
+        }
+    };
     ///Container for all the [`IBlobsFacade`](self) function calls.
     pub enum IBlobsFacadeCalls {
         #[allow(missing_docs)]
@@ -1783,6 +2501,8 @@ function getStorageUsage(address addr) external view returns (uint256);
         getStorageStats(getStorageStatsCall),
         #[allow(missing_docs)]
         getStorageUsage(getStorageUsageCall),
+        #[allow(missing_docs)]
+        getSubnetStats(getSubnetStatsCall),
     }
     #[automatically_derived]
     impl IBlobsFacadeCalls {
@@ -1794,6 +2514,7 @@ function getStorageUsage(address addr) external view returns (uint256);
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
             [83u8, 123u8, 99u8, 58u8],
+            [103u8, 246u8, 199u8, 16u8],
             [117u8, 37u8, 249u8, 109u8],
             [191u8, 26u8, 90u8, 247u8],
             [231u8, 146u8, 62u8, 187u8],
@@ -1803,7 +2524,7 @@ function getStorageUsage(address addr) external view returns (uint256);
     impl alloy_sol_types::SolInterface for IBlobsFacadeCalls {
         const NAME: &'static str = "IBlobsFacadeCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 4usize;
+        const COUNT: usize = 5usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
@@ -1818,6 +2539,9 @@ function getStorageUsage(address addr) external view returns (uint256);
                 }
                 Self::getStorageUsage(_) => {
                     <getStorageUsageCall as alloy_sol_types::SolCall>::SELECTOR
+                }
+                Self::getSubnetStats(_) => {
+                    <getSubnetStatsCall as alloy_sol_types::SolCall>::SELECTOR
                 }
             }
         }
@@ -1852,6 +2576,19 @@ function getStorageUsage(address addr) external view returns (uint256);
                             .map(IBlobsFacadeCalls::getStorageStats)
                     }
                     getStorageStats
+                },
+                {
+                    fn getSubnetStats(
+                        data: &[u8],
+                        validate: bool,
+                    ) -> alloy_sol_types::Result<IBlobsFacadeCalls> {
+                        <getSubnetStatsCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                                validate,
+                            )
+                            .map(IBlobsFacadeCalls::getSubnetStats)
+                    }
+                    getSubnetStats
                 },
                 {
                     fn getPendingBytesCount(
@@ -1926,6 +2663,11 @@ function getStorageUsage(address addr) external view returns (uint256);
                         inner,
                     )
                 }
+                Self::getSubnetStats(inner) => {
+                    <getSubnetStatsCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
             }
         }
         #[inline]
@@ -1951,6 +2693,12 @@ function getStorageUsage(address addr) external view returns (uint256);
                 }
                 Self::getStorageUsage(inner) => {
                     <getStorageUsageCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
+                Self::getSubnetStats(inner) => {
+                    <getSubnetStatsCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )

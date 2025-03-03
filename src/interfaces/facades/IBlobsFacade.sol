@@ -48,4 +48,8 @@ interface IBlobsFacade {
     /// @dev Get the storage stats for the subnet.
     /// @return stats The storage stats including capacity and blob counts.
     function getStorageStats() external view returns (StorageStats memory stats);
+
+    /// @dev Get the subnet stats.
+    /// @return stats The subnet stats including balance, capacity, credit metrics and counts.
+    function getSubnetStats() external view returns (SubnetStats memory stats);
 }

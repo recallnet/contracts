@@ -66,8 +66,6 @@ pub mod blobs {
     use alloy_sol_types::SolCall;
     use fil_actors_runtime::{actor_error, ActorError};
 
-    pub use crate::blobs_facade::iblobsfacade::IBlobsFacade::{StorageStats};
-
     pub mod get_pending_bytes_count {
         use super::*;
 
@@ -102,9 +100,54 @@ pub mod blobs {
 
     pub mod get_storage_stats {
         use super::*;
+        pub use crate::blobs_facade::iblobsfacade::IBlobsFacade::StorageStats;
+
         pub const SELECTOR: [u8; 4] = getStorageStatsCall::SELECTOR;
         pub fn abi_encode_result(value: StorageStats) -> Vec<u8> {
             getStorageStatsCall::abi_encode_returns(&(value,))
+        }
+    }
+
+    pub mod get_subnet_stats {
+        use fvm_shared::bigint::BigUint;
+        use super::*;
+        use crate::blobs_facade::iblobsfacade::IBlobsFacade::{getSubnetStatsCall, SubnetStats as Value};
+        use crate::types::BigUintWrapper;
+
+        pub struct SubnetStats {
+            pub balance: BigUint,
+            pub capacity_free: u64,
+            pub capacity_used: u64,
+            pub credit_sold: BigUint,
+            pub credit_committed: BigUint,
+            pub credit_debited: BigUint,
+            pub token_credit_rate: BigUint,
+            pub num_accounts: u64,
+            pub num_blobs: u64,
+            pub num_added: u64,
+            pub bytes_added: u64,
+            pub num_resolving: u64,
+            pub bytes_resolving: u64,
+        }
+
+        pub const SELECTOR: [u8; 4] = getSubnetStatsCall::SELECTOR;
+
+        pub fn abi_encode_result(value: SubnetStats) -> Vec<u8> {
+            getSubnetStatsCall::abi_encode_returns(&(Value {
+                balance: BigUintWrapper(value.balance).into(),
+                capacityFree: value.capacity_free,
+                capacityUsed: value.capacity_used,
+                creditSold: BigUintWrapper(value.credit_sold).into(),
+                creditCommitted: BigUintWrapper(value.credit_committed).into(),
+                creditDebited: BigUintWrapper(value.credit_debited).into(),
+                tokenCreditRate: BigUintWrapper(value.token_credit_rate).into(),
+                numAccounts: value.num_accounts,
+                numBlobs: value.num_blobs,
+                numAdded: value.num_added,
+                bytesAdded: value.bytes_added,
+                numResolving: value.num_resolving,
+                bytesResolving: value.bytes_resolving
+            },))
         }
     }
 
