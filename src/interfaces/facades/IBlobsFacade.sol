@@ -37,6 +37,11 @@ interface IBlobsFacade {
     /// @return blobs List of added blobs.
     function getAddedBlobs(uint32 size) external view returns (BlobTuple[] memory blobs);
 
+    /// @dev Get a list of pending blobs.
+    /// @param size Maximum number of pending blobs to return.
+    /// @return blobs List of pending blobs.
+    function getPendingBlobs(uint32 size) external view returns (BlobTuple[] memory blobs);
+
     /// @dev Get the total size in bytes of pending blobs.
     /// @return Total size of pending blobs in bytes.
     function getPendingBytesCount() external view returns (uint64);

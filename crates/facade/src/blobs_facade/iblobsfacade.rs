@@ -44,6 +44,7 @@ interface IBlobsFacade {
     event BlobPending(address indexed subscriber, bytes32 hash, bytes32 sourceId);
 
     function getAddedBlobs(uint32 size) external view returns (BlobTuple[] memory blobs);
+    function getPendingBlobs(uint32 size) external view returns (BlobTuple[] memory blobs);
     function getPendingBlobsCount() external view returns (uint64);
     function getPendingBytesCount() external view returns (uint64);
     function getStorageStats() external view returns (StorageStats memory stats);
@@ -58,6 +59,54 @@ interface IBlobsFacade {
   {
     "type": "function",
     "name": "getAddedBlobs",
+    "inputs": [
+      {
+        "name": "size",
+        "type": "uint32",
+        "internalType": "uint32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "blobs",
+        "type": "tuple[]",
+        "internalType": "struct BlobTuple[]",
+        "components": [
+          {
+            "name": "blobHash",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "sourceInfo",
+            "type": "tuple[]",
+            "internalType": "struct BlobSourceInfo[]",
+            "components": [
+              {
+                "name": "subscriber",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "subscriptionId",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "source",
+                "type": "string",
+                "internalType": "string"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getPendingBlobs",
     "inputs": [
       {
         "name": "size",
@@ -2529,6 +2578,142 @@ function getAddedBlobs(uint32 size) external view returns (BlobTuple[] memory bl
             }
         }
     };
+    /**Function with signature `getPendingBlobs(uint32)` and selector `0x9d69985d`.
+```solidity
+function getPendingBlobs(uint32 size) external view returns (BlobTuple[] memory blobs);
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct getPendingBlobsCall {
+        #[allow(missing_docs)]
+        pub size: u32,
+    }
+    ///Container type for the return parameters of the [`getPendingBlobs(uint32)`](getPendingBlobsCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct getPendingBlobsReturn {
+        #[allow(missing_docs)]
+        pub blobs: ::alloy_sol_types::private::Vec<
+            <BlobTuple as ::alloy_sol_types::SolType>::RustType,
+        >,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use ::alloy_sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = (::alloy_sol_types::sol_data::Uint<32>,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (u32,);
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<getPendingBlobsCall> for UnderlyingRustTuple<'_> {
+                fn from(value: getPendingBlobsCall) -> Self {
+                    (value.size,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for getPendingBlobsCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self { size: tuple.0 }
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = (
+                ::alloy_sol_types::sol_data::Array<BlobTuple>,
+            );
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (
+                ::alloy_sol_types::private::Vec<
+                    <BlobTuple as ::alloy_sol_types::SolType>::RustType,
+                >,
+            );
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<getPendingBlobsReturn>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: getPendingBlobsReturn) -> Self {
+                    (value.blobs,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for getPendingBlobsReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self { blobs: tuple.0 }
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for getPendingBlobsCall {
+            type Parameters<'a> = (::alloy_sol_types::sol_data::Uint<32>,);
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = getPendingBlobsReturn;
+            type ReturnTuple<'a> = (::alloy_sol_types::sol_data::Array<BlobTuple>,);
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "getPendingBlobs(uint32)";
+            const SELECTOR: [u8; 4] = [157u8, 105u8, 152u8, 93u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                (
+                    <::alloy_sol_types::sol_data::Uint<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.size),
+                )
+            }
+            #[inline]
+            fn abi_decode_returns(
+                data: &[u8],
+                validate: bool,
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data, validate)
+                    .map(Into::into)
+            }
+        }
+    };
     /**Function with signature `getPendingBlobsCount()` and selector `0xe7923ebb`.
 ```solidity
 function getPendingBlobsCount() external view returns (uint64);
@@ -3156,6 +3341,8 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
         #[allow(missing_docs)]
         getAddedBlobs(getAddedBlobsCall),
         #[allow(missing_docs)]
+        getPendingBlobs(getPendingBlobsCall),
+        #[allow(missing_docs)]
         getPendingBlobsCount(getPendingBlobsCountCall),
         #[allow(missing_docs)]
         getPendingBytesCount(getPendingBytesCountCall),
@@ -3179,6 +3366,7 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
             [83u8, 123u8, 99u8, 58u8],
             [103u8, 246u8, 199u8, 16u8],
             [117u8, 37u8, 249u8, 109u8],
+            [157u8, 105u8, 152u8, 93u8],
             [191u8, 26u8, 90u8, 247u8],
             [231u8, 146u8, 62u8, 187u8],
         ];
@@ -3187,12 +3375,15 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
     impl alloy_sol_types::SolInterface for IBlobsFacadeCalls {
         const NAME: &'static str = "IBlobsFacadeCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 6usize;
+        const COUNT: usize = 7usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
                 Self::getAddedBlobs(_) => {
                     <getAddedBlobsCall as alloy_sol_types::SolCall>::SELECTOR
+                }
+                Self::getPendingBlobs(_) => {
+                    <getPendingBlobsCall as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::getPendingBlobsCount(_) => {
                     <getPendingBlobsCountCall as alloy_sol_types::SolCall>::SELECTOR
@@ -3283,6 +3474,19 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
                     getPendingBytesCount
                 },
                 {
+                    fn getPendingBlobs(
+                        data: &[u8],
+                        validate: bool,
+                    ) -> alloy_sol_types::Result<IBlobsFacadeCalls> {
+                        <getPendingBlobsCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                                validate,
+                            )
+                            .map(IBlobsFacadeCalls::getPendingBlobs)
+                    }
+                    getPendingBlobs
+                },
+                {
                     fn getStorageUsage(
                         data: &[u8],
                         validate: bool,
@@ -3327,6 +3531,11 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
                         inner,
                     )
                 }
+                Self::getPendingBlobs(inner) => {
+                    <getPendingBlobsCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
                 Self::getPendingBlobsCount(inner) => {
                     <getPendingBlobsCountCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
@@ -3359,6 +3568,12 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
             match self {
                 Self::getAddedBlobs(inner) => {
                     <getAddedBlobsCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
+                Self::getPendingBlobs(inner) => {
+                    <getPendingBlobsCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
