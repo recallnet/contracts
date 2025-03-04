@@ -151,6 +151,48 @@ pub mod blobs {
         }
     }
 
+    pub mod get_added_blobs {
+        use super::*;
+        use crate::blobs_facade::iblobsfacade::IBlobsFacade::{getAddedBlobsCall, BlobTuple as BlobTupleInner, BlobSourceInfo as BlobSourceInfoInner};
+
+        pub const SELECTOR: [u8; 4] = getAddedBlobsCall::SELECTOR;
+
+        pub struct BlobSourceInfo<'a> {
+            pub subscriber: Address,
+            pub subscription_id: String,
+            pub source: &'a[u8; 32],
+        }
+
+        pub struct BlobTuple<'a> {
+            pub blob_hash: &'a [u8; 32],
+            pub source_info: Vec<BlobSourceInfo<'a>>,
+        }
+
+        pub fn abi_decode_input(bytes: &[u8]) -> Result<getAddedBlobsCall, ActorError> {
+            getAddedBlobsCall::abi_decode(bytes, true).map_err(|err| {
+                actor_error!(illegal_argument, format!("Invalid parameters {}", err))
+            })
+        }
+
+        pub fn abi_encode_result(value: Vec<BlobTuple>) -> Result<Vec<u8>> {
+            let returns: Vec<BlobTupleInner> = value.iter().map(|blob_tuple| {
+                Ok(BlobTupleInner {
+                    blobHash: data_encoding::BASE32_NOPAD.encode(blob_tuple.blob_hash),
+                    sourceInfo: blob_tuple.source_info.iter().map(|source_info| {
+                        let subscriber = H160::try_from(source_info.subscriber)?;
+                        Ok(BlobSourceInfoInner {
+                            subscriber: subscriber.into(),
+                            subscriptionId: source_info.subscription_id.clone(),
+                            source: data_encoding::BASE32_NOPAD.encode(source_info.source),
+                        })
+                    }).collect::<Result<Vec<_>>>()?
+                })
+            }).collect::<Result<Vec<_>>>()?;
+            
+            Ok(getAddedBlobsCall::abi_encode_returns(&(returns,)))
+        }
+    }
+
     pub fn blob_added(
         subscriber: Address,
         hash: &[u8; 32],

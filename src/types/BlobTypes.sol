@@ -217,7 +217,7 @@ struct Subscription {
 /// @param blobHash (string): The blob hash.
 /// @param sourceInfo (BlobSourceInfo[]): The source information for the blob.
 struct BlobTuple {
-    string blobHash;
+    string blobHash; // FIXME SU Why string??
     BlobSourceInfo[] sourceInfo;
 }
 
@@ -227,6 +227,6 @@ struct BlobTuple {
 /// @param source (string): The source Iroh node ID used for ingestion.
 struct BlobSourceInfo {
     address subscriber;
-    string subscriptionId;
-    string source;
+    string subscriptionId; // FIXME SU Why string??
+    string source; // FIXME SU Why string??
 }

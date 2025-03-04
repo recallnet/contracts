@@ -8,7 +8,7 @@ import {LibBlob} from "./LibBlob.sol";
 contract BlobManager is IBlobManager {
     /// @dev See {IBlobManager-getAddedBlobs}.
     function getAddedBlobs(uint32 size) external view returns (BlobTuple[] memory blobs) {
-        return LibBlob.getPendingBlobs(size);
+        return LibBlob.getPendingBlobs(size); // FIXME SU Should that be getAddedBlobs??
     }
 
     /// @dev See {IBlobManager-getBlob}.

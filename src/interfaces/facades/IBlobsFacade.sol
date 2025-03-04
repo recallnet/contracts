@@ -32,6 +32,11 @@ interface IBlobsFacade {
     /// @param bytesReleased Network capacity bytes released.
     event BlobDeleted(address indexed subscriber, bytes32 hash, uint256 size, uint256 bytesReleased);
 
+    /// @dev Get a list of added blobs.
+    /// @param size Maximum number of added blobs to return.
+    /// @return blobs List of added blobs.
+    function getAddedBlobs(uint32 size) external view returns (BlobTuple[] memory blobs);
+
     /// @dev Get the total size in bytes of pending blobs.
     /// @return Total size of pending blobs in bytes.
     function getPendingBytesCount() external view returns (uint64);
