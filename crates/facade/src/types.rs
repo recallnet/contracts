@@ -11,6 +11,7 @@ use fvm_shared::{
     bigint::{BigInt, BigUint, Sign as BigSign},
     ActorID,
 };
+use fvm_shared::econ::TokenAmount;
 use fil_actors_runtime::ActorError;
 use ipc_types::EthAddress;
 
@@ -30,6 +31,13 @@ impl InvokeContractParams {
             .and_then(|s| s.try_into().ok())
             .ok_or(ActorError::illegal_argument(format!("No selector extracted")))
     }
+
+    pub fn selector_and_data(&self) -> Result<([u8; 4], &[u8]), ActorError> {
+        let (selector, rest) = self.input_data.split_at(4);
+        let selector = selector.try_into()
+            .map_err(|_| ActorError::illegal_argument(format!("No selector extracted")))?;
+        Ok((selector, rest))
+    }
 }
 
 #[derive(Serialize_tuple, Deserialize_tuple)]
@@ -37,6 +45,14 @@ impl InvokeContractParams {
 pub struct InvokeContractReturn {
     #[serde(with = "strict_bytes")]
     pub output_data: Vec<u8>,
+}
+
+pub trait AbiEncodeReturns<T> {
+    fn returns(&self, value: &T) -> Vec<u8>;
+}
+
+pub trait TryAbiEncodeReturns<T> {
+    fn try_returns(&self, value: &T) -> anyhow::Result<Vec<u8>, anyhow::Error>;
 }
 
 /// Fixed-size uninterpreted hash type with 20 bytes (160 bits) size.
@@ -113,6 +129,12 @@ impl From<BigUintWrapper> for U256 {
             (n, false) => n,
             (_, true) => U256::MAX,
         }
+    }
+}
+
+impl From<TokenAmount> for BigUintWrapper {
+    fn from(amount: TokenAmount) -> Self {
+        Self(amount.atto().to_biguint().unwrap_or_default())
     }
 }
 

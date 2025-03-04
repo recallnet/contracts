@@ -1,199 +1,156 @@
-use crate::blobs_facade::iblobsfacade::IBlobsFacade::{getPendingBlobsCountCall, getPendingBytesCountCall, getStorageStatsCall, getStorageUsageCall, BlobAdded, BlobDeleted, BlobFinalized, BlobPending, IBlobsFacadeEvents};
-use crate::types::H160;
+use crate::blobs_facade::iblobsfacade::IBlobsFacade::{BlobAdded, BlobDeleted, BlobFinalized, BlobPending, IBlobsFacadeCalls, IBlobsFacadeEvents};
+use crate::types::{AbiEncodeReturns, TryAbiEncodeReturns, H160};
 use alloy_primitives::U256;
 use anyhow::Result;
 use fvm_shared::address::{Address as FVMAddress};
-use alloy_sol_types::SolCall;
+use alloy_sol_types::{SolInterface};
+use alloy_sol_types::private::Address;
 use fil_actors_runtime::{actor_error, ActorError};
-use fendermint_actor_blobs_shared::state::{Hash, PublicKey};
+use fendermint_actor_blobs_shared::state::{BlobStatus, Hash, PublicKey};
+use crate::blobs_facade::iblobsfacade::IBlobsFacade;
 
-pub struct BlobSourceInfo<'a> {
-    pub subscriber: FVMAddress,
-    pub subscription_id: String,
-    pub source: &'a[u8; 32],
-}
+pub use alloy_sol_types::SolCall;
+use fendermint_actor_blobs_shared::params::{BlobRequest, GetStatsReturn};
+use ipc_types::EthAddress;
+use crate::types::BigUintWrapper;
 
-pub struct BlobTuple<'a> {
-    pub blob_hash: &'a [u8; 32],
-    pub source_info: Vec<BlobSourceInfo<'a>>,
-}
-
-pub mod get_pending_bytes_count {
-    use super::*;
-
-    pub const SELECTOR: [u8; 4] = getPendingBytesCountCall::SELECTOR;
-
-    pub fn abi_encode_result(value: u64) -> Vec<u8> {
-        getPendingBytesCountCall::abi_encode_returns(&(value,))
+pub fn parse_input(input: &[u8]) -> Result<IBlobsFacadeCalls, ActorError> {
+    if input.len() < 4 {
+        return Err(actor_error!(illegal_argument, "Input too short"));
     }
+
+    // Get the selector (first 4 bytes)
+    let mut selector = [0u8; 4];
+    selector.copy_from_slice(&input[0..4]);
+
+    // Decode the rest of the input data
+    let data = &input[4..];
+    IBlobsFacadeCalls::abi_decode_raw(selector, data, true).map_err(|err| {
+        actor_error!(illegal_argument, format!("Invalid parameters {}", err))
+    })
 }
 
-pub mod get_pending_blobs_count {
-    use super::*;
-    pub const SELECTOR: [u8; 4] = getPendingBlobsCountCall::SELECTOR;
-    pub fn abi_encode_result(value: u64) -> Vec<u8> {
-        getPendingBlobsCountCall::abi_encode_returns(&(value,))
-    }
-}
+pub type Calls = IBlobsFacadeCalls;
 
-pub mod get_storage_usage {
-    use super::*;
-    pub const SELECTOR: [u8; 4] = getStorageUsageCall::SELECTOR;
-    pub fn abi_decode_input(bytes: &[u8]) -> Result<getStorageUsageCall, ActorError> {
-        getStorageUsageCall::abi_decode(bytes, true).map_err(|err| {
-            actor_error!(illegal_argument, format!("Invalid parameters {}", err))
-        })
-    }
-    pub fn abi_encode_result(value: u64) -> Vec<u8> {
-        let u256 = U256::from(value);
-        getStorageUsageCall::abi_encode_returns(&(u256,))
+impl AbiEncodeReturns<u64> for IBlobsFacade::getPendingBlobsCountCall {
+    fn returns(&self, value: &u64) -> Vec<u8> {
+        Self::abi_encode_returns(&(value,))
     }
 }
 
-pub mod get_storage_stats {
-    use super::*;
-    pub use crate::blobs_facade::iblobsfacade::IBlobsFacade::StorageStats;
-
-    pub const SELECTOR: [u8; 4] = getStorageStatsCall::SELECTOR;
-    pub fn abi_encode_result(value: StorageStats) -> Vec<u8> {
-        getStorageStatsCall::abi_encode_returns(&(value,))
+impl AbiEncodeReturns<u64> for IBlobsFacade::getPendingBytesCountCall {
+    fn returns(&self, value: &u64) -> Vec<u8> {
+        Self::abi_encode_returns(&(value,))
     }
 }
 
-pub mod get_subnet_stats {
-    use fvm_shared::bigint::BigUint;
-    use super::*;
-    use crate::blobs_facade::iblobsfacade::IBlobsFacade::{getSubnetStatsCall, SubnetStats as Value};
-    use crate::types::BigUintWrapper;
-
-    pub struct SubnetStats {
-        pub balance: BigUint,
-        pub capacity_free: u64,
-        pub capacity_used: u64,
-        pub credit_sold: BigUint,
-        pub credit_committed: BigUint,
-        pub credit_debited: BigUint,
-        pub token_credit_rate: BigUint,
-        pub num_accounts: u64,
-        pub num_blobs: u64,
-        pub num_added: u64,
-        pub bytes_added: u64,
-        pub num_resolving: u64,
-        pub bytes_resolving: u64,
-    }
-
-    pub const SELECTOR: [u8; 4] = getSubnetStatsCall::SELECTOR;
-
-    pub fn abi_encode_result(value: SubnetStats) -> Vec<u8> {
-        getSubnetStatsCall::abi_encode_returns(&(Value {
-            balance: BigUintWrapper(value.balance).into(),
-            capacityFree: value.capacity_free,
-            capacityUsed: value.capacity_used,
-            creditSold: BigUintWrapper(value.credit_sold).into(),
-            creditCommitted: BigUintWrapper(value.credit_committed).into(),
-            creditDebited: BigUintWrapper(value.credit_debited).into(),
-            tokenCreditRate: BigUintWrapper(value.token_credit_rate).into(),
-            numAccounts: value.num_accounts,
-            numBlobs: value.num_blobs,
-            numAdded: value.num_added,
-            bytesAdded: value.bytes_added,
-            numResolving: value.num_resolving,
-            bytesResolving: value.bytes_resolving
-        },))
+impl AbiEncodeReturns<Option<u64>> for IBlobsFacade::getStorageUsageCall {
+    fn returns(&self, value: &Option<u64>) -> Vec<u8> {
+        let value = value.unwrap_or(u64::default()); // Value or zero, as per Solidity
+        Self::abi_encode_returns(&(U256::from(value),))
     }
 }
 
-pub mod get_added_blobs {
-    use super::*;
-    use crate::blobs_facade::iblobsfacade::IBlobsFacade::{getAddedBlobsCall, BlobTuple as BlobTupleInner, BlobSourceInfo as BlobSourceInfoInner};
-
-    pub const SELECTOR: [u8; 4] = getAddedBlobsCall::SELECTOR;
-
-    pub fn abi_decode_input(bytes: &[u8]) -> Result<getAddedBlobsCall, ActorError> {
-        getAddedBlobsCall::abi_decode(bytes, true).map_err(|err| {
-            actor_error!(illegal_argument, format!("Invalid parameters {}", err))
-        })
+impl AbiEncodeReturns<GetStatsReturn> for IBlobsFacade::getStorageStatsCall {
+    fn returns(&self, stats: &GetStatsReturn) -> Vec<u8> {
+        let storage_stats = IBlobsFacade::StorageStats {
+            capacityFree: stats.capacity_free,
+            capacityUsed: stats.capacity_used,
+            numBlobs: stats.num_blobs,
+            numResolving: stats.num_resolving,
+            numAccounts: stats.num_accounts,
+            bytesResolving: stats.bytes_resolving,
+            numAdded: stats.num_added,
+            bytesAdded: stats.bytes_added,
+        };
+        Self::abi_encode_returns(&(storage_stats,))
     }
+}
 
-    pub fn abi_encode_result(value: Vec<BlobTuple>) -> Result<Vec<u8>> {
-        let returns: Vec<BlobTupleInner> = value.iter().map(|blob_tuple| {
-            Ok(BlobTupleInner {
-                blobHash: data_encoding::BASE32_NOPAD.encode(blob_tuple.blob_hash),
-                sourceInfo: blob_tuple.source_info.iter().map(|source_info| {
-                    let subscriber = H160::try_from(source_info.subscriber)?;
-                    Ok(BlobSourceInfoInner {
-                        subscriber: subscriber.into(),
-                        subscriptionId: source_info.subscription_id.clone(),
-                        source: data_encoding::BASE32_NOPAD.encode(source_info.source),
-                    })
-                }).collect::<Result<Vec<_>>>()?
+fn blob_requests_to_tuple(blob_requests: &Vec<BlobRequest>) -> Result<Vec<IBlobsFacade::BlobTuple>, anyhow::Error> {
+    blob_requests.iter().map(|blob_request| {
+        let source_info: Result<Vec<IBlobsFacade::BlobSourceInfo>> = blob_request.1.iter().map(|item| {
+            let address = item.0;
+            let public_key = item.2;
+            let subscription_id = item.1.clone();
+
+            Ok(IBlobsFacade::BlobSourceInfo {
+                subscriber: H160::try_from(address)?.into(),
+                subscriptionId: subscription_id.into(),
+                source: public_key.into()
             })
-        }).collect::<Result<Vec<_>>>()?;
+        }).collect::<Result<Vec<_>>>();
 
-        Ok(getAddedBlobsCall::abi_encode_returns(&(returns,)))
+        let blob_hash = blob_request.0;
+        Ok::<IBlobsFacade::BlobTuple, anyhow::Error>(IBlobsFacade::BlobTuple {
+            blobHash: blob_hash.into(),
+            sourceInfo: source_info?
+        })
+    }).collect::<Result<Vec<_>>>()
+}
+
+impl TryAbiEncodeReturns<Vec<BlobRequest>> for IBlobsFacade::getAddedBlobsCall {
+    fn try_returns(&self, blob_requests: &Vec<BlobRequest>) -> Result<Vec<u8>, anyhow::Error> {
+        let blob_tuples = blob_requests_to_tuple(blob_requests)?;
+        Ok(Self::abi_encode_returns(&(blob_tuples,)))
     }
 }
 
-pub mod get_pending_blobs {
-    use super::*;
-    use crate::blobs_facade::iblobsfacade::IBlobsFacade::{getPendingBlobsCall, BlobTuple as BlobTupleInner, BlobSourceInfo as BlobSourceInfoInner};
-
-    pub const SELECTOR: [u8; 4] = getPendingBlobsCall::SELECTOR;
-
-    pub fn abi_decode_input(bytes: &[u8]) -> Result<getPendingBlobsCall, ActorError> {
-        getPendingBlobsCall::abi_decode(bytes, true).map_err(|err| {
-            actor_error!(illegal_argument, format!("Invalid parameters {}", err))
-        })
-    }
-
-    pub fn abi_encode_result(value: Vec<BlobTuple>) -> Result<Vec<u8>> {
-        let returns: Vec<BlobTupleInner> = value.iter().map(|blob_tuple| {
-            Ok(BlobTupleInner {
-                blobHash: data_encoding::BASE32_NOPAD.encode(blob_tuple.blob_hash),
-                sourceInfo: blob_tuple.source_info.iter().map(|source_info| {
-                    let subscriber = H160::try_from(source_info.subscriber)?;
-                    Ok(BlobSourceInfoInner {
-                        subscriber: subscriber.into(),
-                        subscriptionId: source_info.subscription_id.clone(),
-                        source: data_encoding::BASE32_NOPAD.encode(source_info.source),
-                    })
-                }).collect::<Result<Vec<_>>>()?
-            })
-        }).collect::<Result<Vec<_>>>()?;
-
-        Ok(getPendingBlobsCall::abi_encode_returns(&(returns,)))
+impl TryAbiEncodeReturns<Vec<BlobRequest>> for IBlobsFacade::getPendingBlobsCall {
+    fn try_returns(&self, blob_requests: &Vec<BlobRequest>) -> Result<Vec<u8>, anyhow::Error> {
+        let blob_tuples = blob_requests_to_tuple(blob_requests)?;
+        Ok(Self::abi_encode_returns(&(blob_tuples,)))
     }
 }
 
-pub mod get_blob_status {
-    use super::*;
-    use crate::blobs_facade::iblobsfacade::IBlobsFacade::getBlobStatusCall;
-    use ipc_types::EthAddress;
-
-    pub const SELECTOR: [u8; 4] = getBlobStatusCall::SELECTOR;
-
-    pub struct Input {
-        pub subscriber: EthAddress,
-        pub blob_hash: String,
-        pub subscription_id: String,
+impl AbiEncodeReturns<BlobStatus> for IBlobsFacade::getBlobStatusCall {
+    fn returns(&self, blob_status: &BlobStatus) -> Vec<u8> {
+        let value = match blob_status {
+            BlobStatus::Added => 0,
+            BlobStatus::Pending => 1,
+            BlobStatus::Resolved => 2,
+            BlobStatus::Failed => 3
+        };
+        Self::abi_encode_returns(&(value,))
     }
+}
 
-    pub fn abi_decode_input(bytes: &[u8]) -> Result<Input, ActorError> {
-        let input = getBlobStatusCall::abi_decode(bytes, true).map_err(|err| {
-            actor_error!(illegal_argument, format!("Invalid parameters {}", err))
-        })?;
-        let h160: H160 = input.subscriber.into();
-        Ok(Input {
-            subscriber: h160.into(),
-            blob_hash: input.blobHash,
-            subscription_id: input.subscriptionId,
-        })
+impl AbiEncodeReturns<Option<BlobStatus>> for IBlobsFacade::getBlobStatusCall {
+    fn returns(&self, blob_status: &Option<BlobStatus>) -> Vec<u8> {
+        // Use BlobStatus::Failed if None got passed
+        let blob_status = blob_status.as_ref().unwrap_or(&BlobStatus::Failed);
+        self.returns(blob_status)
     }
+}
 
-    pub fn abi_encode_result(value: u8) -> Vec<u8> {
-        // There is a BlobStatus prepared by allow, but we can not use it here :((
-        // Looks like encoding of return types is neglected there.
-        getBlobStatusCall::abi_encode_returns(&(value,))
+impl AbiEncodeReturns<GetStatsReturn> for IBlobsFacade::getSubnetStatsCall {
+    fn returns(&self, stats: &GetStatsReturn) -> Vec<u8> {
+        let subnet_stats = IBlobsFacade::SubnetStats {
+            balance: BigUintWrapper::from(stats.balance.clone()).into(),
+            capacityFree: stats.capacity_free,
+            capacityUsed: stats.capacity_used,
+            creditSold: BigUintWrapper::from(stats.credit_sold.clone()).into(),
+            creditCommitted: BigUintWrapper::from(stats.credit_committed.clone()).into(),
+            creditDebited: BigUintWrapper::from(stats.credit_debited.clone()).into(),
+            tokenCreditRate: BigUintWrapper(stats.token_credit_rate.rate().clone()).into(),
+            numAccounts: stats.num_accounts,
+            numBlobs: stats.num_blobs,
+            numAdded: stats.num_added,
+            bytesAdded: stats.bytes_added,
+            numResolving: stats.num_resolving,
+            bytesResolving: stats.bytes_resolving,
+        };
+        Self::abi_encode_returns(&(subnet_stats,))
+    }
+}
+
+pub trait IntoEthAddress {
+    fn into_eth_address(self) -> EthAddress;
+}
+
+impl IntoEthAddress for Address {
+    fn into_eth_address(self) -> EthAddress {
+        EthAddress(self.0.0)
     }
 }
 
