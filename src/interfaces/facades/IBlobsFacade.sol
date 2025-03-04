@@ -37,6 +37,16 @@ interface IBlobsFacade {
     /// @return blobs List of added blobs.
     function getAddedBlobs(uint32 size) external view returns (BlobTuple[] memory blobs);
 
+    /// @dev Get status of a specific blob for a subscriber.
+    /// @param subscriber The address of the subscriber.
+    /// @param blobHash Blob blake3 hash.
+    /// @param subscriptionId Identifier used to differentiate blob additions for the same subscriber.
+    /// @return status The status of the blob: Pending, Resolved or Failed.
+    function getBlobStatus(address subscriber, string memory blobHash, string memory subscriptionId)
+    external
+    view
+    returns (BlobStatus status);
+
     /// @dev Get a list of pending blobs.
     /// @param size Maximum number of pending blobs to return.
     /// @return blobs List of pending blobs.

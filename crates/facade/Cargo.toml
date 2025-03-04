@@ -19,6 +19,7 @@ fvm_shared = { version = "4.4.0" }
 serde = { workspace = true, features = ["derive"] }
 fil_actors_runtime = { workspace = true }
 data-encoding = { workspace = true }
+ipc-types = { workspace = true}
 
 [build-dependencies]
 alloy-primitives = { version = "0.8.19" }

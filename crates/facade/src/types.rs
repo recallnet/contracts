@@ -12,6 +12,7 @@ use fvm_shared::{
     ActorID,
 };
 use fil_actors_runtime::ActorError;
+use ipc_types::EthAddress;
 
 const EAM_ACTOR_ID: ActorID = 10;
 
@@ -85,9 +86,21 @@ impl TryFrom<FvmAddress> for H160 {
     }
 }
 
+impl Into<EthAddress> for H160 {
+    fn into(self) -> EthAddress {
+        EthAddress(self.0)
+    }
+}
+
 impl From<H160> for Address {
     fn from(value: H160) -> Self {
         Address::from(value.to_fixed_bytes())
+    }
+}
+
+impl From<Address> for H160 {
+    fn from(value: Address) -> Self {
+        H160::from_slice(&value.0.0)
     }
 }
 

@@ -224,6 +224,38 @@ pub mod blobs {
         }
     }
 
+    pub mod get_blob_status {
+        use super::*;
+        use crate::blobs_facade::iblobsfacade::IBlobsFacade::getBlobStatusCall;
+        use ipc_types::EthAddress;
+
+        pub const SELECTOR: [u8; 4] = getBlobStatusCall::SELECTOR;
+
+        pub struct Input {
+            pub subscriber: EthAddress,
+            pub blob_hash: String,
+            pub subscription_id: String,
+        }
+
+        pub fn abi_decode_input(bytes: &[u8]) -> Result<Input, ActorError> {
+            let input = getBlobStatusCall::abi_decode(bytes, true).map_err(|err| {
+                actor_error!(illegal_argument, format!("Invalid parameters {}", err))
+            })?;
+            let h160: H160 = input.subscriber.into();
+            Ok(Input {
+                subscriber: h160.into(),
+                blob_hash: input.blobHash,
+                subscription_id: input.subscriptionId,
+            })
+        }
+
+        pub fn abi_encode_result(value: u8) -> Vec<u8> {
+            // There is a BlobStatus prepared by allow, but we can not use it here :((
+            // Looks like encoding of return types is neglected there.
+            getBlobStatusCall::abi_encode_returns(&(value,))
+        }
+    }
+
     pub fn blob_added(
         subscriber: Address,
         hash: &[u8; 32],
