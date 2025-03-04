@@ -80,6 +80,12 @@ impl H160 {
     }
 }
 
+impl Default for H160 {
+    fn default() -> Self {
+        H160([0u8; 20])
+    }
+}
+
 impl fmt::Debug for H160 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "H160({:?})", &self.0)

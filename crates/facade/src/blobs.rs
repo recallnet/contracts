@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use crate::blobs_facade::iblobsfacade::IBlobsFacade::{BlobAdded, BlobDeleted, BlobFinalized, BlobPending, IBlobsFacadeCalls, IBlobsFacadeEvents};
 use crate::types::{AbiEncodeReturns, TryAbiEncodeReturns, H160};
 use alloy_primitives::U256;
@@ -6,7 +7,7 @@ use fvm_shared::address::{Address as FVMAddress};
 use alloy_sol_types::{SolInterface};
 use alloy_sol_types::private::Address;
 use fil_actors_runtime::{actor_error, ActorError};
-use fendermint_actor_blobs_shared::state::{BlobStatus, Hash, PublicKey};
+use fendermint_actor_blobs_shared::state::{Blob, BlobStatus, Hash, PublicKey};
 use crate::blobs_facade::iblobsfacade::IBlobsFacade;
 
 pub use alloy_sol_types::SolCall;
@@ -105,13 +106,17 @@ impl TryAbiEncodeReturns<Vec<BlobRequest>> for IBlobsFacade::getPendingBlobsCall
 
 impl AbiEncodeReturns<BlobStatus> for IBlobsFacade::getBlobStatusCall {
     fn returns(&self, blob_status: &BlobStatus) -> Vec<u8> {
-        let value = match blob_status {
-            BlobStatus::Added => 0,
-            BlobStatus::Pending => 1,
-            BlobStatus::Resolved => 2,
-            BlobStatus::Failed => 3
-        };
+        let value = blob_status_as_solidity_enum(blob_status);
         Self::abi_encode_returns(&(value,))
+    }
+}
+
+fn blob_status_as_solidity_enum(blob_status: &BlobStatus) -> u8 {
+    match blob_status {
+        BlobStatus::Added => 0,
+        BlobStatus::Pending => 1,
+        BlobStatus::Resolved => 2,
+        BlobStatus::Failed => 3
     }
 }
 
@@ -141,6 +146,48 @@ impl AbiEncodeReturns<GetStatsReturn> for IBlobsFacade::getSubnetStatsCall {
             bytesResolving: stats.bytes_resolving,
         };
         Self::abi_encode_returns(&(subnet_stats,))
+    }
+}
+
+impl TryAbiEncodeReturns<Option<Blob>> for IBlobsFacade::getBlobCall {
+    fn try_returns(&self, value: &Option<Blob>) -> Result<Vec<u8>, anyhow::Error> {
+        let facade_blob = if let Some(blob) = value {
+            let subscribers = blob.subscribers.iter().map(|(fvm_address, subscription_group)| {
+                let subscription_group = subscription_group.subscriptions.iter().map(|(subscription_id, subscription)| {
+                    let delegate = subscription.delegate.map(|fvm_address| H160::try_from(fvm_address)).transpose()?.unwrap_or_default();
+                    Ok(IBlobsFacade::SubscriptionGroup {
+                       subscriptionId: subscription_id.into(),
+                       subscription: IBlobsFacade::Subscription {
+                           added: subscription.added as u64,
+                           expiry: subscription.expiry as u64,
+                           source: subscription.source.into(),
+                           delegate: delegate.into(),
+                           failed: subscription.failed,
+                       },
+                   })
+                }).collect::<Result<Vec<_>, anyhow::Error>>()?;
+                let fvm_address = FVMAddress::from_str(fvm_address)?;
+                let h160_address: H160 = fvm_address.try_into()?;
+                Ok(IBlobsFacade::Subscriber {
+                    subscriber: h160_address.into(),
+                    subscriptionGroup: subscription_group,
+                })
+            }).collect::<Result<Vec<_>>>()?;
+            IBlobsFacade::Blob {
+                size: blob.size,
+                metadataHash: blob.metadata_hash.into(),
+                status: blob_status_as_solidity_enum(&blob.status),
+                subscribers,
+            }
+        } else {
+            IBlobsFacade::Blob {
+                size: 0,
+                metadataHash: Hash::default().into(),
+                status: blob_status_as_solidity_enum(&BlobStatus::Failed),
+                subscribers: vec![]
+            }
+        };
+        Ok(Self::abi_encode_returns(&(facade_blob,)))
     }
 }
 

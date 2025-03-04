@@ -72,4 +72,9 @@ interface IBlobsFacade {
     /// @dev Get the subnet stats.
     /// @return stats The subnet stats including balance, capacity, credit metrics and counts.
     function getSubnetStats() external view returns (SubnetStats memory stats);
+
+    /// @dev Get information about a specific blob.
+    /// @param blobHash Blob blake3 hash.
+    /// @return blob Information, including its hash, size, metadata hash, subscribers and status.
+    function getBlob(string memory blobHash) external view returns (Blob memory blob);
 }
