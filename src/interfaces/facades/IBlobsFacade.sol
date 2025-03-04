@@ -77,4 +77,8 @@ interface IBlobsFacade {
     /// @param blobHash Blob blake3 hash.
     /// @return blob Information, including its hash, size, metadata hash, subscribers and status.
     function getBlob(string memory blobHash) external view returns (Blob memory blob);
+
+    /// @dev Add a new blob to storage.
+    /// @param params Parameters for adding the blob including sponsor, source, hashes, size and TTL.
+    function addBlob(AddBlobParams memory params) external;
 }

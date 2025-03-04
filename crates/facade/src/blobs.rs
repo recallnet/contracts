@@ -7,7 +7,7 @@ use fvm_shared::address::{Address as FVMAddress};
 use alloy_sol_types::{SolInterface};
 use alloy_sol_types::private::Address;
 use fil_actors_runtime::{actor_error, ActorError};
-use fendermint_actor_blobs_shared::state::{Blob, BlobStatus, Hash, PublicKey};
+use fendermint_actor_blobs_shared::state::{Blob, BlobStatus, Hash, PublicKey, Subscription};
 use crate::blobs_facade::iblobsfacade::IBlobsFacade;
 
 pub use alloy_sol_types::SolCall;
@@ -188,6 +188,12 @@ impl TryAbiEncodeReturns<Option<Blob>> for IBlobsFacade::getBlobCall {
             }
         };
         Ok(Self::abi_encode_returns(&(facade_blob,)))
+    }
+}
+
+impl AbiEncodeReturns<()> for IBlobsFacade::addBlobCall {
+    fn returns(&self, _: &()) -> Vec<u8> {
+        Self::abi_encode_returns(&())
     }
 }
 
