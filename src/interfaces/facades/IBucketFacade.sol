@@ -34,14 +34,15 @@ interface IBucketFacade {
 //    /// @param metadata The metadata.
 //    function createBucket(address owner, KeyValue[] memory metadata) external;
 
-    /// @dev List all buckets owned by an address.
-    /// @return The list of buckets.
-    function listBuckets() external view returns (Machine[] memory);
-
-    /// @dev List all buckets owned by an address.
-    /// @param owner The owner of the buckets.
-    /// @return The list of buckets.
-    function listBuckets(address owner) external view returns (Machine[] memory);
+    // FIXME SU ADM CALLS
+//    /// @dev List all buckets owned by an address.
+//    /// @return The list of buckets.
+//    function listBuckets() external view returns (Machine[] memory);
+//
+//    /// @dev List all buckets owned by an address.
+//    /// @param owner The owner of the buckets.
+//    /// @return The list of buckets.
+//    function listBuckets(address owner) external view returns (Machine[] memory);
 
     /// @dev Add an object to a bucket.
     /// @param source The source Iroh node ID used for ingestion.
