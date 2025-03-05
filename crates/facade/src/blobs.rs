@@ -6,11 +6,13 @@ use anyhow::Result;
 use fvm_shared::address::{Address as FVMAddress};
 use alloy_sol_types::{SolInterface};
 use alloy_sol_types::private::Address;
-use fendermint_actor_blobs_shared::state::{Blob, BlobStatus, Hash, PublicKey};
+use fendermint_actor_blobs_shared::state::{Blob, BlobStatus, Hash, PublicKey, SubscriptionId};
 use crate::blobs_facade::iblobsfacade::IBlobsFacade;
 
 pub use alloy_sol_types::SolCall;
-use fendermint_actor_blobs_shared::params::{BlobRequest, GetStatsReturn};
+use fvm_shared::bigint::Zero;
+use fvm_shared::clock::ChainEpoch;
+use fendermint_actor_blobs_shared::params::{AddBlobParams, BlobRequest, DeleteBlobParams, GetAccountParams, GetBlobParams, GetBlobStatusParams, GetStatsReturn, OverwriteBlobParams};
 use fil_actors_evm_shared::address::EthAddress;
 use fil_actors_runtime::{actor_error, ActorError};
 use crate::impl_empty_returns;
@@ -37,6 +39,13 @@ impl AbiEncodeReturns<u64> for IBlobsFacade::getPendingBlobsCountCall {
 impl AbiEncodeReturns<u64> for IBlobsFacade::getPendingBytesCountCall {
     fn returns(&self, value: u64) -> Vec<u8> {
         Self::abi_encode_returns(&(&value,))
+    }
+}
+
+impl Into<GetAccountParams> for IBlobsFacade::getStorageUsageCall {
+    fn into(self) -> GetAccountParams {
+        let address: fvm_shared::address::Address = self.addr.into_eth_address().into();
+        GetAccountParams(address)
     }
 }
 
@@ -99,6 +108,23 @@ impl TryAbiEncodeReturns<Vec<BlobRequest>> for IBlobsFacade::getPendingBlobsCall
     }
 }
 
+impl TryInto<GetBlobStatusParams> for IBlobsFacade::getBlobStatusCall {
+    type Error = ActorError;
+
+    fn try_into(self) -> std::result::Result<GetBlobStatusParams, Self::Error> {
+        let subscriber = self.subscriber.into_eth_address();
+        let blob_hash: Hash = self.blobHash.try_into().map_err(|e| {
+            actor_error!(serialization, format!("invalid hash value {}", e))
+        })?;
+        let subscription_id: SubscriptionId = self.subscriptionId.clone().try_into()?;
+        Ok(GetBlobStatusParams {
+            subscriber: subscriber.into(),
+            hash: blob_hash,
+            id: subscription_id,
+        })
+    }
+}
+
 impl AbiEncodeReturns<BlobStatus> for IBlobsFacade::getBlobStatusCall {
     fn returns(&self, blob_status: BlobStatus) -> Vec<u8> {
         let value = blob_status_as_solidity_enum(blob_status);
@@ -144,6 +170,17 @@ impl AbiEncodeReturns<GetStatsReturn> for IBlobsFacade::getSubnetStatsCall {
     }
 }
 
+impl TryInto<GetBlobParams> for IBlobsFacade::getBlobCall {
+    type Error = ActorError;
+
+    fn try_into(self) -> std::result::Result<GetBlobParams, Self::Error> {
+        let blob_hash: Hash = self.blobHash.clone().try_into().map_err(|e| {
+            actor_error!(serialization, format!("invalid hash value {}", e))
+        })?;
+        Ok(GetBlobParams(blob_hash))
+    }
+}
+
 impl TryAbiEncodeReturns<Option<Blob>> for IBlobsFacade::getBlobCall {
     fn try_returns(&self, value: Option<Blob>) -> Result<Vec<u8>, AbiEncodeError> {
         let facade_blob = if let Some(blob) = value {
@@ -183,6 +220,95 @@ impl TryAbiEncodeReturns<Option<Blob>> for IBlobsFacade::getBlobCall {
             }
         };
         Ok(Self::abi_encode_returns(&(facade_blob,)))
+    }
+}
+
+impl TryInto<AddBlobParams> for IBlobsFacade::addBlobCall {
+    type Error = ActorError;
+
+    fn try_into(self) -> std::result::Result<AddBlobParams, Self::Error> {
+        let sponsor: EthAddress = self.params.sponsor.into_eth_address();
+        let sponsor: Option<fvm_shared::address::Address> = if sponsor.is_null() { None } else { Some(sponsor.into()) };
+        let source: PublicKey = PublicKey::try_from(self.params.source.as_str()).map_err(|e| {
+            actor_error!(serialization, format!("invalid source value {}", e))
+        })?;
+        let hash: Hash = self.params.source.try_into().map_err(|e| {
+            actor_error!(serialization, format!("invalid hash value {}", e))
+        })?;
+        let metadata_hash: Hash = self.params.metadataHash.clone().try_into().map_err(|e| {
+            actor_error!(serialization, format!("invalid hash value {}", e))
+        })?;
+        let subscription_id: SubscriptionId = self.params.subscriptionId.clone().try_into()?;
+        let size =  self.params.size;
+        let ttl = if self.params.ttl.is_zero() { None } else { Some(self.params.ttl as ChainEpoch) };
+        let from: fvm_shared::address::Address = self.params.from.into_eth_address().into();
+        Ok(AddBlobParams {
+            sponsor,
+            source,
+            hash,
+            metadata_hash,
+            id: subscription_id,
+            size,
+            ttl,
+            from
+        })
+    }
+}
+
+impl TryInto<DeleteBlobParams> for IBlobsFacade::deleteBlobCall {
+    type Error = ActorError;
+    fn try_into(self) -> std::result::Result<DeleteBlobParams, Self::Error> {
+        let subscriber: EthAddress = self.subscriber.into_eth_address();
+        let subscriber: Option<fvm_shared::address::Address> = if subscriber.is_null() { None } else { Some(subscriber.into()) };
+        let hash: Hash = self.blobHash.clone().try_into().map_err(|e| {
+            actor_error!(serialization, format!("invalid hash value {}", e))
+        })?;
+        let subscription_id: SubscriptionId = self.subscriptionId.clone().try_into()?;
+        let from: fvm_shared::address::Address = self.from.into_eth_address().into();
+        Ok(DeleteBlobParams {
+            sponsor: subscriber,
+            hash,
+            id: subscription_id,
+            from
+        })
+    }
+}
+
+impl TryInto<OverwriteBlobParams> for IBlobsFacade::overwriteBlobCall {
+    type Error = ActorError;
+
+    fn try_into(self) -> std::result::Result<OverwriteBlobParams, Self::Error> {
+        let old_hash: Hash = self.oldHash.clone().try_into().map_err(|e| {
+            actor_error!(serialization, format!("invalid hash value {}", e))
+        })?;
+        let sponsor: EthAddress = self.params.sponsor.into_eth_address();
+        let sponsor: Option<fvm_shared::address::Address> = if sponsor.is_null() { None } else { Some(sponsor.into()) };
+        let source: PublicKey = PublicKey::try_from(self.params.source.as_str()).map_err(|e| {
+            actor_error!(serialization, format!("invalid source value {}", e))
+        })?;
+        let hash: Hash = self.params.source.clone().try_into().map_err(|e| {
+            actor_error!(serialization, format!("invalid hash value {}", e))
+        })?;
+        let metadata_hash: Hash = self.params.metadataHash.clone().try_into().map_err(|e| {
+            actor_error!(serialization, format!("invalid hash value {}", e))
+        })?;
+        let subscription_id: SubscriptionId = self.params.subscriptionId.clone().try_into()?;
+        let size =  self.params.size;
+        let ttl = if self.params.ttl.is_zero() { None } else { Some(self.params.ttl as ChainEpoch) };
+        let from: fvm_shared::address::Address = self.params.from.into_eth_address().into();
+        Ok(OverwriteBlobParams {
+            old_hash,
+            add: AddBlobParams {
+                sponsor,
+                source,
+                hash,
+                metadata_hash,
+                id: subscription_id,
+                size,
+                ttl,
+                from,
+            },
+        })
     }
 }
 
