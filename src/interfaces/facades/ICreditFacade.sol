@@ -43,6 +43,11 @@ interface ICreditFacade {
     /// @return approval The credit approval for the account.
     function getCreditApproval(address from, address to) external view returns (CreditApproval memory approval);
 
+    /// @dev Get the credit balance of an account.
+    /// @param addr The address of the account.
+    /// @return balance The credit balance of the account.
+    function getCreditBalance(address addr) external view returns (Balance memory balance);
+
     /// @dev Set the credit sponsor for an account.
     /// @param from The address of the account.
     /// @param sponsor The address of the sponsor. Use zero address if unused.

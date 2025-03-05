@@ -18,6 +18,15 @@ interface ICreditFacade {
         address addr;
         CreditApproval approval;
     }
+    struct Balance {
+        uint256 creditFree;
+        uint256 creditCommitted;
+        address creditSponsor;
+        uint64 lastDebitEpoch;
+        Approval[] approvalsTo;
+        Approval[] approvalsFrom;
+        uint256 gasAllowance;
+    }
     struct CreditApproval {
         uint256 creditLimit;
         uint256 gasFeeLimit;
@@ -41,6 +50,7 @@ interface ICreditFacade {
 
     function getAccount(address addr) external view returns (Account memory account);
     function getCreditApproval(address from, address to) external view returns (CreditApproval memory approval);
+    function getCreditBalance(address addr) external view returns (Balance memory balance);
     function getCreditStats() external view returns (CreditStats memory stats);
     function setAccountSponsor(address from, address sponsor) external;
 }
@@ -236,6 +246,140 @@ interface ICreditFacade {
           },
           {
             "name": "gasFeeUsed",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getCreditBalance",
+    "inputs": [
+      {
+        "name": "addr",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "balance",
+        "type": "tuple",
+        "internalType": "struct Balance",
+        "components": [
+          {
+            "name": "creditFree",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "creditCommitted",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "creditSponsor",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "lastDebitEpoch",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "approvalsTo",
+            "type": "tuple[]",
+            "internalType": "struct Approval[]",
+            "components": [
+              {
+                "name": "addr",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "approval",
+                "type": "tuple",
+                "internalType": "struct CreditApproval",
+                "components": [
+                  {
+                    "name": "creditLimit",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "gasFeeLimit",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint64",
+                    "internalType": "uint64"
+                  },
+                  {
+                    "name": "creditUsed",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "gasFeeUsed",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "approvalsFrom",
+            "type": "tuple[]",
+            "internalType": "struct Approval[]",
+            "components": [
+              {
+                "name": "addr",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "approval",
+                "type": "tuple",
+                "internalType": "struct CreditApproval",
+                "components": [
+                  {
+                    "name": "creditLimit",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "gasFeeLimit",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "expiry",
+                    "type": "uint64",
+                    "internalType": "uint64"
+                  },
+                  {
+                    "name": "creditUsed",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "gasFeeUsed",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "gasAllowance",
             "type": "uint256",
             "internalType": "uint256"
           }
@@ -1058,6 +1202,372 @@ struct Approval { address addr; CreditApproval approval; }
                 );
                 <CreditApproval as alloy_sol_types::EventTopic>::encode_topic_preimage(
                     &rust.approval,
+                    out,
+                );
+            }
+            #[inline]
+            fn encode_topic(
+                rust: &Self::RustType,
+            ) -> alloy_sol_types::abi::token::WordToken {
+                let mut out = alloy_sol_types::private::Vec::new();
+                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    rust,
+                    &mut out,
+                );
+                alloy_sol_types::abi::token::WordToken(
+                    alloy_sol_types::private::keccak256(out),
+                )
+            }
+        }
+    };
+    /**```solidity
+struct Balance { uint256 creditFree; uint256 creditCommitted; address creditSponsor; uint64 lastDebitEpoch; Approval[] approvalsTo; Approval[] approvalsFrom; uint256 gasAllowance; }
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct Balance {
+        #[allow(missing_docs)]
+        pub creditFree: ::alloy_sol_types::private::primitives::aliases::U256,
+        #[allow(missing_docs)]
+        pub creditCommitted: ::alloy_sol_types::private::primitives::aliases::U256,
+        #[allow(missing_docs)]
+        pub creditSponsor: ::alloy_sol_types::private::Address,
+        #[allow(missing_docs)]
+        pub lastDebitEpoch: u64,
+        #[allow(missing_docs)]
+        pub approvalsTo: ::alloy_sol_types::private::Vec<
+            <Approval as ::alloy_sol_types::SolType>::RustType,
+        >,
+        #[allow(missing_docs)]
+        pub approvalsFrom: ::alloy_sol_types::private::Vec<
+            <Approval as ::alloy_sol_types::SolType>::RustType,
+        >,
+        #[allow(missing_docs)]
+        pub gasAllowance: ::alloy_sol_types::private::primitives::aliases::U256,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use ::alloy_sol_types as alloy_sol_types;
+        #[doc(hidden)]
+        type UnderlyingSolTuple<'a> = (
+            ::alloy_sol_types::sol_data::Uint<256>,
+            ::alloy_sol_types::sol_data::Uint<256>,
+            ::alloy_sol_types::sol_data::Address,
+            ::alloy_sol_types::sol_data::Uint<64>,
+            ::alloy_sol_types::sol_data::Array<Approval>,
+            ::alloy_sol_types::sol_data::Array<Approval>,
+            ::alloy_sol_types::sol_data::Uint<256>,
+        );
+        #[doc(hidden)]
+        type UnderlyingRustTuple<'a> = (
+            ::alloy_sol_types::private::primitives::aliases::U256,
+            ::alloy_sol_types::private::primitives::aliases::U256,
+            ::alloy_sol_types::private::Address,
+            u64,
+            ::alloy_sol_types::private::Vec<
+                <Approval as ::alloy_sol_types::SolType>::RustType,
+            >,
+            ::alloy_sol_types::private::Vec<
+                <Approval as ::alloy_sol_types::SolType>::RustType,
+            >,
+            ::alloy_sol_types::private::primitives::aliases::U256,
+        );
+        #[cfg(test)]
+        #[allow(dead_code, unreachable_patterns)]
+        fn _type_assertion(
+            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+        ) {
+            match _t {
+                alloy_sol_types::private::AssertTypeEq::<
+                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                >(_) => {}
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<Balance> for UnderlyingRustTuple<'_> {
+            fn from(value: Balance) -> Self {
+                (
+                    value.creditFree,
+                    value.creditCommitted,
+                    value.creditSponsor,
+                    value.lastDebitEpoch,
+                    value.approvalsTo,
+                    value.approvalsFrom,
+                    value.gasAllowance,
+                )
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Balance {
+            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                Self {
+                    creditFree: tuple.0,
+                    creditCommitted: tuple.1,
+                    creditSponsor: tuple.2,
+                    lastDebitEpoch: tuple.3,
+                    approvalsTo: tuple.4,
+                    approvalsFrom: tuple.5,
+                    gasAllowance: tuple.6,
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolValue for Balance {
+            type SolType = Self;
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::private::SolTypeValue<Self> for Balance {
+            #[inline]
+            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
+                (
+                    <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::tokenize(&self.creditFree),
+                    <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::tokenize(&self.creditCommitted),
+                    <::alloy_sol_types::sol_data::Address as alloy_sol_types::SolType>::tokenize(
+                        &self.creditSponsor,
+                    ),
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::tokenize(&self.lastDebitEpoch),
+                    <::alloy_sol_types::sol_data::Array<
+                        Approval,
+                    > as alloy_sol_types::SolType>::tokenize(&self.approvalsTo),
+                    <::alloy_sol_types::sol_data::Array<
+                        Approval,
+                    > as alloy_sol_types::SolType>::tokenize(&self.approvalsFrom),
+                    <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::tokenize(&self.gasAllowance),
+                )
+            }
+            #[inline]
+            fn stv_abi_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
+            }
+            #[inline]
+            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
+                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
+            }
+            #[inline]
+            fn stv_abi_encode_packed_to(
+                &self,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
+            }
+            #[inline]
+            fn stv_abi_packed_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolType for Balance {
+            type RustType = Self;
+            type Token<'a> = <UnderlyingSolTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
+            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::ENCODED_SIZE;
+            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
+            #[inline]
+            fn valid_token(token: &Self::Token<'_>) -> bool {
+                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
+            }
+            #[inline]
+            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
+                let tuple = <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::detokenize(token);
+                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolStruct for Balance {
+            const NAME: &'static str = "Balance";
+            #[inline]
+            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
+                alloy_sol_types::private::Cow::Borrowed(
+                    "Balance(uint256 creditFree,uint256 creditCommitted,address creditSponsor,uint64 lastDebitEpoch,Approval[] approvalsTo,Approval[] approvalsFrom,uint256 gasAllowance)",
+                )
+            }
+            #[inline]
+            fn eip712_components() -> alloy_sol_types::private::Vec<
+                alloy_sol_types::private::Cow<'static, str>,
+            > {
+                let mut components = alloy_sol_types::private::Vec::with_capacity(2);
+                components
+                    .push(<Approval as alloy_sol_types::SolStruct>::eip712_root_type());
+                components
+                    .extend(
+                        <Approval as alloy_sol_types::SolStruct>::eip712_components(),
+                    );
+                components
+                    .push(<Approval as alloy_sol_types::SolStruct>::eip712_root_type());
+                components
+                    .extend(
+                        <Approval as alloy_sol_types::SolStruct>::eip712_components(),
+                    );
+                components
+            }
+            #[inline]
+            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
+                [
+                    <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.creditFree)
+                        .0,
+                    <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.creditCommitted,
+                        )
+                        .0,
+                    <::alloy_sol_types::sol_data::Address as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.creditSponsor,
+                        )
+                        .0,
+                    <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.lastDebitEpoch,
+                        )
+                        .0,
+                    <::alloy_sol_types::sol_data::Array<
+                        Approval,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.approvalsTo)
+                        .0,
+                    <::alloy_sol_types::sol_data::Array<
+                        Approval,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.approvalsFrom)
+                        .0,
+                    <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.gasAllowance)
+                        .0,
+                ]
+                    .concat()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::EventTopic for Balance {
+            #[inline]
+            fn topic_preimage_length(rust: &Self::RustType) -> usize {
+                0usize
+                    + <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.creditFree,
+                    )
+                    + <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.creditCommitted,
+                    )
+                    + <::alloy_sol_types::sol_data::Address as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.creditSponsor,
+                    )
+                    + <::alloy_sol_types::sol_data::Uint<
+                        64,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.lastDebitEpoch,
+                    )
+                    + <::alloy_sol_types::sol_data::Array<
+                        Approval,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.approvalsTo,
+                    )
+                    + <::alloy_sol_types::sol_data::Array<
+                        Approval,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.approvalsFrom,
+                    )
+                    + <::alloy_sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.gasAllowance,
+                    )
+            }
+            #[inline]
+            fn encode_topic_preimage(
+                rust: &Self::RustType,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                out.reserve(
+                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    256,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.creditFree,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    256,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.creditCommitted,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Address as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.creditSponsor,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    64,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.lastDebitEpoch,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Array<
+                    Approval,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.approvalsTo,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Array<
+                    Approval,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.approvalsFrom,
+                    out,
+                );
+                <::alloy_sol_types::sol_data::Uint<
+                    256,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.gasAllowance,
                     out,
                 );
             }
@@ -2577,6 +3087,138 @@ function getCreditApproval(address from, address to) external view returns (Cred
             }
         }
     };
+    /**Function with signature `getCreditBalance(address)` and selector `0x6add1b3f`.
+```solidity
+function getCreditBalance(address addr) external view returns (Balance memory balance);
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct getCreditBalanceCall {
+        #[allow(missing_docs)]
+        pub addr: ::alloy_sol_types::private::Address,
+    }
+    ///Container type for the return parameters of the [`getCreditBalance(address)`](getCreditBalanceCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct getCreditBalanceReturn {
+        #[allow(missing_docs)]
+        pub balance: <Balance as ::alloy_sol_types::SolType>::RustType,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use ::alloy_sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = (::alloy_sol_types::sol_data::Address,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (::alloy_sol_types::private::Address,);
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<getCreditBalanceCall>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: getCreditBalanceCall) -> Self {
+                    (value.addr,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for getCreditBalanceCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self { addr: tuple.0 }
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = (Balance,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (
+                <Balance as ::alloy_sol_types::SolType>::RustType,
+            );
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<getCreditBalanceReturn>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: getCreditBalanceReturn) -> Self {
+                    (value.balance,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for getCreditBalanceReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self { balance: tuple.0 }
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for getCreditBalanceCall {
+            type Parameters<'a> = (::alloy_sol_types::sol_data::Address,);
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = getCreditBalanceReturn;
+            type ReturnTuple<'a> = (Balance,);
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "getCreditBalance(address)";
+            const SELECTOR: [u8; 4] = [106u8, 221u8, 27u8, 63u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                (
+                    <::alloy_sol_types::sol_data::Address as alloy_sol_types::SolType>::tokenize(
+                        &self.addr,
+                    ),
+                )
+            }
+            #[inline]
+            fn abi_decode_returns(
+                data: &[u8],
+                validate: bool,
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data, validate)
+                    .map(Into::into)
+            }
+        }
+    };
     /**Function with signature `getCreditStats()` and selector `0xc7d0b56c`.
 ```solidity
 function getCreditStats() external view returns (CreditStats memory stats);
@@ -2851,6 +3493,8 @@ function setAccountSponsor(address from, address sponsor) external;
         #[allow(missing_docs)]
         getCreditApproval(getCreditApprovalCall),
         #[allow(missing_docs)]
+        getCreditBalance(getCreditBalanceCall),
+        #[allow(missing_docs)]
         getCreditStats(getCreditStatsCall),
         #[allow(missing_docs)]
         setAccountSponsor(setAccountSponsorCall),
@@ -2864,6 +3508,7 @@ function setAccountSponsor(address from, address sponsor) external;
         ///
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
+            [106u8, 221u8, 27u8, 63u8],
             [125u8, 164u8, 203u8, 89u8],
             [199u8, 208u8, 181u8, 108u8],
             [205u8, 155u8, 232u8, 15u8],
@@ -2874,7 +3519,7 @@ function setAccountSponsor(address from, address sponsor) external;
     impl alloy_sol_types::SolInterface for ICreditFacadeCalls {
         const NAME: &'static str = "ICreditFacadeCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 4usize;
+        const COUNT: usize = 5usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
@@ -2883,6 +3528,9 @@ function setAccountSponsor(address from, address sponsor) external;
                 }
                 Self::getCreditApproval(_) => {
                     <getCreditApprovalCall as alloy_sol_types::SolCall>::SELECTOR
+                }
+                Self::getCreditBalance(_) => {
+                    <getCreditBalanceCall as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::getCreditStats(_) => {
                     <getCreditStatsCall as alloy_sol_types::SolCall>::SELECTOR
@@ -2911,6 +3559,19 @@ function setAccountSponsor(address from, address sponsor) external;
                 &[u8],
                 bool,
             ) -> alloy_sol_types::Result<ICreditFacadeCalls>] = &[
+                {
+                    fn getCreditBalance(
+                        data: &[u8],
+                        validate: bool,
+                    ) -> alloy_sol_types::Result<ICreditFacadeCalls> {
+                        <getCreditBalanceCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                                validate,
+                            )
+                            .map(ICreditFacadeCalls::getCreditBalance)
+                    }
+                    getCreditBalance
+                },
                 {
                     fn setAccountSponsor(
                         data: &[u8],
@@ -2985,6 +3646,11 @@ function setAccountSponsor(address from, address sponsor) external;
                         inner,
                     )
                 }
+                Self::getCreditBalance(inner) => {
+                    <getCreditBalanceCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
                 Self::getCreditStats(inner) => {
                     <getCreditStatsCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
@@ -3008,6 +3674,12 @@ function setAccountSponsor(address from, address sponsor) external;
                 }
                 Self::getCreditApproval(inner) => {
                     <getCreditApprovalCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
+                Self::getCreditBalance(inner) => {
+                    <getCreditBalanceCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )

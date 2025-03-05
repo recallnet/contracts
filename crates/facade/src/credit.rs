@@ -122,6 +122,35 @@ impl TryAbiEncodeReturns<Option<CreditApproval>> for ICreditFacade::getCreditApp
     }
 }
 
+impl TryAbiEncodeReturns<Option<Account>> for ICreditFacade::getCreditBalanceCall {
+    fn try_returns(&self, value: Option<Account>) -> Result<Vec<u8>, Error> {
+        let balance = if let Some(account) = value {
+            ICreditFacade::Balance {
+                creditFree: BigUintWrapper::try_from(account.credit_free)?.into(),
+                creditCommitted: BigUintWrapper::try_from(account.credit_committed)?.into(),
+                creditSponsor: account.credit_sponsor.map(|address| {
+                    H160::try_from(address)
+                }).transpose()?.map(|h160| h160.into()).unwrap_or_default(), // FIXME SU DRY
+                lastDebitEpoch: account.last_debit_epoch as u64,
+                approvalsTo: convert_approvals(account.approvals_to)?,
+                approvalsFrom: convert_approvals(account.approvals_from)?,
+                gasAllowance: BigUintWrapper::try_from(account.gas_allowance)?.into(),
+            }
+        } else {
+            ICreditFacade::Balance {
+                creditFree: U256::default(),
+                creditCommitted: U256::default(),
+                creditSponsor: Address::default(),
+                lastDebitEpoch: u64::default(),
+                approvalsTo: Vec::default(),
+                approvalsFrom: Vec::default(),
+                gasAllowance: U256::default(),
+            }
+        };
+        Ok(Self::abi_encode_returns(&(balance,)))
+    }
+}
+
 pub type Calls = ICreditFacadeCalls;
 
 impl_empty_returns!(
