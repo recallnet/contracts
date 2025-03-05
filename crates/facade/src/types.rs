@@ -228,3 +228,13 @@ pub fn try_into_hash(string: String) -> Result<Hash, ActorError> {
         actor_error!(serialization, format!("invalid hash value {}", e))
     })
 }
+
+pub trait IntoEthAddress {
+    fn into_eth_address(self) -> EthAddress;
+}
+
+impl IntoEthAddress for Address {
+    fn into_eth_address(self) -> EthAddress {
+        EthAddress(self.0.0)
+    }
+}

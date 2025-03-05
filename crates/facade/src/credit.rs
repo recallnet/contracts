@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use crate::credit_facade::icreditfacade::ICreditFacade::{CreditApproved, CreditDebited, CreditPurchased, CreditRevoked, ICreditFacadeCalls, ICreditFacadeEvents};
-use crate::types::{AbiEncodeError, BigUintWrapper, InputData, TryAbiEncodeReturns, H160};
+use crate::types::{AbiEncodeError, BigUintWrapper, InputData, TryAbiEncodeReturns, H160, IntoEthAddress};
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::SolInterface;
 use anyhow::Result;
@@ -17,7 +17,6 @@ use fvm_shared::clock::ChainEpoch;
 use fvm_shared::econ::TokenAmount;
 use fendermint_actor_blobs_shared::params::{ApproveCreditParams, GetAccountParams, GetCreditApprovalParams, GetStatsReturn, RevokeCreditParams, SetSponsorParams};
 use fil_actors_evm_shared::address::EthAddress;
-use crate::blobs::IntoEthAddress;
 
 pub fn can_handle(input_data: &InputData) -> bool {
     ICreditFacadeCalls::valid_selector(input_data.selector())
@@ -125,8 +124,8 @@ impl TryAbiEncodeReturns<GetStatsReturn> for ICreditFacade::getCreditStatsCall {
 
 impl Into<GetCreditApprovalParams> for ICreditFacade::getCreditApprovalCall {
     fn into(self) -> GetCreditApprovalParams {
-        let from: fvm_shared::address::Address = self.from.into_eth_address().into();
-        let to: fvm_shared::address::Address = self.to.into_eth_address().into();
+        let from: FVMAddress = self.from.into_eth_address().into();
+        let to: FVMAddress = self.to.into_eth_address().into();
         GetCreditApprovalParams { from, to }
     }
 }
@@ -189,7 +188,7 @@ impl Into<ApproveCreditParams> for ICreditFacade::approveCredit_1Call {
     fn into(self) -> ApproveCreditParams {
         let from: FVMAddress = self.from.into_eth_address().into();
         let to: FVMAddress = self.to.into_eth_address().into();
-        let caller_allowlist: HashSet<FVMAddress> = HashSet::from_iter(self.caller.iter().map(|address| <EthAddress as Into<fvm_shared::address::Address>>::into(address.into_eth_address())));
+        let caller_allowlist: HashSet<FVMAddress> = HashSet::from_iter(self.caller.iter().map(|address| <EthAddress as Into<FVMAddress>>::into(address.into_eth_address())));
         ApproveCreditParams {
             from,
             to,
@@ -205,7 +204,7 @@ impl Into<ApproveCreditParams> for ICreditFacade::approveCredit_2Call {
     fn into(self) -> ApproveCreditParams {
         let from: FVMAddress = self.from.into_eth_address().into();
         let to: FVMAddress = self.to.into_eth_address().into();
-        let caller_allowlist: HashSet<FVMAddress> = HashSet::from_iter(self.caller.iter().map(|address| <EthAddress as Into<fvm_shared::address::Address>>::into(address.into_eth_address())));
+        let caller_allowlist: HashSet<FVMAddress> = HashSet::from_iter(self.caller.iter().map(|address| <EthAddress as Into<FVMAddress>>::into(address.into_eth_address())));
         let credit_limit: Credit = BigUintWrapper::from(self.creditLimit).into();
         let gas_fee_limit: TokenAmount = BigUintWrapper::from(self.gasFeeLimit).into();
         let ttl = self.ttl;
@@ -237,8 +236,8 @@ impl Into<ApproveCreditParams> for ICreditFacade::approveCredit_3Call {
 
 impl Into<RevokeCreditParams> for ICreditFacade::revokeCredit_0Call {
     fn into(self) -> RevokeCreditParams {
-        let from: fvm_shared::address::Address = self.from.into_eth_address().into();
-        let to: fvm_shared::address::Address = self.to.into_eth_address().into();
+        let from: FVMAddress = self.from.into_eth_address().into();
+        let to: FVMAddress = self.to.into_eth_address().into();
         RevokeCreditParams{
             from,
             to,
@@ -249,9 +248,9 @@ impl Into<RevokeCreditParams> for ICreditFacade::revokeCredit_0Call {
 
 impl Into<RevokeCreditParams> for ICreditFacade::revokeCredit_2Call {
     fn into(self) -> RevokeCreditParams {
-        let from: fvm_shared::address::Address = self.from.into_eth_address().into();
-        let to: fvm_shared::address::Address = self.to.into_eth_address().into();
-        let caller: fvm_shared::address::Address = self.caller.into_eth_address().into();
+        let from: FVMAddress = self.from.into_eth_address().into();
+        let to: FVMAddress = self.to.into_eth_address().into();
+        let caller: FVMAddress = self.caller.into_eth_address().into();
         RevokeCreditParams {
             from,
             to,

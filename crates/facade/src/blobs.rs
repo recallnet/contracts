@@ -1,11 +1,10 @@
 use std::str::FromStr;
 use crate::blobs_facade::iblobsfacade::IBlobsFacade::{BlobAdded, BlobDeleted, BlobFinalized, BlobPending, IBlobsFacadeCalls, IBlobsFacadeEvents};
-use crate::types::{try_into_hash, try_into_public_key, AbiEncodeError, AbiEncodeReturns, InputData, TryAbiEncodeReturns, H160};
+use crate::types::{try_into_hash, try_into_public_key, AbiEncodeError, AbiEncodeReturns, InputData, TryAbiEncodeReturns, H160, IntoEthAddress};
 use alloy_primitives::U256;
 use anyhow::Result;
 use fvm_shared::address::{Address as FVMAddress};
 use alloy_sol_types::{SolInterface};
-use alloy_sol_types::private::Address;
 use fendermint_actor_blobs_shared::state::{Blob, BlobStatus, Hash, PublicKey, SubscriptionId};
 use crate::blobs_facade::iblobsfacade::IBlobsFacade;
 
@@ -301,16 +300,6 @@ impl_empty_returns!(
     IBlobsFacade::deleteBlobCall, 
     IBlobsFacade::overwriteBlobCall
 );
-
-pub trait IntoEthAddress {
-    fn into_eth_address(self) -> EthAddress;
-}
-
-impl IntoEthAddress for Address {
-    fn into_eth_address(self) -> EthAddress {
-        EthAddress(self.0.0)
-    }
-}
 
 pub fn blob_added(
     subscriber: FVMAddress,
