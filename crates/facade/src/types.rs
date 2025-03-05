@@ -48,11 +48,11 @@ pub struct InvokeContractReturn {
 }
 
 pub trait AbiEncodeReturns<T> {
-    fn returns(&self, value: &T) -> Vec<u8>;
+    fn returns(&self, value: T) -> Vec<u8>;
 }
 
 pub trait TryAbiEncodeReturns<T> {
-    fn try_returns(&self, value: &T) -> anyhow::Result<Vec<u8>, anyhow::Error>;
+    fn try_returns(&self, value: T) -> anyhow::Result<Vec<u8>, anyhow::Error>;
 }
 
 /// Fixed-size uninterpreted hash type with 20 bytes (160 bits) size.

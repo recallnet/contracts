@@ -34,26 +34,26 @@ pub fn parse_input(input: &[u8]) -> Result<IBlobsFacadeCalls, ActorError> {
 pub type Calls = IBlobsFacadeCalls;
 
 impl AbiEncodeReturns<u64> for IBlobsFacade::getPendingBlobsCountCall {
-    fn returns(&self, value: &u64) -> Vec<u8> {
-        Self::abi_encode_returns(&(value,))
+    fn returns(&self, value: u64) -> Vec<u8> {
+        Self::abi_encode_returns(&(&value,))
     }
 }
 
 impl AbiEncodeReturns<u64> for IBlobsFacade::getPendingBytesCountCall {
-    fn returns(&self, value: &u64) -> Vec<u8> {
-        Self::abi_encode_returns(&(value,))
+    fn returns(&self, value: u64) -> Vec<u8> {
+        Self::abi_encode_returns(&(&value,))
     }
 }
 
 impl AbiEncodeReturns<Option<u64>> for IBlobsFacade::getStorageUsageCall {
-    fn returns(&self, value: &Option<u64>) -> Vec<u8> {
+    fn returns(&self, value: Option<u64>) -> Vec<u8> {
         let value = value.unwrap_or(u64::default()); // Value or zero, as per Solidity
         Self::abi_encode_returns(&(U256::from(value),))
     }
 }
 
 impl AbiEncodeReturns<GetStatsReturn> for IBlobsFacade::getStorageStatsCall {
-    fn returns(&self, stats: &GetStatsReturn) -> Vec<u8> {
+    fn returns(&self, stats: GetStatsReturn) -> Vec<u8> {
         let storage_stats = IBlobsFacade::StorageStats {
             capacityFree: stats.capacity_free,
             capacityUsed: stats.capacity_used,
@@ -68,7 +68,7 @@ impl AbiEncodeReturns<GetStatsReturn> for IBlobsFacade::getStorageStatsCall {
     }
 }
 
-fn blob_requests_to_tuple(blob_requests: &Vec<BlobRequest>) -> Result<Vec<IBlobsFacade::BlobTuple>, anyhow::Error> {
+fn blob_requests_to_tuple(blob_requests: Vec<BlobRequest>) -> Result<Vec<IBlobsFacade::BlobTuple>, anyhow::Error> {
     blob_requests.iter().map(|blob_request| {
         let source_info: Result<Vec<IBlobsFacade::BlobSourceInfo>> = blob_request.1.iter().map(|item| {
             let address = item.0;
@@ -91,27 +91,27 @@ fn blob_requests_to_tuple(blob_requests: &Vec<BlobRequest>) -> Result<Vec<IBlobs
 }
 
 impl TryAbiEncodeReturns<Vec<BlobRequest>> for IBlobsFacade::getAddedBlobsCall {
-    fn try_returns(&self, blob_requests: &Vec<BlobRequest>) -> Result<Vec<u8>, anyhow::Error> {
+    fn try_returns(&self, blob_requests: Vec<BlobRequest>) -> Result<Vec<u8>, anyhow::Error> {
         let blob_tuples = blob_requests_to_tuple(blob_requests)?;
         Ok(Self::abi_encode_returns(&(blob_tuples,)))
     }
 }
 
 impl TryAbiEncodeReturns<Vec<BlobRequest>> for IBlobsFacade::getPendingBlobsCall {
-    fn try_returns(&self, blob_requests: &Vec<BlobRequest>) -> Result<Vec<u8>, anyhow::Error> {
+    fn try_returns(&self, blob_requests: Vec<BlobRequest>) -> Result<Vec<u8>, anyhow::Error> {
         let blob_tuples = blob_requests_to_tuple(blob_requests)?;
         Ok(Self::abi_encode_returns(&(blob_tuples,)))
     }
 }
 
 impl AbiEncodeReturns<BlobStatus> for IBlobsFacade::getBlobStatusCall {
-    fn returns(&self, blob_status: &BlobStatus) -> Vec<u8> {
+    fn returns(&self, blob_status: BlobStatus) -> Vec<u8> {
         let value = blob_status_as_solidity_enum(blob_status);
         Self::abi_encode_returns(&(value,))
     }
 }
 
-fn blob_status_as_solidity_enum(blob_status: &BlobStatus) -> u8 {
+fn blob_status_as_solidity_enum(blob_status: BlobStatus) -> u8 {
     match blob_status {
         BlobStatus::Added => 0,
         BlobStatus::Pending => 1,
@@ -121,22 +121,22 @@ fn blob_status_as_solidity_enum(blob_status: &BlobStatus) -> u8 {
 }
 
 impl AbiEncodeReturns<Option<BlobStatus>> for IBlobsFacade::getBlobStatusCall {
-    fn returns(&self, blob_status: &Option<BlobStatus>) -> Vec<u8> {
+    fn returns(&self, blob_status: Option<BlobStatus>) -> Vec<u8> {
         // Use BlobStatus::Failed if None got passed
-        let blob_status = blob_status.as_ref().unwrap_or(&BlobStatus::Failed);
+        let blob_status = blob_status.unwrap_or(BlobStatus::Failed);
         self.returns(blob_status)
     }
 }
 
 impl AbiEncodeReturns<GetStatsReturn> for IBlobsFacade::getSubnetStatsCall {
-    fn returns(&self, stats: &GetStatsReturn) -> Vec<u8> {
+    fn returns(&self, stats: GetStatsReturn) -> Vec<u8> {
         let subnet_stats = IBlobsFacade::SubnetStats {
-            balance: BigUintWrapper::from(stats.balance.clone()).into(),
+            balance: BigUintWrapper::from(stats.balance).into(),
             capacityFree: stats.capacity_free,
             capacityUsed: stats.capacity_used,
-            creditSold: BigUintWrapper::from(stats.credit_sold.clone()).into(),
-            creditCommitted: BigUintWrapper::from(stats.credit_committed.clone()).into(),
-            creditDebited: BigUintWrapper::from(stats.credit_debited.clone()).into(),
+            creditSold: BigUintWrapper::from(stats.credit_sold).into(),
+            creditCommitted: BigUintWrapper::from(stats.credit_committed).into(),
+            creditDebited: BigUintWrapper::from(stats.credit_debited).into(),
             tokenCreditRate: BigUintWrapper(stats.token_credit_rate.rate().clone()).into(),
             numAccounts: stats.num_accounts,
             numBlobs: stats.num_blobs,
@@ -150,7 +150,7 @@ impl AbiEncodeReturns<GetStatsReturn> for IBlobsFacade::getSubnetStatsCall {
 }
 
 impl TryAbiEncodeReturns<Option<Blob>> for IBlobsFacade::getBlobCall {
-    fn try_returns(&self, value: &Option<Blob>) -> Result<Vec<u8>, anyhow::Error> {
+    fn try_returns(&self, value: Option<Blob>) -> Result<Vec<u8>, anyhow::Error> {
         let facade_blob = if let Some(blob) = value {
             let subscribers = blob.subscribers.iter().map(|(fvm_address, subscription_group)| {
                 let subscription_group = subscription_group.subscriptions.iter().map(|(subscription_id, subscription)| {
@@ -176,14 +176,14 @@ impl TryAbiEncodeReturns<Option<Blob>> for IBlobsFacade::getBlobCall {
             IBlobsFacade::Blob {
                 size: blob.size,
                 metadataHash: blob.metadata_hash.into(),
-                status: blob_status_as_solidity_enum(&blob.status),
+                status: blob_status_as_solidity_enum(blob.status),
                 subscribers,
             }
         } else {
             IBlobsFacade::Blob {
                 size: 0,
                 metadataHash: Hash::default().into(),
-                status: blob_status_as_solidity_enum(&BlobStatus::Failed),
+                status: blob_status_as_solidity_enum(BlobStatus::Failed),
                 subscribers: vec![]
             }
         };
@@ -196,7 +196,7 @@ macro_rules! impl_empty_returns {
     ($($t:ty),*) => {
         $(
             impl AbiEncodeReturns<()> for $t {
-                fn returns(&self, _: &()) -> Vec<u8> { Self::abi_encode_returns(&()) }
+                fn returns(&self, _: ()) -> Vec<u8> { Self::abi_encode_returns(&()) }
             }
         )*
     };
