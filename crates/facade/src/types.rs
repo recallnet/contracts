@@ -11,7 +11,6 @@ use fvm_shared::{
     bigint::{BigInt, BigUint, Sign as BigSign},
     ActorID,
 };
-use fvm_shared::bigint::ToBigInt;
 use fvm_shared::econ::TokenAmount;
 use fil_actors_runtime::ActorError;
 use fil_actors_evm_shared::address::EthAddress;

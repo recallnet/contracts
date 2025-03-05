@@ -87,6 +87,21 @@ interface ICreditFacade {
     /// @param recipient The address of the account.
     function buyCredit(address recipient) external payable;
 
+    /// @dev Revoke credits for an account. Assumes `msg.sender` is the owner of the credits.
+    /// @param to The address of the account to revoke credits for.
+    function revokeCredit(address to) external;
+
+    /// @dev Revoke credits for an account.
+    /// @param from The address of the account that owns the credits.
+    /// @param to The address of the account to revoke credits for.
+    function revokeCredit(address from, address to) external;
+
+    /// @dev Revoke credits for an account. Includes optional fields, which if set to zero, will be encoded as null.
+    /// @param from The address of the account that owns the credits.
+    /// @param to The address of the account to revoke credits for.
+    /// @param caller Optional restriction on caller address, e.g., an object store.
+    function revokeCredit(address from, address to, address caller) external;
+
     /// @dev Set the credit sponsor for an account.
     /// @param from The address of the account.
     /// @param sponsor The address of the sponsor. Use zero address if unused.
