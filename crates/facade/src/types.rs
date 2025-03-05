@@ -27,6 +27,18 @@ pub struct InvokeContractParams {
 /// EVM call with selector (first 4 bytes) and calldata (remaining bytes)
 pub struct InputData(Vec<u8>);
 
+impl InputData {
+    pub fn selector(&self) -> [u8; 4] {
+        let mut selector = [0u8; 4];
+        selector.copy_from_slice(&self.0[0..4]);
+        selector
+    }
+
+    pub fn calldata(&self) -> &[u8] {
+        &self.0[4..]
+    }
+}
+
 impl TryFrom<InvokeContractParams> for InputData {
     type Error = ActorError;
 

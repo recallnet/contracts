@@ -6,7 +6,6 @@ use anyhow::Result;
 use fvm_shared::address::{Address as FVMAddress};
 use alloy_sol_types::{SolInterface};
 use alloy_sol_types::private::Address;
-use fil_actors_runtime::{actor_error, ActorError};
 use fendermint_actor_blobs_shared::state::{Blob, BlobStatus, Hash, PublicKey};
 use crate::blobs_facade::iblobsfacade::IBlobsFacade;
 
@@ -16,13 +15,7 @@ use fil_actors_evm_shared::address::EthAddress;
 use crate::types::BigUintWrapper;
 
 pub fn parse_input(input: InputData) -> Option<IBlobsFacadeCalls> {
-    // Get the selector (first 4 bytes)
-    let mut selector = [0u8; 4];
-    selector.copy_from_slice(&input[0..4]);
-
-    // Decode the rest of the input data
-    let data = &input[4..];
-    IBlobsFacadeCalls::abi_decode_raw(selector, data, true).ok()
+    IBlobsFacadeCalls::abi_decode_raw(input.selector(), input.calldata(), true).ok()
 }
 
 pub type Calls = IBlobsFacadeCalls;
