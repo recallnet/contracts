@@ -1,6 +1,6 @@
 use std::str::FromStr;
 use crate::blobs_facade::iblobsfacade::IBlobsFacade::{BlobAdded, BlobDeleted, BlobFinalized, BlobPending, IBlobsFacadeCalls, IBlobsFacadeEvents};
-use crate::types::{AbiEncodeError, AbiEncodeReturns, InputData, TryAbiEncodeReturns, H160};
+use crate::types::{try_into_hash, try_into_public_key, AbiEncodeError, AbiEncodeReturns, InputData, TryAbiEncodeReturns, H160};
 use alloy_primitives::U256;
 use anyhow::Result;
 use fvm_shared::address::{Address as FVMAddress};
@@ -228,20 +228,14 @@ impl TryInto<AddBlobParams> for IBlobsFacade::addBlobCall {
 
     fn try_into(self) -> std::result::Result<AddBlobParams, Self::Error> {
         let sponsor: EthAddress = self.params.sponsor.into_eth_address();
-        let sponsor: Option<fvm_shared::address::Address> = if sponsor.is_null() { None } else { Some(sponsor.into()) };
-        let source: PublicKey = PublicKey::try_from(self.params.source.as_str()).map_err(|e| {
-            actor_error!(serialization, format!("invalid source value {}", e))
-        })?;
-        let hash: Hash = self.params.source.try_into().map_err(|e| {
-            actor_error!(serialization, format!("invalid hash value {}", e))
-        })?;
-        let metadata_hash: Hash = self.params.metadataHash.clone().try_into().map_err(|e| {
-            actor_error!(serialization, format!("invalid hash value {}", e))
-        })?;
+        let sponsor: Option<FVMAddress> = if sponsor.is_null() { None } else { Some(sponsor.into()) };
+        let source = try_into_public_key(self.params.source.clone())?;
+        let hash = try_into_hash(self.params.blobHash)?;
+        let metadata_hash = try_into_hash(self.params.metadataHash)?;
         let subscription_id: SubscriptionId = self.params.subscriptionId.clone().try_into()?;
         let size =  self.params.size;
         let ttl = if self.params.ttl.is_zero() { None } else { Some(self.params.ttl as ChainEpoch) };
-        let from: fvm_shared::address::Address = self.params.from.into_eth_address().into();
+        let from: FVMAddress = self.params.from.into_eth_address().into();
         Ok(AddBlobParams {
             sponsor,
             source,
@@ -260,9 +254,7 @@ impl TryInto<DeleteBlobParams> for IBlobsFacade::deleteBlobCall {
     fn try_into(self) -> std::result::Result<DeleteBlobParams, Self::Error> {
         let subscriber: EthAddress = self.subscriber.into_eth_address();
         let subscriber: Option<fvm_shared::address::Address> = if subscriber.is_null() { None } else { Some(subscriber.into()) };
-        let hash: Hash = self.blobHash.clone().try_into().map_err(|e| {
-            actor_error!(serialization, format!("invalid hash value {}", e))
-        })?;
+        let hash: Hash = try_into_hash(self.blobHash)?;
         let subscription_id: SubscriptionId = self.subscriptionId.clone().try_into()?;
         let from: fvm_shared::address::Address = self.from.into_eth_address().into();
         Ok(DeleteBlobParams {
@@ -278,20 +270,12 @@ impl TryInto<OverwriteBlobParams> for IBlobsFacade::overwriteBlobCall {
     type Error = ActorError;
 
     fn try_into(self) -> std::result::Result<OverwriteBlobParams, Self::Error> {
-        let old_hash: Hash = self.oldHash.clone().try_into().map_err(|e| {
-            actor_error!(serialization, format!("invalid hash value {}", e))
-        })?;
+        let old_hash: Hash = try_into_hash(self.oldHash)?;
         let sponsor: EthAddress = self.params.sponsor.into_eth_address();
         let sponsor: Option<fvm_shared::address::Address> = if sponsor.is_null() { None } else { Some(sponsor.into()) };
-        let source: PublicKey = PublicKey::try_from(self.params.source.as_str()).map_err(|e| {
-            actor_error!(serialization, format!("invalid source value {}", e))
-        })?;
-        let hash: Hash = self.params.source.clone().try_into().map_err(|e| {
-            actor_error!(serialization, format!("invalid hash value {}", e))
-        })?;
-        let metadata_hash: Hash = self.params.metadataHash.clone().try_into().map_err(|e| {
-            actor_error!(serialization, format!("invalid hash value {}", e))
-        })?;
+        let source: PublicKey = try_into_public_key(self.params.source)?;
+        let hash: Hash = try_into_hash(self.params.blobHash)?;
+        let metadata_hash: Hash = try_into_hash(self.params.metadataHash)?;
         let subscription_id: SubscriptionId = self.params.subscriptionId.clone().try_into()?;
         let size =  self.params.size;
         let ttl = if self.params.ttl.is_zero() { None } else { Some(self.params.ttl as ChainEpoch) };

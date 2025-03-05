@@ -12,6 +12,7 @@ use fvm_shared::{
     ActorID,
 };
 use fvm_shared::econ::TokenAmount;
+use fendermint_actor_blobs_shared::state::{Hash, PublicKey};
 use fil_actors_runtime::{actor_error, ActorError};
 use fil_actors_evm_shared::address::EthAddress;
 
@@ -214,4 +215,16 @@ impl From<BigIntWrapper> for I256 {
             }
         )*
     };
+}
+
+pub fn try_into_public_key(string: String) -> Result<PublicKey, ActorError> {
+    PublicKey::try_from(string.as_str()).map_err(|e| {
+        actor_error!(serialization, format!("invalid source value {}", e))
+    })
+}
+
+pub fn try_into_hash(string: String) -> Result<Hash, ActorError> {
+    string.try_into().map_err(|e| {
+        actor_error!(serialization, format!("invalid hash value {}", e))
+    })
 }

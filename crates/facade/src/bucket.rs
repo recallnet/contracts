@@ -2,7 +2,9 @@ use crate::bucket_facade::ibucketfacade::IBucketFacade::{IBucketFacadeCalls, IBu
 use anyhow::Result;
 use std::collections::HashMap;
 use alloy_sol_types::SolInterface;
+use fendermint_actor_bucket_shared::AddParams;
 use fil_actors_runtime::{actor_error, ActorError};
+use crate::bucket_facade::ibucketfacade::IBucketFacade;
 use crate::types::InputData;
 
 pub fn can_handle(input_data: &InputData) -> bool {
@@ -16,6 +18,12 @@ pub fn parse_input(input: &InputData) -> Result<IBucketFacadeCalls, ActorError> 
 }
 
 pub type Calls = IBucketFacadeCalls;
+
+impl Into<AddParams> for IBucketFacade::addObject_0Call {
+    fn into(self) -> AddParams {
+        todo!()
+    }
+}
 
 pub fn object_added(
     key: Vec<u8>,
