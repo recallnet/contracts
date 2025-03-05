@@ -11,6 +11,7 @@ use fvm_shared::{
     bigint::{BigInt, BigUint, Sign as BigSign},
     ActorID,
 };
+use fvm_shared::bigint::{ToBigInt, ToBigUint};
 use fvm_shared::econ::TokenAmount;
 use fil_actors_runtime::ActorError;
 use fil_actors_evm_shared::address::EthAddress;
@@ -151,6 +152,18 @@ impl From<BigUintWrapper> for U256 {
             (n, false) => n,
             (_, true) => U256::MAX,
         }
+    }
+}
+
+impl From<U256> for BigUintWrapper {
+    fn from(value: U256) -> Self {
+        BigUintWrapper(BigUint::from_bytes_be(&value.to_be_bytes::<{U256::BYTES}>()))
+    }
+}
+
+impl Into<TokenAmount> for BigUintWrapper {
+    fn into(self) -> TokenAmount {
+        TokenAmount::from_atto(self.0)
     }
 }
 

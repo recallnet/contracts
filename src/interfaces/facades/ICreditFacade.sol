@@ -48,6 +48,38 @@ interface ICreditFacade {
     /// @return balance The credit balance of the account.
     function getCreditBalance(address addr) external view returns (Balance memory balance);
 
+    /// @dev Approve credits for an account. Assumes `msg.sender` is the owner of the credits, and no optional fields.
+    /// @param to The address of the account to approve credits for.
+    function approveCredit(address to) external;
+
+    /// @dev Approve credits for an account. This is a simplified variant when no optional fields are needed.
+    /// @param from The address of the account that owns the credits.
+    /// @param to The address of the account to approve credits for.
+    function approveCredit(address from, address to) external;
+
+    /// @dev Approve credits for an account. This is a simplified variant when no optional fields are needed.
+    /// @param from The address of the account that owns the credits.
+    /// @param to The address of the account to approve credits for.
+    /// @param caller Optional restriction on caller address, e.g., an object store. Use zero address if unused.
+    function approveCredit(address from, address to, address[] memory caller) external;
+
+    /// @dev Approve credits for an account. This is a simplified variant when no optional fields are needed.
+    /// @param from The address of the account that owns the credits.
+    /// @param to The address of the account to approve credits for.
+    /// @param caller Optional restriction on caller address, e.g., an object store. Use zero address if unused.
+    /// @param creditLimit Optional credit approval limit. Use zero if unused, indicating a null value.
+    /// @param gasFeeLimit Optional gas fee approval limit. Use zero if unused, indicating a null value.
+    /// @param ttl Optional credit approval time-to-live epochs. Minimum value is 3600 (1 hour). Use zero if
+    /// unused, indicating a null value.
+    function approveCredit(
+        address from,
+        address to,
+        address[] memory caller,
+        uint256 creditLimit,
+        uint256 gasFeeLimit,
+        uint64 ttl
+    ) external;
+
     /// @dev Set the credit sponsor for an account.
     /// @param from The address of the account.
     /// @param sponsor The address of the sponsor. Use zero address if unused.

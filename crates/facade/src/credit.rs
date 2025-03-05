@@ -154,7 +154,11 @@ impl TryAbiEncodeReturns<Option<Account>> for ICreditFacade::getCreditBalanceCal
 pub type Calls = ICreditFacadeCalls;
 
 impl_empty_returns!(
-    ICreditFacade::setAccountSponsorCall
+    ICreditFacade::setAccountSponsorCall,
+    ICreditFacade::approveCredit_0Call,
+    ICreditFacade::approveCredit_1Call,
+    ICreditFacade::approveCredit_2Call,
+    ICreditFacade::approveCredit_3Call
 );
 
 pub fn credit_purchased(from: FVMAddress, amount: BigUint) -> Result<ICreditFacadeEvents> {
