@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use alloy_sol_types::SolInterface;
 use fvm_shared::bigint::Zero;
 use fvm_shared::clock::ChainEpoch;
-use fendermint_actor_bucket_shared::{AddParams, DeleteParams, Object};
+use fendermint_actor_bucket_shared::{AddParams, DeleteParams, ListParams, Object};
 use fil_actors_runtime::{actor_error, ActorError};
 use crate::bucket_facade::ibucketfacade::IBucketFacade;
 use crate::types::{try_into_hash, try_into_public_key, InputData, AbiEncodeReturns, TryAbiEncodeReturns, IntoEthAddress};
@@ -132,6 +132,17 @@ impl AbiEncodeReturns<Option<Object>> for IBucketFacade::getObjectCall {
             IBucketFacade::ObjectValue::default()
         };
         Self::abi_encode_returns(&(object_value,))
+    }
+}
+
+impl Into<ListParams> for IBucketFacade::queryObjects_0Call {
+    fn into(self) -> ListParams {
+        ListParams {
+            prefix: self.prefix.into_bytes(),
+            delimiter: self.delimiter.into_bytes(),
+            start_key: Some(self.startKey.into_bytes()),
+            limit: self.limit,
+        }
     }
 }
 
