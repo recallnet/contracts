@@ -13,6 +13,7 @@ use crate::types::AbiEncodeReturns;
 use alloy_sol_types::SolCall;
 use fendermint_actor_blobs_shared::state::{Account, CreditApproval};
 use fvm_shared::address::{Address as FVMAddress};
+use fendermint_actor_blobs_shared::params::GetStatsReturn;
 
 pub fn can_handle(input_data: &InputData) -> bool {
     ICreditFacadeCalls::valid_selector(input_data.selector())
@@ -77,6 +78,20 @@ impl TryAbiEncodeReturns<Option<Account>> for ICreditFacade::getAccountCall {
             }
         };
         Ok(Self::abi_encode_returns(&(account_result,)))
+    }
+}
+
+impl TryAbiEncodeReturns<GetStatsReturn> for ICreditFacade::getCreditStatsCall {
+    fn try_returns(&self, stats: GetStatsReturn) -> Result<Vec<u8>, anyhow::Error> {
+        let credit_stats = ICreditFacade::CreditStats {
+            balance: BigUintWrapper::try_from(stats.balance)?.into(),
+            creditSold: BigUintWrapper::try_from(stats.credit_sold)?.into(),
+            creditCommitted: BigUintWrapper::try_from(stats.credit_committed)?.into(),
+            creditDebited: BigUintWrapper::try_from(stats.credit_debited)?.into(),
+            tokenCreditRate: BigUintWrapper(stats.token_credit_rate.rate().clone()).into(),
+            numAccounts: stats.num_accounts
+        };
+        Ok(Self::abi_encode_returns(&(credit_stats,)))
     }
 }
 

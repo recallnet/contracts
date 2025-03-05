@@ -33,6 +33,10 @@ interface ICreditFacade {
     /// @return account The credit account for the address.
     function getAccount(address addr) external view returns (Account memory account);
 
+    /// @dev Get the subnet-wide credit statistics.
+    /// @return stats The subnet-wide credit statistics.
+    function getCreditStats() external view returns (CreditStats memory stats);
+
     /// @dev Set the credit sponsor for an account.
     /// @param from The address of the account.
     /// @param sponsor The address of the sponsor. Use zero address if unused.

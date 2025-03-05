@@ -12,7 +12,6 @@ use fvm_shared::{
     ActorID,
 };
 use fvm_shared::econ::TokenAmount;
-use fendermint_actor_blobs_shared::state::Credit;
 use fil_actors_runtime::ActorError;
 use fil_actors_evm_shared::address::EthAddress;
 
