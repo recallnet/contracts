@@ -170,3 +170,14 @@ impl From<BigIntWrapper> for I256 {
         }
     }
 }
+
+// These calls all share the same empty return implementation
+#[macro_export] macro_rules! impl_empty_returns {
+    ($($t:ty),*) => {
+        $(
+            impl AbiEncodeReturns<()> for $t {
+                fn returns(&self, _: ()) -> Vec<u8> { Self::abi_encode_returns(&()) }
+            }
+        )*
+    };
+}

@@ -5,8 +5,12 @@ use alloy_sol_types::SolInterface;
 use anyhow::Result;
 use fvm_shared::{address::Address, bigint::BigUint};
 use fil_actors_runtime::{actor_error, ActorError};
+use crate::credit_facade::icreditfacade::ICreditFacade;
+use crate::impl_empty_returns;
+use crate::types::AbiEncodeReturns;
+use alloy_sol_types::SolCall;
 
-pub fn can_handle(input_data: InputData) -> bool {
+pub fn can_handle(input_data: &InputData) -> bool {
     ICreditFacadeCalls::valid_selector(input_data.selector())
 }
 
@@ -15,6 +19,12 @@ pub fn parse_input(input: &InputData) -> Result<ICreditFacadeCalls, ActorError> 
         actor_error!(illegal_argument, format!("invalid call: {}", e))
     })
 }
+
+pub type Calls = ICreditFacadeCalls;
+
+impl_empty_returns!(
+    ICreditFacade::setAccountSponsorCall
+);
 
 pub fn credit_purchased(from: Address, amount: BigUint) -> Result<ICreditFacadeEvents> {
     let from: H160 = from.try_into()?;

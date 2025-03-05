@@ -13,6 +13,7 @@ pub use alloy_sol_types::SolCall;
 use fendermint_actor_blobs_shared::params::{BlobRequest, GetStatsReturn};
 use fil_actors_evm_shared::address::EthAddress;
 use fil_actors_runtime::{actor_error, ActorError};
+use crate::impl_empty_returns;
 use crate::types::BigUintWrapper;
 
 pub fn can_handle(input_data: &InputData) -> bool {
@@ -183,17 +184,6 @@ impl TryAbiEncodeReturns<Option<Blob>> for IBlobsFacade::getBlobCall {
         };
         Ok(Self::abi_encode_returns(&(facade_blob,)))
     }
-}
-
-// These calls all share the same empty return implementation
-macro_rules! impl_empty_returns {
-    ($($t:ty),*) => {
-        $(
-            impl AbiEncodeReturns<()> for $t {
-                fn returns(&self, _: ()) -> Vec<u8> { Self::abi_encode_returns(&()) }
-            }
-        )*
-    };
 }
 
 impl_empty_returns!(
