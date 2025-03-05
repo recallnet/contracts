@@ -4,7 +4,7 @@ use crate::credit_facade::icreditfacade::ICreditFacade::{CreditApproved, CreditD
 use crate::types::{BigUintWrapper, InputData, TryAbiEncodeReturns, H160};
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::SolInterface;
-use anyhow::Result;
+use anyhow::{Error, Result};
 use fvm_shared::bigint::BigUint;
 use fil_actors_runtime::{actor_error, ActorError};
 use crate::credit_facade::icreditfacade::ICreditFacade;
@@ -29,20 +29,36 @@ fn convert_approvals(approvals: HashMap<String, CreditApproval>) -> Result<Vec<I
     approvals.iter().map(|(address_string, credit_approval)| {
         let address: H160 = FVMAddress::from_str(address_string)?.try_into()?;
         let address: Address = address.try_into()?;
-        let credit_approval = credit_approval.clone();
-        let credit_approval = ICreditFacade::CreditApproval {
+        let approval = ICreditFacade::Approval {
+            addr: address,
+            approval: ICreditFacade::CreditApproval::from(credit_approval.clone()),
+        };
+        Ok(approval)
+    }).collect::<Result<Vec<_>, anyhow::Error>>()
+}
+
+impl From<CreditApproval> for ICreditFacade::CreditApproval {
+    fn from(credit_approval: CreditApproval) -> Self {
+        Self {
             creditLimit: credit_approval.credit_limit.map(|credit_limit| BigUintWrapper::from(credit_limit)).unwrap_or_default().into(),
             gasFeeLimit: credit_approval.gas_fee_limit.map(|gas_fee_limit| BigUintWrapper::from(gas_fee_limit)).unwrap_or_default().into(),
             expiry: credit_approval.expiry.map(|expiry| expiry as u64).unwrap_or_default(),
             creditUsed: BigUintWrapper::from(credit_approval.credit_used).into(),
             gasFeeUsed: BigUintWrapper::from(credit_approval.gas_fee_used).into(),
-        };
-        let approval = ICreditFacade::Approval {
-            addr: address,
-            approval: credit_approval,
-        };
-        Ok(approval)
-    }).collect::<Result<Vec<_>, anyhow::Error>>()
+        }
+    }
+}
+
+impl Default for ICreditFacade::CreditApproval {
+    fn default() -> Self {
+        Self {
+            creditLimit: U256::default(),
+            gasFeeLimit: U256::default(),
+            expiry: u64::default(),
+            creditUsed: U256::default(),
+            gasFeeUsed: U256::default(),
+        }
+    }
 }
 
 impl TryAbiEncodeReturns<Option<Account>> for ICreditFacade::getAccountCall {
@@ -92,6 +108,17 @@ impl TryAbiEncodeReturns<GetStatsReturn> for ICreditFacade::getCreditStatsCall {
             numAccounts: stats.num_accounts
         };
         Ok(Self::abi_encode_returns(&(credit_stats,)))
+    }
+}
+
+impl TryAbiEncodeReturns<Option<CreditApproval>> for ICreditFacade::getCreditApprovalCall {
+    fn try_returns(&self, value: Option<CreditApproval>) -> Result<Vec<u8>, Error> {
+        let approval_result = if let Some(credit_approval) = value {
+            ICreditFacade::CreditApproval::from(credit_approval.clone())
+        } else {
+            ICreditFacade::CreditApproval::default()
+        };
+        Ok(Self::abi_encode_returns(&(approval_result,)))
     }
 }
 

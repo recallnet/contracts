@@ -37,6 +37,12 @@ interface ICreditFacade {
     /// @return stats The subnet-wide credit statistics.
     function getCreditStats() external view returns (CreditStats memory stats);
 
+    /// @dev Get the credit approval from one account to another, if it exists.
+    /// @param from The address of the account.
+    /// @param to The address of the account to check the approval for.
+    /// @return approval The credit approval for the account.
+    function getCreditApproval(address from, address to) external view returns (CreditApproval memory approval);
+
     /// @dev Set the credit sponsor for an account.
     /// @param from The address of the account.
     /// @param sponsor The address of the sponsor. Use zero address if unused.

@@ -40,6 +40,7 @@ interface ICreditFacade {
     event CreditRevoked(address from, address to);
 
     function getAccount(address addr) external view returns (Account memory account);
+    function getCreditApproval(address from, address to) external view returns (CreditApproval memory approval);
     function getCreditStats() external view returns (CreditStats memory stats);
     function setAccountSponsor(address from, address sponsor) external;
 }
@@ -184,6 +185,57 @@ interface ICreditFacade {
           },
           {
             "name": "gasAllowance",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getCreditApproval",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "to",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "approval",
+        "type": "tuple",
+        "internalType": "struct CreditApproval",
+        "components": [
+          {
+            "name": "creditLimit",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "gasFeeLimit",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "expiry",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "creditUsed",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "gasFeeUsed",
             "type": "uint256",
             "internalType": "uint256"
           }
@@ -2379,6 +2431,152 @@ function getAccount(address addr) external view returns (Account memory account)
             }
         }
     };
+    /**Function with signature `getCreditApproval(address,address)` and selector `0xcd9be80f`.
+```solidity
+function getCreditApproval(address from, address to) external view returns (CreditApproval memory approval);
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct getCreditApprovalCall {
+        #[allow(missing_docs)]
+        pub from: ::alloy_sol_types::private::Address,
+        #[allow(missing_docs)]
+        pub to: ::alloy_sol_types::private::Address,
+    }
+    ///Container type for the return parameters of the [`getCreditApproval(address,address)`](getCreditApprovalCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct getCreditApprovalReturn {
+        #[allow(missing_docs)]
+        pub approval: <CreditApproval as ::alloy_sol_types::SolType>::RustType,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use ::alloy_sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = (
+                ::alloy_sol_types::sol_data::Address,
+                ::alloy_sol_types::sol_data::Address,
+            );
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (
+                ::alloy_sol_types::private::Address,
+                ::alloy_sol_types::private::Address,
+            );
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<getCreditApprovalCall>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: getCreditApprovalCall) -> Self {
+                    (value.from, value.to)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for getCreditApprovalCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self { from: tuple.0, to: tuple.1 }
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = (CreditApproval,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (
+                <CreditApproval as ::alloy_sol_types::SolType>::RustType,
+            );
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<getCreditApprovalReturn>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: getCreditApprovalReturn) -> Self {
+                    (value.approval,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for getCreditApprovalReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self { approval: tuple.0 }
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for getCreditApprovalCall {
+            type Parameters<'a> = (
+                ::alloy_sol_types::sol_data::Address,
+                ::alloy_sol_types::sol_data::Address,
+            );
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = getCreditApprovalReturn;
+            type ReturnTuple<'a> = (CreditApproval,);
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "getCreditApproval(address,address)";
+            const SELECTOR: [u8; 4] = [205u8, 155u8, 232u8, 15u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                (
+                    <::alloy_sol_types::sol_data::Address as alloy_sol_types::SolType>::tokenize(
+                        &self.from,
+                    ),
+                    <::alloy_sol_types::sol_data::Address as alloy_sol_types::SolType>::tokenize(
+                        &self.to,
+                    ),
+                )
+            }
+            #[inline]
+            fn abi_decode_returns(
+                data: &[u8],
+                validate: bool,
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data, validate)
+                    .map(Into::into)
+            }
+        }
+    };
     /**Function with signature `getCreditStats()` and selector `0xc7d0b56c`.
 ```solidity
 function getCreditStats() external view returns (CreditStats memory stats);
@@ -2651,6 +2849,8 @@ function setAccountSponsor(address from, address sponsor) external;
         #[allow(missing_docs)]
         getAccount(getAccountCall),
         #[allow(missing_docs)]
+        getCreditApproval(getCreditApprovalCall),
+        #[allow(missing_docs)]
         getCreditStats(getCreditStatsCall),
         #[allow(missing_docs)]
         setAccountSponsor(setAccountSponsorCall),
@@ -2666,6 +2866,7 @@ function setAccountSponsor(address from, address sponsor) external;
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
             [125u8, 164u8, 203u8, 89u8],
             [199u8, 208u8, 181u8, 108u8],
+            [205u8, 155u8, 232u8, 15u8],
             [251u8, 203u8, 192u8, 241u8],
         ];
     }
@@ -2673,12 +2874,15 @@ function setAccountSponsor(address from, address sponsor) external;
     impl alloy_sol_types::SolInterface for ICreditFacadeCalls {
         const NAME: &'static str = "ICreditFacadeCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 3usize;
+        const COUNT: usize = 4usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
                 Self::getAccount(_) => {
                     <getAccountCall as alloy_sol_types::SolCall>::SELECTOR
+                }
+                Self::getCreditApproval(_) => {
+                    <getCreditApprovalCall as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::getCreditStats(_) => {
                     <getCreditStatsCall as alloy_sol_types::SolCall>::SELECTOR
@@ -2734,6 +2938,19 @@ function setAccountSponsor(address from, address sponsor) external;
                     getCreditStats
                 },
                 {
+                    fn getCreditApproval(
+                        data: &[u8],
+                        validate: bool,
+                    ) -> alloy_sol_types::Result<ICreditFacadeCalls> {
+                        <getCreditApprovalCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                                validate,
+                            )
+                            .map(ICreditFacadeCalls::getCreditApproval)
+                    }
+                    getCreditApproval
+                },
+                {
                     fn getAccount(
                         data: &[u8],
                         validate: bool,
@@ -2763,6 +2980,11 @@ function setAccountSponsor(address from, address sponsor) external;
                 Self::getAccount(inner) => {
                     <getAccountCall as alloy_sol_types::SolCall>::abi_encoded_size(inner)
                 }
+                Self::getCreditApproval(inner) => {
+                    <getCreditApprovalCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
                 Self::getCreditStats(inner) => {
                     <getCreditStatsCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
@@ -2780,6 +3002,12 @@ function setAccountSponsor(address from, address sponsor) external;
             match self {
                 Self::getAccount(inner) => {
                     <getAccountCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
+                Self::getCreditApproval(inner) => {
+                    <getCreditApprovalCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
