@@ -12,7 +12,7 @@ use fvm_shared::{
     ActorID,
 };
 use fvm_shared::econ::TokenAmount;
-use fil_actors_runtime::ActorError;
+use fil_actors_runtime::{actor_error, ActorError};
 use fil_actors_evm_shared::address::EthAddress;
 
 const EAM_ACTOR_ID: ActorID = 10;
@@ -62,7 +62,23 @@ pub trait AbiEncodeReturns<T> {
 }
 
 pub trait TryAbiEncodeReturns<T> {
-    fn try_returns(&self, value: T) -> anyhow::Result<Vec<u8>, anyhow::Error>;
+    fn try_returns(&self, value: T) -> anyhow::Result<Vec<u8>, AbiEncodeError>;
+}
+
+pub struct AbiEncodeError {
+    message: String,
+}
+
+impl From<anyhow::Error> for AbiEncodeError {
+    fn from(error: anyhow::Error) -> Self {
+        Self { message: format!("failed to abi encode response {}", error) }
+    }
+}
+
+impl From<AbiEncodeError> for ActorError {
+    fn from(error: AbiEncodeError) -> Self {
+        actor_error!(serialization, error.message)
+    }
 }
 
 /// Fixed-size uninterpreted hash type with 20 bytes (160 bits) size.

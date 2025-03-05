@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 use crate::credit_facade::icreditfacade::ICreditFacade::{CreditApproved, CreditDebited, CreditPurchased, CreditRevoked, ICreditFacadeCalls, ICreditFacadeEvents};
-use crate::types::{BigUintWrapper, InputData, TryAbiEncodeReturns, H160};
+use crate::types::{AbiEncodeError, BigUintWrapper, InputData, TryAbiEncodeReturns, H160};
 use alloy_primitives::{Address, U256};
 use alloy_sol_types::SolInterface;
-use anyhow::{Error, Result};
+use anyhow::Result;
 use fvm_shared::bigint::BigUint;
 use fil_actors_runtime::{actor_error, ActorError};
 use crate::credit_facade::icreditfacade::ICreditFacade;
@@ -62,7 +62,7 @@ impl Default for ICreditFacade::CreditApproval {
 }
 
 impl TryAbiEncodeReturns<Option<Account>> for ICreditFacade::getAccountCall {
-    fn try_returns(&self, value: Option<Account>) -> Result<Vec<u8>, anyhow::Error> {
+    fn try_returns(&self, value: Option<Account>) -> Result<Vec<u8>, AbiEncodeError> {
         let account_result = if let Some(account) = value {
             let credit_sponsor: Address = account.credit_sponsor.map(|address| {
                 H160::try_from(address)
@@ -98,12 +98,12 @@ impl TryAbiEncodeReturns<Option<Account>> for ICreditFacade::getAccountCall {
 }
 
 impl TryAbiEncodeReturns<GetStatsReturn> for ICreditFacade::getCreditStatsCall {
-    fn try_returns(&self, stats: GetStatsReturn) -> Result<Vec<u8>, anyhow::Error> {
+    fn try_returns(&self, stats: GetStatsReturn) -> Result<Vec<u8>, AbiEncodeError> {
         let credit_stats = ICreditFacade::CreditStats {
-            balance: BigUintWrapper::try_from(stats.balance)?.into(),
-            creditSold: BigUintWrapper::try_from(stats.credit_sold)?.into(),
-            creditCommitted: BigUintWrapper::try_from(stats.credit_committed)?.into(),
-            creditDebited: BigUintWrapper::try_from(stats.credit_debited)?.into(),
+            balance: BigUintWrapper::from(stats.balance).into(),
+            creditSold: BigUintWrapper::from(stats.credit_sold).into(),
+            creditCommitted: BigUintWrapper::from(stats.credit_committed).into(),
+            creditDebited: BigUintWrapper::from(stats.credit_debited).into(),
             tokenCreditRate: BigUintWrapper(stats.token_credit_rate.rate().clone()).into(),
             numAccounts: stats.num_accounts
         };
@@ -112,7 +112,7 @@ impl TryAbiEncodeReturns<GetStatsReturn> for ICreditFacade::getCreditStatsCall {
 }
 
 impl TryAbiEncodeReturns<Option<CreditApproval>> for ICreditFacade::getCreditApprovalCall {
-    fn try_returns(&self, value: Option<CreditApproval>) -> Result<Vec<u8>, Error> {
+    fn try_returns(&self, value: Option<CreditApproval>) -> Result<Vec<u8>, AbiEncodeError> {
         let approval_result = if let Some(credit_approval) = value {
             ICreditFacade::CreditApproval::from(credit_approval.clone())
         } else {
@@ -123,18 +123,18 @@ impl TryAbiEncodeReturns<Option<CreditApproval>> for ICreditFacade::getCreditApp
 }
 
 impl TryAbiEncodeReturns<Option<Account>> for ICreditFacade::getCreditBalanceCall {
-    fn try_returns(&self, value: Option<Account>) -> Result<Vec<u8>, Error> {
+    fn try_returns(&self, value: Option<Account>) -> Result<Vec<u8>, AbiEncodeError> {
         let balance = if let Some(account) = value {
             ICreditFacade::Balance {
-                creditFree: BigUintWrapper::try_from(account.credit_free)?.into(),
-                creditCommitted: BigUintWrapper::try_from(account.credit_committed)?.into(),
+                creditFree: BigUintWrapper::from(account.credit_free).into(),
+                creditCommitted: BigUintWrapper::from(account.credit_committed).into(),
                 creditSponsor: account.credit_sponsor.map(|address| {
                     H160::try_from(address)
                 }).transpose()?.map(|h160| h160.into()).unwrap_or_default(), // FIXME SU DRY
                 lastDebitEpoch: account.last_debit_epoch as u64,
                 approvalsTo: convert_approvals(account.approvals_to)?,
                 approvalsFrom: convert_approvals(account.approvals_from)?,
-                gasAllowance: BigUintWrapper::try_from(account.gas_allowance)?.into(),
+                gasAllowance: BigUintWrapper::from(account.gas_allowance).into(),
             }
         } else {
             ICreditFacade::Balance {

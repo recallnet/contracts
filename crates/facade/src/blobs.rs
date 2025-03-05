@@ -1,6 +1,6 @@
 use std::str::FromStr;
 use crate::blobs_facade::iblobsfacade::IBlobsFacade::{BlobAdded, BlobDeleted, BlobFinalized, BlobPending, IBlobsFacadeCalls, IBlobsFacadeEvents};
-use crate::types::{AbiEncodeReturns, InputData, TryAbiEncodeReturns, H160};
+use crate::types::{AbiEncodeError, AbiEncodeReturns, InputData, TryAbiEncodeReturns, H160};
 use alloy_primitives::U256;
 use anyhow::Result;
 use fvm_shared::address::{Address as FVMAddress};
@@ -86,14 +86,14 @@ fn blob_requests_to_tuple(blob_requests: Vec<BlobRequest>) -> Result<Vec<IBlobsF
 }
 
 impl TryAbiEncodeReturns<Vec<BlobRequest>> for IBlobsFacade::getAddedBlobsCall {
-    fn try_returns(&self, blob_requests: Vec<BlobRequest>) -> Result<Vec<u8>, anyhow::Error> {
+    fn try_returns(&self, blob_requests: Vec<BlobRequest>) -> Result<Vec<u8>, AbiEncodeError> {
         let blob_tuples = blob_requests_to_tuple(blob_requests)?;
         Ok(Self::abi_encode_returns(&(blob_tuples,)))
     }
 }
 
 impl TryAbiEncodeReturns<Vec<BlobRequest>> for IBlobsFacade::getPendingBlobsCall {
-    fn try_returns(&self, blob_requests: Vec<BlobRequest>) -> Result<Vec<u8>, anyhow::Error> {
+    fn try_returns(&self, blob_requests: Vec<BlobRequest>) -> Result<Vec<u8>, AbiEncodeError> {
         let blob_tuples = blob_requests_to_tuple(blob_requests)?;
         Ok(Self::abi_encode_returns(&(blob_tuples,)))
     }
@@ -145,7 +145,7 @@ impl AbiEncodeReturns<GetStatsReturn> for IBlobsFacade::getSubnetStatsCall {
 }
 
 impl TryAbiEncodeReturns<Option<Blob>> for IBlobsFacade::getBlobCall {
-    fn try_returns(&self, value: Option<Blob>) -> Result<Vec<u8>, anyhow::Error> {
+    fn try_returns(&self, value: Option<Blob>) -> Result<Vec<u8>, AbiEncodeError> {
         let facade_blob = if let Some(blob) = value {
             let subscribers = blob.subscribers.iter().map(|(fvm_address, subscription_group)| {
                 let subscription_group = subscription_group.subscriptions.iter().map(|(subscription_id, subscription)| {
