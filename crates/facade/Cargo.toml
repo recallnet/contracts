@@ -20,9 +20,8 @@ serde = { workspace = true, features = ["derive"] }
 fil_actors_runtime = { workspace = true }
 data-encoding = { workspace = true }
 fil_actors_evm_shared = { workspace = true }
-
-[dependencies.fendermint_actor_blobs_shared]
-path = "../../../fendermint/actors/blobs/shared"
+fendermint_actor_blobs_shared = { path = "../../../fendermint/actors/blobs/shared" }
+fendermint_actor_bucket_shared = { path = "../../../fendermint/actors/bucket/shared" }
 
 [build-dependencies]
 alloy-primitives = { version = "0.8.19" }
