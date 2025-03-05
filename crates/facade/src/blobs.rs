@@ -12,10 +12,17 @@ use crate::blobs_facade::iblobsfacade::IBlobsFacade;
 pub use alloy_sol_types::SolCall;
 use fendermint_actor_blobs_shared::params::{BlobRequest, GetStatsReturn};
 use fil_actors_evm_shared::address::EthAddress;
+use fil_actors_runtime::{actor_error, ActorError};
 use crate::types::BigUintWrapper;
 
-pub fn parse_input(input: InputData) -> Option<IBlobsFacadeCalls> {
-    IBlobsFacadeCalls::abi_decode_raw(input.selector(), input.calldata(), true).ok()
+pub fn can_handle(input_data: &InputData) -> bool {
+    IBlobsFacadeCalls::valid_selector(input_data.selector())
+}
+
+pub fn parse_input(input: &InputData) -> Result<IBlobsFacadeCalls, ActorError> {
+    IBlobsFacadeCalls::abi_decode_raw(input.selector(), input.calldata(), true).map_err(|e| {
+        actor_error!(illegal_argument, format!("invalid call: {}", e))
+    })
 }
 
 pub type Calls = IBlobsFacadeCalls;

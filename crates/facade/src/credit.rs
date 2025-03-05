@@ -1,10 +1,20 @@
-use crate::credit_facade::icreditfacade::ICreditFacade::{
-    CreditApproved, CreditDebited, CreditPurchased, CreditRevoked, ICreditFacadeEvents,
-};
-use crate::types::{BigUintWrapper, H160};
+use crate::credit_facade::icreditfacade::ICreditFacade::{CreditApproved, CreditDebited, CreditPurchased, CreditRevoked, ICreditFacadeCalls, ICreditFacadeEvents};
+use crate::types::{BigUintWrapper, InputData, H160};
 use alloy_primitives::U256;
+use alloy_sol_types::SolInterface;
 use anyhow::Result;
 use fvm_shared::{address::Address, bigint::BigUint};
+use fil_actors_runtime::{actor_error, ActorError};
+
+pub fn can_handle(input_data: InputData) -> bool {
+    ICreditFacadeCalls::valid_selector(input_data.selector())
+}
+
+pub fn parse_input(input: &InputData) -> Result<ICreditFacadeCalls, ActorError> {
+    ICreditFacadeCalls::abi_decode_raw(input.selector(), input.calldata(), true).map_err(|e| {
+        actor_error!(illegal_argument, format!("invalid call: {}", e))
+    })
+}
 
 pub fn credit_purchased(from: Address, amount: BigUint) -> Result<ICreditFacadeEvents> {
     let from: H160 = from.try_into()?;
