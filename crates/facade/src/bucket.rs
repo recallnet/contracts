@@ -25,7 +25,8 @@ pub fn parse_input(input: &InputData) -> Result<IBucketFacadeCalls, ActorError> 
 pub type Calls = IBucketFacadeCalls;
 
 impl_empty_returns!(
-    IBucketFacade::addObject_0Call
+    IBucketFacade::addObject_0Call,
+    IBucketFacade::addObject_1Call
 );
 
 impl TryInto<AddParams> for IBucketFacade::addObject_0Call {
@@ -52,6 +53,29 @@ impl TryInto<AddParams> for IBucketFacade::addObject_0Call {
             ttl,
             metadata,
             overwrite,
+            from,
+        })
+    }
+}
+
+impl TryInto<AddParams> for IBucketFacade::addObject_1Call {
+    type Error = ActorError;
+    fn try_into(self) -> Result<AddParams, Self::Error> {
+        let source = try_into_public_key(self.source)?;
+        let key = self.key.into_bytes();
+        let hash = try_into_hash(self.blobHash)?;
+        let recovery_hash = try_into_hash(self.recoveryHash)?;
+        let size = self.size;
+        let from: FVMAddress = self.from.into_eth_address().into();
+        Ok(AddParams {
+            source,
+            key,
+            hash,
+            recovery_hash,
+            size,
+            ttl: None,
+            metadata: HashMap::default(),
+            overwrite: false,
             from,
         })
     }
