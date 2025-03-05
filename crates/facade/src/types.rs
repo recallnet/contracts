@@ -24,19 +24,17 @@ pub struct InvokeContractParams {
     pub input_data: Vec<u8>,
 }
 
-impl InvokeContractParams {
-    pub fn selector(&self) -> Result<[u8; 4], ActorError> {
-        self.input_data
-            .get(0..4)
-            .and_then(|s| s.try_into().ok())
-            .ok_or(ActorError::illegal_argument(format!("No selector extracted")))
-    }
+/// EVM call with selector (first 4 bytes) and calldata (remaining bytes)
+pub struct InputData(Vec<u8>);
 
-    pub fn selector_and_data(&self) -> Result<([u8; 4], &[u8]), ActorError> {
-        let (selector, rest) = self.input_data.split_at(4);
-        let selector = selector.try_into()
-            .map_err(|_| ActorError::illegal_argument(format!("No selector extracted")))?;
-        Ok((selector, rest))
+impl TryFrom<InvokeContractParams> for InputData {
+    type Error = ActorError;
+
+    fn try_from(value: InvokeContractParams) -> Result<Self, Self::Error> {
+        if value.input_data.len() < 4 {
+            return Err(ActorError::illegal_argument("input too short".to_string()));
+        }
+        Ok(InputData(value.input_data))
     }
 }
 

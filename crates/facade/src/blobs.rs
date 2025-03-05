@@ -1,6 +1,6 @@
 use std::str::FromStr;
 use crate::blobs_facade::iblobsfacade::IBlobsFacade::{BlobAdded, BlobDeleted, BlobFinalized, BlobPending, IBlobsFacadeCalls, IBlobsFacadeEvents};
-use crate::types::{AbiEncodeReturns, TryAbiEncodeReturns, H160};
+use crate::types::{AbiEncodeReturns, InputData, TryAbiEncodeReturns, H160};
 use alloy_primitives::U256;
 use anyhow::Result;
 use fvm_shared::address::{Address as FVMAddress};
@@ -15,20 +15,14 @@ use fendermint_actor_blobs_shared::params::{BlobRequest, GetStatsReturn};
 use fil_actors_evm_shared::address::EthAddress;
 use crate::types::BigUintWrapper;
 
-pub fn parse_input(input: &[u8]) -> Result<IBlobsFacadeCalls, ActorError> {
-    if input.len() < 4 {
-        return Err(actor_error!(illegal_argument, "Input too short"));
-    }
-
+pub fn parse_input(input: InputData) -> Option<IBlobsFacadeCalls> {
     // Get the selector (first 4 bytes)
     let mut selector = [0u8; 4];
     selector.copy_from_slice(&input[0..4]);
 
     // Decode the rest of the input data
     let data = &input[4..];
-    IBlobsFacadeCalls::abi_decode_raw(selector, data, true).map_err(|err| {
-        actor_error!(illegal_argument, format!("Invalid parameters {}", err))
-    })
+    IBlobsFacadeCalls::abi_decode_raw(selector, data, true).ok()
 }
 
 pub type Calls = IBlobsFacadeCalls;
