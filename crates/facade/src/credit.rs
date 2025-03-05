@@ -158,7 +158,9 @@ impl_empty_returns!(
     ICreditFacade::approveCredit_0Call,
     ICreditFacade::approveCredit_1Call,
     ICreditFacade::approveCredit_2Call,
-    ICreditFacade::approveCredit_3Call
+    ICreditFacade::approveCredit_3Call,
+    ICreditFacade::buyCredit_0Call,
+    ICreditFacade::buyCredit_1Call
 );
 
 pub fn credit_purchased(from: FVMAddress, amount: BigUint) -> Result<ICreditFacadeEvents> {

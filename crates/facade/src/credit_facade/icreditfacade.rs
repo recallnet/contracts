@@ -52,6 +52,8 @@ interface ICreditFacade {
     function approveCredit(address from, address to, address[] memory caller) external;
     function approveCredit(address from, address to, address[] memory caller, uint256 creditLimit, uint256 gasFeeLimit, uint64 ttl) external;
     function approveCredit(address from, address to) external;
+    function buyCredit() external payable;
+    function buyCredit(address recipient) external payable;
     function getAccount(address addr) external view returns (Account memory account);
     function getCreditApproval(address from, address to) external view returns (CreditApproval memory approval);
     function getCreditBalance(address addr) external view returns (Balance memory balance);
@@ -154,6 +156,26 @@ interface ICreditFacade {
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "buyCredit",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "buyCredit",
+    "inputs": [
+      {
+        "name": "recipient",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
   },
   {
     "type": "function",
@@ -3509,6 +3531,245 @@ function approveCredit(address from, address to) external;
             }
         }
     };
+    /**Function with signature `buyCredit()` and selector `0x8e4e6f06`.
+```solidity
+function buyCredit() external payable;
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct buyCredit_0Call {}
+    ///Container type for the return parameters of the [`buyCredit()`](buyCredit_0Call) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct buyCredit_0Return {}
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use ::alloy_sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<buyCredit_0Call> for UnderlyingRustTuple<'_> {
+                fn from(value: buyCredit_0Call) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for buyCredit_0Call {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {}
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<buyCredit_0Return> for UnderlyingRustTuple<'_> {
+                fn from(value: buyCredit_0Return) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for buyCredit_0Return {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {}
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for buyCredit_0Call {
+            type Parameters<'a> = ();
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = buyCredit_0Return;
+            type ReturnTuple<'a> = ();
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "buyCredit()";
+            const SELECTOR: [u8; 4] = [142u8, 78u8, 111u8, 6u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                ()
+            }
+            #[inline]
+            fn abi_decode_returns(
+                data: &[u8],
+                validate: bool,
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data, validate)
+                    .map(Into::into)
+            }
+        }
+    };
+    /**Function with signature `buyCredit(address)` and selector `0xa38eae9f`.
+```solidity
+function buyCredit(address recipient) external payable;
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct buyCredit_1Call {
+        #[allow(missing_docs)]
+        pub recipient: ::alloy_sol_types::private::Address,
+    }
+    ///Container type for the return parameters of the [`buyCredit(address)`](buyCredit_1Call) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct buyCredit_1Return {}
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use ::alloy_sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = (::alloy_sol_types::sol_data::Address,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (::alloy_sol_types::private::Address,);
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<buyCredit_1Call> for UnderlyingRustTuple<'_> {
+                fn from(value: buyCredit_1Call) -> Self {
+                    (value.recipient,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for buyCredit_1Call {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self { recipient: tuple.0 }
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<buyCredit_1Return> for UnderlyingRustTuple<'_> {
+                fn from(value: buyCredit_1Return) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for buyCredit_1Return {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {}
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for buyCredit_1Call {
+            type Parameters<'a> = (::alloy_sol_types::sol_data::Address,);
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = buyCredit_1Return;
+            type ReturnTuple<'a> = ();
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "buyCredit(address)";
+            const SELECTOR: [u8; 4] = [163u8, 142u8, 174u8, 159u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                (
+                    <::alloy_sol_types::sol_data::Address as alloy_sol_types::SolType>::tokenize(
+                        &self.recipient,
+                    ),
+                )
+            }
+            #[inline]
+            fn abi_decode_returns(
+                data: &[u8],
+                validate: bool,
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data, validate)
+                    .map(Into::into)
+            }
+        }
+    };
     /**Function with signature `getAccount(address)` and selector `0xfbcbc0f1`.
 ```solidity
 function getAccount(address addr) external view returns (Account memory account);
@@ -4193,6 +4454,10 @@ function setAccountSponsor(address from, address sponsor) external;
         #[allow(missing_docs)]
         approveCredit_3(approveCredit_3Call),
         #[allow(missing_docs)]
+        buyCredit_0(buyCredit_0Call),
+        #[allow(missing_docs)]
+        buyCredit_1(buyCredit_1Call),
+        #[allow(missing_docs)]
         getAccount(getAccountCall),
         #[allow(missing_docs)]
         getCreditApproval(getCreditApprovalCall),
@@ -4216,6 +4481,8 @@ function setAccountSponsor(address from, address sponsor) external;
             [3u8, 14u8, 213u8, 72u8],
             [106u8, 221u8, 27u8, 63u8],
             [125u8, 164u8, 203u8, 89u8],
+            [142u8, 78u8, 111u8, 6u8],
+            [163u8, 142u8, 174u8, 159u8],
             [178u8, 125u8, 140u8, 2u8],
             [199u8, 208u8, 181u8, 108u8],
             [205u8, 155u8, 232u8, 15u8],
@@ -4227,7 +4494,7 @@ function setAccountSponsor(address from, address sponsor) external;
     impl alloy_sol_types::SolInterface for ICreditFacadeCalls {
         const NAME: &'static str = "ICreditFacadeCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 9usize;
+        const COUNT: usize = 11usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
@@ -4242,6 +4509,12 @@ function setAccountSponsor(address from, address sponsor) external;
                 }
                 Self::approveCredit_3(_) => {
                     <approveCredit_3Call as alloy_sol_types::SolCall>::SELECTOR
+                }
+                Self::buyCredit_0(_) => {
+                    <buyCredit_0Call as alloy_sol_types::SolCall>::SELECTOR
+                }
+                Self::buyCredit_1(_) => {
+                    <buyCredit_1Call as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::getAccount(_) => {
                     <getAccountCall as alloy_sol_types::SolCall>::SELECTOR
@@ -4330,6 +4603,32 @@ function setAccountSponsor(address from, address sponsor) external;
                             .map(ICreditFacadeCalls::setAccountSponsor)
                     }
                     setAccountSponsor
+                },
+                {
+                    fn buyCredit_0(
+                        data: &[u8],
+                        validate: bool,
+                    ) -> alloy_sol_types::Result<ICreditFacadeCalls> {
+                        <buyCredit_0Call as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                                validate,
+                            )
+                            .map(ICreditFacadeCalls::buyCredit_0)
+                    }
+                    buyCredit_0
+                },
+                {
+                    fn buyCredit_1(
+                        data: &[u8],
+                        validate: bool,
+                    ) -> alloy_sol_types::Result<ICreditFacadeCalls> {
+                        <buyCredit_1Call as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                                validate,
+                            )
+                            .map(ICreditFacadeCalls::buyCredit_1)
+                    }
+                    buyCredit_1
                 },
                 {
                     fn approveCredit_2(
@@ -4430,6 +4729,16 @@ function setAccountSponsor(address from, address sponsor) external;
                         inner,
                     )
                 }
+                Self::buyCredit_0(inner) => {
+                    <buyCredit_0Call as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
+                Self::buyCredit_1(inner) => {
+                    <buyCredit_1Call as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
                 Self::getAccount(inner) => {
                     <getAccountCall as alloy_sol_types::SolCall>::abi_encoded_size(inner)
                 }
@@ -4478,6 +4787,18 @@ function setAccountSponsor(address from, address sponsor) external;
                 }
                 Self::approveCredit_3(inner) => {
                     <approveCredit_3Call as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
+                Self::buyCredit_0(inner) => {
+                    <buyCredit_0Call as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
+                Self::buyCredit_1(inner) => {
+                    <buyCredit_1Call as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )

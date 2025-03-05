@@ -80,6 +80,13 @@ interface ICreditFacade {
         uint64 ttl
     ) external;
 
+    /// @dev Buy credits for `msg.sender` with a `msg.value` for number of native currency to spend on credits.
+    function buyCredit() external payable;
+
+    /// @dev Buy credits for a specified account with a `msg.value` for number of native currency to spend on credits.
+    /// @param recipient The address of the account.
+    function buyCredit(address recipient) external payable;
+
     /// @dev Set the credit sponsor for an account.
     /// @param from The address of the account.
     /// @param sponsor The address of the sponsor. Use zero address if unused.
