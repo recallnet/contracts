@@ -7,7 +7,7 @@ use fvm_shared::address::{Address as FVMAddress};
 use alloy_sol_types::{SolInterface};
 use alloy_sol_types::private::Address;
 use fil_actors_runtime::{actor_error, ActorError};
-use fendermint_actor_blobs_shared::state::{Blob, BlobStatus, Hash, PublicKey, Subscription};
+use fendermint_actor_blobs_shared::state::{Blob, BlobStatus, Hash, PublicKey};
 use crate::blobs_facade::iblobsfacade::IBlobsFacade;
 
 pub use alloy_sol_types::SolCall;
@@ -191,17 +191,22 @@ impl TryAbiEncodeReturns<Option<Blob>> for IBlobsFacade::getBlobCall {
     }
 }
 
-impl AbiEncodeReturns<()> for IBlobsFacade::addBlobCall {
-    fn returns(&self, _: &()) -> Vec<u8> {
-        Self::abi_encode_returns(&())
-    }
+// These calls all share the same empty return implementation
+macro_rules! impl_empty_returns {
+    ($($t:ty),*) => {
+        $(
+            impl AbiEncodeReturns<()> for $t {
+                fn returns(&self, _: &()) -> Vec<u8> { Self::abi_encode_returns(&()) }
+            }
+        )*
+    };
 }
 
-impl AbiEncodeReturns<()> for IBlobsFacade::deleteBlobCall {
-    fn returns(&self, _: &()) -> Vec<u8> {
-        Self::abi_encode_returns(&())
-    }
-}
+impl_empty_returns!(
+    IBlobsFacade::addBlobCall,
+    IBlobsFacade::deleteBlobCall, 
+    IBlobsFacade::overwriteBlobCall
+);
 
 pub trait IntoEthAddress {
     fn into_eth_address(self) -> EthAddress;

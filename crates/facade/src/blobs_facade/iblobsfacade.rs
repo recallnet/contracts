@@ -86,6 +86,7 @@ interface IBlobsFacade {
     function getStorageStats() external view returns (StorageStats memory stats);
     function getStorageUsage(address addr) external view returns (uint256);
     function getSubnetStats() external view returns (SubnetStats memory stats);
+    function overwriteBlob(string memory oldHash, AddBlobParams memory params) external;
 }
 ```
 
@@ -571,6 +572,66 @@ interface IBlobsFacade {
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "overwriteBlob",
+    "inputs": [
+      {
+        "name": "oldHash",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "params",
+        "type": "tuple",
+        "internalType": "struct AddBlobParams",
+        "components": [
+          {
+            "name": "sponsor",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "source",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "blobHash",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "metadataHash",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "subscriptionId",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "size",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "ttl",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "from",
+            "type": "address",
+            "internalType": "address"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "event",
@@ -5609,6 +5670,141 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
             }
         }
     };
+    /**Function with signature `overwriteBlob(string,(address,string,string,string,string,uint64,uint64,address))` and selector `0x1f196da0`.
+```solidity
+function overwriteBlob(string memory oldHash, AddBlobParams memory params) external;
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct overwriteBlobCall {
+        #[allow(missing_docs)]
+        pub oldHash: ::alloy_sol_types::private::String,
+        #[allow(missing_docs)]
+        pub params: <AddBlobParams as ::alloy_sol_types::SolType>::RustType,
+    }
+    ///Container type for the return parameters of the [`overwriteBlob(string,(address,string,string,string,string,uint64,uint64,address))`](overwriteBlobCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct overwriteBlobReturn {}
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use ::alloy_sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = (
+                ::alloy_sol_types::sol_data::String,
+                AddBlobParams,
+            );
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (
+                ::alloy_sol_types::private::String,
+                <AddBlobParams as ::alloy_sol_types::SolType>::RustType,
+            );
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<overwriteBlobCall> for UnderlyingRustTuple<'_> {
+                fn from(value: overwriteBlobCall) -> Self {
+                    (value.oldHash, value.params)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for overwriteBlobCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {
+                        oldHash: tuple.0,
+                        params: tuple.1,
+                    }
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<overwriteBlobReturn> for UnderlyingRustTuple<'_> {
+                fn from(value: overwriteBlobReturn) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for overwriteBlobReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {}
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for overwriteBlobCall {
+            type Parameters<'a> = (::alloy_sol_types::sol_data::String, AddBlobParams);
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = overwriteBlobReturn;
+            type ReturnTuple<'a> = ();
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "overwriteBlob(string,(address,string,string,string,string,uint64,uint64,address))";
+            const SELECTOR: [u8; 4] = [31u8, 25u8, 109u8, 160u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                (
+                    <::alloy_sol_types::sol_data::String as alloy_sol_types::SolType>::tokenize(
+                        &self.oldHash,
+                    ),
+                    <AddBlobParams as alloy_sol_types::SolType>::tokenize(&self.params),
+                )
+            }
+            #[inline]
+            fn abi_decode_returns(
+                data: &[u8],
+                validate: bool,
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data, validate)
+                    .map(Into::into)
+            }
+        }
+    };
     ///Container for all the [`IBlobsFacade`](self) function calls.
     pub enum IBlobsFacadeCalls {
         #[allow(missing_docs)]
@@ -5633,6 +5829,8 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
         getStorageUsage(getStorageUsageCall),
         #[allow(missing_docs)]
         getSubnetStats(getSubnetStatsCall),
+        #[allow(missing_docs)]
+        overwriteBlob(overwriteBlobCall),
     }
     #[automatically_derived]
     impl IBlobsFacadeCalls {
@@ -5643,6 +5841,7 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
         ///
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
+            [31u8, 25u8, 109u8, 160u8],
             [70u8, 135u8, 125u8, 184u8],
             [76u8, 38u8, 50u8, 48u8],
             [83u8, 123u8, 99u8, 58u8],
@@ -5660,7 +5859,7 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
     impl alloy_sol_types::SolInterface for IBlobsFacadeCalls {
         const NAME: &'static str = "IBlobsFacadeCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 11usize;
+        const COUNT: usize = 12usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
@@ -5693,6 +5892,9 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
                 Self::getSubnetStats(_) => {
                     <getSubnetStatsCall as alloy_sol_types::SolCall>::SELECTOR
                 }
+                Self::overwriteBlob(_) => {
+                    <overwriteBlobCall as alloy_sol_types::SolCall>::SELECTOR
+                }
             }
         }
         #[inline]
@@ -5714,6 +5916,19 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
                 &[u8],
                 bool,
             ) -> alloy_sol_types::Result<IBlobsFacadeCalls>] = &[
+                {
+                    fn overwriteBlob(
+                        data: &[u8],
+                        validate: bool,
+                    ) -> alloy_sol_types::Result<IBlobsFacadeCalls> {
+                        <overwriteBlobCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                                validate,
+                            )
+                            .map(IBlobsFacadeCalls::overwriteBlob)
+                    }
+                    overwriteBlob
+                },
                 {
                     fn getAddedBlobs(
                         data: &[u8],
@@ -5920,6 +6135,11 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
                         inner,
                     )
                 }
+                Self::overwriteBlob(inner) => {
+                    <overwriteBlobCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
             }
         }
         #[inline]
@@ -5981,6 +6201,12 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
                 }
                 Self::getSubnetStats(inner) => {
                     <getSubnetStatsCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
+                Self::overwriteBlob(inner) => {
+                    <overwriteBlobCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
