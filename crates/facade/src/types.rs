@@ -13,7 +13,7 @@ use fvm_shared::{
 };
 use fvm_shared::econ::TokenAmount;
 use fil_actors_runtime::ActorError;
-use ipc_types::EthAddress;
+use fil_actors_evm_shared::address::EthAddress;
 
 const EAM_ACTOR_ID: ActorID = 10;
 

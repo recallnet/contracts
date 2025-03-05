@@ -81,4 +81,12 @@ interface IBlobsFacade {
     /// @dev Add a new blob to storage.
     /// @param params Parameters for adding the blob including sponsor, source, hashes, size and TTL.
     function addBlob(AddBlobParams memory params) external;
+
+    /// @dev Delete a blob from storage.
+    /// @param subscriber The address of the subscriber.
+    /// @param blobHash Blob blake3 hash to delete.
+    /// @param subscriptionId Identifier used to differentiate blob additions for the same subscriber.
+    /// @param from The address of the account that is deleting the blob.
+    function deleteBlob(address subscriber, string memory blobHash, string memory subscriptionId, address from)
+    external;
 }

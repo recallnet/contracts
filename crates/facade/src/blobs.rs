@@ -12,7 +12,7 @@ use crate::blobs_facade::iblobsfacade::IBlobsFacade;
 
 pub use alloy_sol_types::SolCall;
 use fendermint_actor_blobs_shared::params::{BlobRequest, GetStatsReturn};
-use ipc_types::EthAddress;
+use fil_actors_evm_shared::address::EthAddress;
 use crate::types::BigUintWrapper;
 
 pub fn parse_input(input: &[u8]) -> Result<IBlobsFacadeCalls, ActorError> {
@@ -192,6 +192,12 @@ impl TryAbiEncodeReturns<Option<Blob>> for IBlobsFacade::getBlobCall {
 }
 
 impl AbiEncodeReturns<()> for IBlobsFacade::addBlobCall {
+    fn returns(&self, _: &()) -> Vec<u8> {
+        Self::abi_encode_returns(&())
+    }
+}
+
+impl AbiEncodeReturns<()> for IBlobsFacade::deleteBlobCall {
     fn returns(&self, _: &()) -> Vec<u8> {
         Self::abi_encode_returns(&())
     }

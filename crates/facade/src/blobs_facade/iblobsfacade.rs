@@ -76,6 +76,7 @@ interface IBlobsFacade {
     event BlobPending(address indexed subscriber, bytes32 hash, bytes32 sourceId);
 
     function addBlob(AddBlobParams memory params) external;
+    function deleteBlob(address subscriber, string memory blobHash, string memory subscriptionId, address from) external;
     function getAddedBlobs(uint32 size) external view returns (BlobTuple[] memory blobs);
     function getBlob(string memory blobHash) external view returns (Blob memory blob);
     function getBlobStatus(address subscriber, string memory blobHash, string memory subscriptionId) external view returns (BlobStatus status);
@@ -141,6 +142,34 @@ interface IBlobsFacade {
             "internalType": "address"
           }
         ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "deleteBlob",
+    "inputs": [
+      {
+        "name": "subscriber",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "blobHash",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "subscriptionId",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "from",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "outputs": [],
@@ -4248,6 +4277,164 @@ function addBlob(AddBlobParams memory params) external;
             }
         }
     };
+    /**Function with signature `deleteBlob(address,string,string,address)` and selector `0x4c263230`.
+```solidity
+function deleteBlob(address subscriber, string memory blobHash, string memory subscriptionId, address from) external;
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct deleteBlobCall {
+        #[allow(missing_docs)]
+        pub subscriber: ::alloy_sol_types::private::Address,
+        #[allow(missing_docs)]
+        pub blobHash: ::alloy_sol_types::private::String,
+        #[allow(missing_docs)]
+        pub subscriptionId: ::alloy_sol_types::private::String,
+        #[allow(missing_docs)]
+        pub from: ::alloy_sol_types::private::Address,
+    }
+    ///Container type for the return parameters of the [`deleteBlob(address,string,string,address)`](deleteBlobCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct deleteBlobReturn {}
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use ::alloy_sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = (
+                ::alloy_sol_types::sol_data::Address,
+                ::alloy_sol_types::sol_data::String,
+                ::alloy_sol_types::sol_data::String,
+                ::alloy_sol_types::sol_data::Address,
+            );
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (
+                ::alloy_sol_types::private::Address,
+                ::alloy_sol_types::private::String,
+                ::alloy_sol_types::private::String,
+                ::alloy_sol_types::private::Address,
+            );
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<deleteBlobCall> for UnderlyingRustTuple<'_> {
+                fn from(value: deleteBlobCall) -> Self {
+                    (value.subscriber, value.blobHash, value.subscriptionId, value.from)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for deleteBlobCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {
+                        subscriber: tuple.0,
+                        blobHash: tuple.1,
+                        subscriptionId: tuple.2,
+                        from: tuple.3,
+                    }
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<deleteBlobReturn> for UnderlyingRustTuple<'_> {
+                fn from(value: deleteBlobReturn) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for deleteBlobReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {}
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for deleteBlobCall {
+            type Parameters<'a> = (
+                ::alloy_sol_types::sol_data::Address,
+                ::alloy_sol_types::sol_data::String,
+                ::alloy_sol_types::sol_data::String,
+                ::alloy_sol_types::sol_data::Address,
+            );
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = deleteBlobReturn;
+            type ReturnTuple<'a> = ();
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "deleteBlob(address,string,string,address)";
+            const SELECTOR: [u8; 4] = [76u8, 38u8, 50u8, 48u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                (
+                    <::alloy_sol_types::sol_data::Address as alloy_sol_types::SolType>::tokenize(
+                        &self.subscriber,
+                    ),
+                    <::alloy_sol_types::sol_data::String as alloy_sol_types::SolType>::tokenize(
+                        &self.blobHash,
+                    ),
+                    <::alloy_sol_types::sol_data::String as alloy_sol_types::SolType>::tokenize(
+                        &self.subscriptionId,
+                    ),
+                    <::alloy_sol_types::sol_data::Address as alloy_sol_types::SolType>::tokenize(
+                        &self.from,
+                    ),
+                )
+            }
+            #[inline]
+            fn abi_decode_returns(
+                data: &[u8],
+                validate: bool,
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data, validate)
+                    .map(Into::into)
+            }
+        }
+    };
     /**Function with signature `getAddedBlobs(uint32)` and selector `0x46877db8`.
 ```solidity
 function getAddedBlobs(uint32 size) external view returns (BlobTuple[] memory blobs);
@@ -5427,6 +5614,8 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
         #[allow(missing_docs)]
         addBlob(addBlobCall),
         #[allow(missing_docs)]
+        deleteBlob(deleteBlobCall),
+        #[allow(missing_docs)]
         getAddedBlobs(getAddedBlobsCall),
         #[allow(missing_docs)]
         getBlob(getBlobCall),
@@ -5455,6 +5644,7 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
             [70u8, 135u8, 125u8, 184u8],
+            [76u8, 38u8, 50u8, 48u8],
             [83u8, 123u8, 99u8, 58u8],
             [85u8, 77u8, 240u8, 248u8],
             [103u8, 246u8, 199u8, 16u8],
@@ -5470,11 +5660,14 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
     impl alloy_sol_types::SolInterface for IBlobsFacadeCalls {
         const NAME: &'static str = "IBlobsFacadeCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 10usize;
+        const COUNT: usize = 11usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
                 Self::addBlob(_) => <addBlobCall as alloy_sol_types::SolCall>::SELECTOR,
+                Self::deleteBlob(_) => {
+                    <deleteBlobCall as alloy_sol_types::SolCall>::SELECTOR
+                }
                 Self::getAddedBlobs(_) => {
                     <getAddedBlobsCall as alloy_sol_types::SolCall>::SELECTOR
                 }
@@ -5533,6 +5726,19 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
                             .map(IBlobsFacadeCalls::getAddedBlobs)
                     }
                     getAddedBlobs
+                },
+                {
+                    fn deleteBlob(
+                        data: &[u8],
+                        validate: bool,
+                    ) -> alloy_sol_types::Result<IBlobsFacadeCalls> {
+                        <deleteBlobCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                                validate,
+                            )
+                            .map(IBlobsFacadeCalls::deleteBlob)
+                    }
+                    deleteBlob
                 },
                 {
                     fn getStorageStats(
@@ -5668,6 +5874,9 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
                 Self::addBlob(inner) => {
                     <addBlobCall as alloy_sol_types::SolCall>::abi_encoded_size(inner)
                 }
+                Self::deleteBlob(inner) => {
+                    <deleteBlobCall as alloy_sol_types::SolCall>::abi_encoded_size(inner)
+                }
                 Self::getAddedBlobs(inner) => {
                     <getAddedBlobsCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
@@ -5718,6 +5927,12 @@ function getSubnetStats() external view returns (SubnetStats memory stats);
             match self {
                 Self::addBlob(inner) => {
                     <addBlobCall as alloy_sol_types::SolCall>::abi_encode_raw(inner, out)
+                }
+                Self::deleteBlob(inner) => {
+                    <deleteBlobCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
                 }
                 Self::getAddedBlobs(inner) => {
                     <getAddedBlobsCall as alloy_sol_types::SolCall>::abi_encode_raw(
