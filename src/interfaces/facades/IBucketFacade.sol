@@ -21,17 +21,18 @@ interface IBucketFacade {
     /// @param blobHash Object blob blake3 hash.
     event ObjectDeleted(bytes key, bytes32 blobHash);
 
-    /// @dev Create a bucket. Uses the sender as the owner.
-    function createBucket() external;
-
-    /// @dev Create a bucket.
-    /// @param owner The owner.
-    function createBucket(address owner) external;
-
-    /// @dev Create a bucket.
-    /// @param owner The owner.
-    /// @param metadata The metadata.
-    function createBucket(address owner, KeyValue[] memory metadata) external;
+    // FIXME SU ADM CALLS
+//    /// @dev Create a bucket. Uses the sender as the owner.
+//    function createBucket() external;
+//
+//    /// @dev Create a bucket.
+//    /// @param owner The owner.
+//    function createBucket(address owner) external;
+//
+//    /// @dev Create a bucket.
+//    /// @param owner The owner.
+//    /// @param metadata The metadata.
+//    function createBucket(address owner, KeyValue[] memory metadata) external;
 
     /// @dev List all buckets owned by an address.
     /// @return The list of buckets.

@@ -52,9 +52,6 @@ interface IBucketFacade {
 
     function addObject(AddObjectParams memory addObjectParams) external;
     function addObject(string memory source, string memory key, string memory blobHash, string memory recoveryHash, uint64 size, address from) external;
-    function createBucket() external;
-    function createBucket(address owner, KeyValue[] memory metadata) external;
-    function createBucket(address owner) external;
     function deleteObject(string memory key, address from) external;
     function getObject(string memory key) external view returns (ObjectValue memory);
     function listBuckets() external view returns (Machine[] memory);
@@ -174,56 +171,6 @@ interface IBucketFacade {
       },
       {
         "name": "from",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "createBucket",
-    "inputs": [],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "createBucket",
-    "inputs": [
-      {
-        "name": "owner",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "metadata",
-        "type": "tuple[]",
-        "internalType": "struct KeyValue[]",
-        "components": [
-          {
-            "name": "key",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "value",
-            "type": "string",
-            "internalType": "string"
-          }
-        ]
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "createBucket",
-    "inputs": [
-      {
-        "name": "owner",
         "type": "address",
         "internalType": "address"
       }
@@ -3658,395 +3605,6 @@ function addObject(string memory source, string memory key, string memory blobHa
             }
         }
     };
-    /**Function with signature `createBucket()` and selector `0x4aa82ff5`.
-```solidity
-function createBucket() external;
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct createBucket_0Call {}
-    ///Container type for the return parameters of the [`createBucket()`](createBucket_0Call) function.
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct createBucket_0Return {}
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use ::alloy_sol_types as alloy_sol_types;
-        {
-            #[doc(hidden)]
-            type UnderlyingSolTuple<'a> = ();
-            #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = ();
-            #[cfg(test)]
-            #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
-                match _t {
-                    alloy_sol_types::private::AssertTypeEq::<
-                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                    >(_) => {}
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<createBucket_0Call> for UnderlyingRustTuple<'_> {
-                fn from(value: createBucket_0Call) -> Self {
-                    ()
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>> for createBucket_0Call {
-                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self {}
-                }
-            }
-        }
-        {
-            #[doc(hidden)]
-            type UnderlyingSolTuple<'a> = ();
-            #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = ();
-            #[cfg(test)]
-            #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
-                match _t {
-                    alloy_sol_types::private::AssertTypeEq::<
-                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                    >(_) => {}
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<createBucket_0Return>
-            for UnderlyingRustTuple<'_> {
-                fn from(value: createBucket_0Return) -> Self {
-                    ()
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for createBucket_0Return {
-                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self {}
-                }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolCall for createBucket_0Call {
-            type Parameters<'a> = ();
-            type Token<'a> = <Self::Parameters<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            type Return = createBucket_0Return;
-            type ReturnTuple<'a> = ();
-            type ReturnToken<'a> = <Self::ReturnTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "createBucket()";
-            const SELECTOR: [u8; 4] = [74u8, 168u8, 47u8, 245u8];
-            #[inline]
-            fn new<'a>(
-                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
-                tuple.into()
-            }
-            #[inline]
-            fn tokenize(&self) -> Self::Token<'_> {
-                ()
-            }
-            #[inline]
-            fn abi_decode_returns(
-                data: &[u8],
-                validate: bool,
-            ) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence(data, validate)
-                    .map(Into::into)
-            }
-        }
-    };
-    /**Function with signature `createBucket(address,(string,string)[])` and selector `0xe129ed90`.
-```solidity
-function createBucket(address owner, KeyValue[] memory metadata) external;
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct createBucket_1Call {
-        #[allow(missing_docs)]
-        pub owner: ::alloy_sol_types::private::Address,
-        #[allow(missing_docs)]
-        pub metadata: ::alloy_sol_types::private::Vec<
-            <KeyValue as ::alloy_sol_types::SolType>::RustType,
-        >,
-    }
-    ///Container type for the return parameters of the [`createBucket(address,(string,string)[])`](createBucket_1Call) function.
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct createBucket_1Return {}
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use ::alloy_sol_types as alloy_sol_types;
-        {
-            #[doc(hidden)]
-            type UnderlyingSolTuple<'a> = (
-                ::alloy_sol_types::sol_data::Address,
-                ::alloy_sol_types::sol_data::Array<KeyValue>,
-            );
-            #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = (
-                ::alloy_sol_types::private::Address,
-                ::alloy_sol_types::private::Vec<
-                    <KeyValue as ::alloy_sol_types::SolType>::RustType,
-                >,
-            );
-            #[cfg(test)]
-            #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
-                match _t {
-                    alloy_sol_types::private::AssertTypeEq::<
-                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                    >(_) => {}
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<createBucket_1Call> for UnderlyingRustTuple<'_> {
-                fn from(value: createBucket_1Call) -> Self {
-                    (value.owner, value.metadata)
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>> for createBucket_1Call {
-                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self {
-                        owner: tuple.0,
-                        metadata: tuple.1,
-                    }
-                }
-            }
-        }
-        {
-            #[doc(hidden)]
-            type UnderlyingSolTuple<'a> = ();
-            #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = ();
-            #[cfg(test)]
-            #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
-                match _t {
-                    alloy_sol_types::private::AssertTypeEq::<
-                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                    >(_) => {}
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<createBucket_1Return>
-            for UnderlyingRustTuple<'_> {
-                fn from(value: createBucket_1Return) -> Self {
-                    ()
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for createBucket_1Return {
-                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self {}
-                }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolCall for createBucket_1Call {
-            type Parameters<'a> = (
-                ::alloy_sol_types::sol_data::Address,
-                ::alloy_sol_types::sol_data::Array<KeyValue>,
-            );
-            type Token<'a> = <Self::Parameters<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            type Return = createBucket_1Return;
-            type ReturnTuple<'a> = ();
-            type ReturnToken<'a> = <Self::ReturnTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "createBucket(address,(string,string)[])";
-            const SELECTOR: [u8; 4] = [225u8, 41u8, 237u8, 144u8];
-            #[inline]
-            fn new<'a>(
-                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
-                tuple.into()
-            }
-            #[inline]
-            fn tokenize(&self) -> Self::Token<'_> {
-                (
-                    <::alloy_sol_types::sol_data::Address as alloy_sol_types::SolType>::tokenize(
-                        &self.owner,
-                    ),
-                    <::alloy_sol_types::sol_data::Array<
-                        KeyValue,
-                    > as alloy_sol_types::SolType>::tokenize(&self.metadata),
-                )
-            }
-            #[inline]
-            fn abi_decode_returns(
-                data: &[u8],
-                validate: bool,
-            ) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence(data, validate)
-                    .map(Into::into)
-            }
-        }
-    };
-    /**Function with signature `createBucket(address)` and selector `0xf6d6c420`.
-```solidity
-function createBucket(address owner) external;
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct createBucket_2Call {
-        #[allow(missing_docs)]
-        pub owner: ::alloy_sol_types::private::Address,
-    }
-    ///Container type for the return parameters of the [`createBucket(address)`](createBucket_2Call) function.
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct createBucket_2Return {}
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use ::alloy_sol_types as alloy_sol_types;
-        {
-            #[doc(hidden)]
-            type UnderlyingSolTuple<'a> = (::alloy_sol_types::sol_data::Address,);
-            #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = (::alloy_sol_types::private::Address,);
-            #[cfg(test)]
-            #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
-                match _t {
-                    alloy_sol_types::private::AssertTypeEq::<
-                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                    >(_) => {}
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<createBucket_2Call> for UnderlyingRustTuple<'_> {
-                fn from(value: createBucket_2Call) -> Self {
-                    (value.owner,)
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>> for createBucket_2Call {
-                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self { owner: tuple.0 }
-                }
-            }
-        }
-        {
-            #[doc(hidden)]
-            type UnderlyingSolTuple<'a> = ();
-            #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = ();
-            #[cfg(test)]
-            #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
-                match _t {
-                    alloy_sol_types::private::AssertTypeEq::<
-                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                    >(_) => {}
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<createBucket_2Return>
-            for UnderlyingRustTuple<'_> {
-                fn from(value: createBucket_2Return) -> Self {
-                    ()
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for createBucket_2Return {
-                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self {}
-                }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolCall for createBucket_2Call {
-            type Parameters<'a> = (::alloy_sol_types::sol_data::Address,);
-            type Token<'a> = <Self::Parameters<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            type Return = createBucket_2Return;
-            type ReturnTuple<'a> = ();
-            type ReturnToken<'a> = <Self::ReturnTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "createBucket(address)";
-            const SELECTOR: [u8; 4] = [246u8, 214u8, 196u8, 32u8];
-            #[inline]
-            fn new<'a>(
-                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
-                tuple.into()
-            }
-            #[inline]
-            fn tokenize(&self) -> Self::Token<'_> {
-                (
-                    <::alloy_sol_types::sol_data::Address as alloy_sol_types::SolType>::tokenize(
-                        &self.owner,
-                    ),
-                )
-            }
-            #[inline]
-            fn abi_decode_returns(
-                data: &[u8],
-                validate: bool,
-            ) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence(data, validate)
-                    .map(Into::into)
-            }
-        }
-    };
     /**Function with signature `deleteObject(string,address)` and selector `0x08425c1f`.
 ```solidity
 function deleteObject(string memory key, address from) external;
@@ -5457,12 +5015,6 @@ function updateObjectMetadata(string memory key, KeyValue[] memory metadata, add
         #[allow(missing_docs)]
         addObject_1(addObject_1Call),
         #[allow(missing_docs)]
-        createBucket_0(createBucket_0Call),
-        #[allow(missing_docs)]
-        createBucket_1(createBucket_1Call),
-        #[allow(missing_docs)]
-        createBucket_2(createBucket_2Call),
-        #[allow(missing_docs)]
         deleteObject(deleteObjectCall),
         #[allow(missing_docs)]
         getObject(getObjectCall),
@@ -5496,7 +5048,6 @@ function updateObjectMetadata(string memory key, KeyValue[] memory metadata, add
             [8u8, 66u8, 92u8, 31u8],
             [23u8, 211u8, 82u8, 192u8],
             [26u8, 128u8, 208u8, 166u8],
-            [74u8, 168u8, 47u8, 245u8],
             [76u8, 83u8, 234u8, 181u8],
             [98u8, 148u8, 233u8, 163u8],
             [99u8, 194u8, 68u8, 194u8],
@@ -5505,15 +5056,13 @@ function updateObjectMetadata(string memory key, KeyValue[] memory metadata, add
             [164u8, 67u8, 168u8, 63u8],
             [201u8, 174u8, 239u8, 129u8],
             [209u8, 32u8, 48u8, 63u8],
-            [225u8, 41u8, 237u8, 144u8],
-            [246u8, 214u8, 196u8, 32u8],
         ];
     }
     #[automatically_derived]
     impl alloy_sol_types::SolInterface for IBucketFacadeCalls {
         const NAME: &'static str = "IBucketFacadeCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 15usize;
+        const COUNT: usize = 12usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
@@ -5522,15 +5071,6 @@ function updateObjectMetadata(string memory key, KeyValue[] memory metadata, add
                 }
                 Self::addObject_1(_) => {
                     <addObject_1Call as alloy_sol_types::SolCall>::SELECTOR
-                }
-                Self::createBucket_0(_) => {
-                    <createBucket_0Call as alloy_sol_types::SolCall>::SELECTOR
-                }
-                Self::createBucket_1(_) => {
-                    <createBucket_1Call as alloy_sol_types::SolCall>::SELECTOR
-                }
-                Self::createBucket_2(_) => {
-                    <createBucket_2Call as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::deleteObject(_) => {
                     <deleteObjectCall as alloy_sol_types::SolCall>::SELECTOR
@@ -5636,19 +5176,6 @@ function updateObjectMetadata(string memory key, KeyValue[] memory metadata, add
                     addObject_0
                 },
                 {
-                    fn createBucket_0(
-                        data: &[u8],
-                        validate: bool,
-                    ) -> alloy_sol_types::Result<IBucketFacadeCalls> {
-                        <createBucket_0Call as alloy_sol_types::SolCall>::abi_decode_raw(
-                                data,
-                                validate,
-                            )
-                            .map(IBucketFacadeCalls::createBucket_0)
-                    }
-                    createBucket_0
-                },
-                {
                     fn queryObjects_1(
                         data: &[u8],
                         validate: bool,
@@ -5752,32 +5279,6 @@ function updateObjectMetadata(string memory key, KeyValue[] memory metadata, add
                     }
                     listBuckets_1
                 },
-                {
-                    fn createBucket_1(
-                        data: &[u8],
-                        validate: bool,
-                    ) -> alloy_sol_types::Result<IBucketFacadeCalls> {
-                        <createBucket_1Call as alloy_sol_types::SolCall>::abi_decode_raw(
-                                data,
-                                validate,
-                            )
-                            .map(IBucketFacadeCalls::createBucket_1)
-                    }
-                    createBucket_1
-                },
-                {
-                    fn createBucket_2(
-                        data: &[u8],
-                        validate: bool,
-                    ) -> alloy_sol_types::Result<IBucketFacadeCalls> {
-                        <createBucket_2Call as alloy_sol_types::SolCall>::abi_decode_raw(
-                                data,
-                                validate,
-                            )
-                            .map(IBucketFacadeCalls::createBucket_2)
-                    }
-                    createBucket_2
-                },
             ];
             let Ok(idx) = Self::SELECTORS.binary_search(&selector) else {
                 return Err(
@@ -5799,21 +5300,6 @@ function updateObjectMetadata(string memory key, KeyValue[] memory metadata, add
                 }
                 Self::addObject_1(inner) => {
                     <addObject_1Call as alloy_sol_types::SolCall>::abi_encoded_size(
-                        inner,
-                    )
-                }
-                Self::createBucket_0(inner) => {
-                    <createBucket_0Call as alloy_sol_types::SolCall>::abi_encoded_size(
-                        inner,
-                    )
-                }
-                Self::createBucket_1(inner) => {
-                    <createBucket_1Call as alloy_sol_types::SolCall>::abi_encoded_size(
-                        inner,
-                    )
-                }
-                Self::createBucket_2(inner) => {
-                    <createBucket_2Call as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
                     )
                 }
@@ -5878,24 +5364,6 @@ function updateObjectMetadata(string memory key, KeyValue[] memory metadata, add
                 }
                 Self::addObject_1(inner) => {
                     <addObject_1Call as alloy_sol_types::SolCall>::abi_encode_raw(
-                        inner,
-                        out,
-                    )
-                }
-                Self::createBucket_0(inner) => {
-                    <createBucket_0Call as alloy_sol_types::SolCall>::abi_encode_raw(
-                        inner,
-                        out,
-                    )
-                }
-                Self::createBucket_1(inner) => {
-                    <createBucket_1Call as alloy_sol_types::SolCall>::abi_encode_raw(
-                        inner,
-                        out,
-                    )
-                }
-                Self::createBucket_2(inner) => {
-                    <createBucket_2Call as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )

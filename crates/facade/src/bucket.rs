@@ -4,11 +4,11 @@ use std::collections::HashMap;
 use alloy_sol_types::SolInterface;
 use fvm_shared::bigint::Zero;
 use fvm_shared::clock::ChainEpoch;
-use fendermint_actor_bucket_shared::AddParams;
+use fendermint_actor_bucket_shared::{AddParams, DeleteParams};
 use fil_actors_runtime::{actor_error, ActorError};
 use crate::bucket_facade::ibucketfacade::IBucketFacade;
 use crate::types::{try_into_hash, try_into_public_key, InputData, AbiEncodeReturns, TryAbiEncodeReturns, IntoEthAddress};
-use fvm_shared::address::{Address as FVMAddress};
+use fvm_shared::address::{Address as FVMAddress, Address};
 use crate::impl_empty_returns;
 use alloy_sol_types::SolCall;
 
@@ -26,7 +26,8 @@ pub type Calls = IBucketFacadeCalls;
 
 impl_empty_returns!(
     IBucketFacade::addObject_0Call,
-    IBucketFacade::addObject_1Call
+    IBucketFacade::addObject_1Call,
+    IBucketFacade::deleteObjectCall
 );
 
 impl TryInto<AddParams> for IBucketFacade::addObject_0Call {
@@ -77,6 +78,17 @@ impl TryInto<AddParams> for IBucketFacade::addObject_1Call {
             metadata: HashMap::default(),
             overwrite: false,
             from,
+        })
+    }
+}
+
+impl TryInto<DeleteParams> for IBucketFacade::deleteObjectCall {
+    type Error = ActorError;
+    fn try_into(self) -> Result<DeleteParams, Self::Error> {
+        let key = self.key.into_bytes();
+        let from: Address = self.from.into_eth_address().into();
+        Ok(DeleteParams {
+            key, from,
         })
     }
 }
