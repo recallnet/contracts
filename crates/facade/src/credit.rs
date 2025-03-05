@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use crate::credit_facade::icreditfacade::ICreditFacade::{CreditApproved, CreditDebited, CreditPurchased, CreditRevoked, ICreditFacadeCalls, ICreditFacadeEvents};
 use crate::types::{AbiEncodeError, BigUintWrapper, InputData, TryAbiEncodeReturns, H160};
@@ -11,9 +11,13 @@ use crate::credit_facade::icreditfacade::ICreditFacade;
 use crate::impl_empty_returns;
 use crate::types::AbiEncodeReturns;
 use alloy_sol_types::SolCall;
-use fendermint_actor_blobs_shared::state::{Account, CreditApproval};
+use fendermint_actor_blobs_shared::state::{Account, Credit, CreditApproval};
 use fvm_shared::address::{Address as FVMAddress};
-use fendermint_actor_blobs_shared::params::GetStatsReturn;
+use fvm_shared::clock::ChainEpoch;
+use fvm_shared::econ::TokenAmount;
+use fendermint_actor_blobs_shared::params::{ApproveCreditParams, GetAccountParams, GetCreditApprovalParams, GetStatsReturn, RevokeCreditParams, SetSponsorParams};
+use fil_actors_evm_shared::address::EthAddress;
+use crate::blobs::IntoEthAddress;
 
 pub fn can_handle(input_data: &InputData) -> bool {
     ICreditFacadeCalls::valid_selector(input_data.selector())
@@ -58,6 +62,14 @@ impl Default for ICreditFacade::CreditApproval {
             creditUsed: U256::default(),
             gasFeeUsed: U256::default(),
         }
+    }
+}
+
+impl Into<GetAccountParams> for ICreditFacade::getAccountCall {
+    fn into(self) -> GetAccountParams {
+        let sponsor: EthAddress = self.addr.into_eth_address();
+        let sponsor: FVMAddress = sponsor.into();
+        GetAccountParams(sponsor)
     }
 }
 
@@ -111,6 +123,14 @@ impl TryAbiEncodeReturns<GetStatsReturn> for ICreditFacade::getCreditStatsCall {
     }
 }
 
+impl Into<GetCreditApprovalParams> for ICreditFacade::getCreditApprovalCall {
+    fn into(self) -> GetCreditApprovalParams {
+        let from: fvm_shared::address::Address = self.from.into_eth_address().into();
+        let to: fvm_shared::address::Address = self.to.into_eth_address().into();
+        GetCreditApprovalParams { from, to }
+    }
+}
+
 impl TryAbiEncodeReturns<Option<CreditApproval>> for ICreditFacade::getCreditApprovalCall {
     fn try_returns(&self, value: Option<CreditApproval>) -> Result<Vec<u8>, AbiEncodeError> {
         let approval_result = if let Some(credit_approval) = value {
@@ -152,6 +172,93 @@ impl TryAbiEncodeReturns<Option<Account>> for ICreditFacade::getCreditBalanceCal
 }
 
 pub type Calls = ICreditFacadeCalls;
+
+impl Into<SetSponsorParams> for ICreditFacade::setAccountSponsorCall {
+    fn into(self) -> SetSponsorParams {
+        let from: FVMAddress = self.from.into_eth_address().into();
+        let sponsor: EthAddress = self.sponsor.into_eth_address();
+        let sponsor: Option<FVMAddress> = if sponsor.is_null() { None } else { Some(sponsor.into()) };
+        SetSponsorParams {
+            from,
+            sponsor,
+        }
+    }
+}
+
+impl Into<ApproveCreditParams> for ICreditFacade::approveCredit_1Call {
+    fn into(self) -> ApproveCreditParams {
+        let from: FVMAddress = self.from.into_eth_address().into();
+        let to: FVMAddress = self.to.into_eth_address().into();
+        let caller_allowlist: HashSet<FVMAddress> = HashSet::from_iter(self.caller.iter().map(|address| <EthAddress as Into<fvm_shared::address::Address>>::into(address.into_eth_address())));
+        ApproveCreditParams {
+            from,
+            to,
+            caller_allowlist: Some(caller_allowlist),
+            credit_limit: None,
+            gas_fee_limit: None,
+            ttl: None
+        }
+    }
+}
+
+impl Into<ApproveCreditParams> for ICreditFacade::approveCredit_2Call {
+    fn into(self) -> ApproveCreditParams {
+        let from: FVMAddress = self.from.into_eth_address().into();
+        let to: FVMAddress = self.to.into_eth_address().into();
+        let caller_allowlist: HashSet<FVMAddress> = HashSet::from_iter(self.caller.iter().map(|address| <EthAddress as Into<fvm_shared::address::Address>>::into(address.into_eth_address())));
+        let credit_limit: Credit = BigUintWrapper::from(self.creditLimit).into();
+        let gas_fee_limit: TokenAmount = BigUintWrapper::from(self.gasFeeLimit).into();
+        let ttl = self.ttl;
+        ApproveCreditParams {
+            from,
+            to,
+            caller_allowlist: Some(caller_allowlist),
+            credit_limit: Some(credit_limit),
+            gas_fee_limit: Some(gas_fee_limit),
+            ttl: Some(ttl as ChainEpoch)
+        }
+    }
+}
+
+impl Into<ApproveCreditParams> for ICreditFacade::approveCredit_3Call {
+    fn into(self) -> ApproveCreditParams {
+        let from: FVMAddress = self.from.into_eth_address().into();
+        let to: FVMAddress = self.to.into_eth_address().into();
+        ApproveCreditParams {
+            from,
+            to,
+            caller_allowlist: None,
+            credit_limit: None,
+            gas_fee_limit: None,
+            ttl: None
+        }
+    }
+}
+
+impl Into<RevokeCreditParams> for ICreditFacade::revokeCredit_0Call {
+    fn into(self) -> RevokeCreditParams {
+        let from: fvm_shared::address::Address = self.from.into_eth_address().into();
+        let to: fvm_shared::address::Address = self.to.into_eth_address().into();
+        RevokeCreditParams{
+            from,
+            to,
+            for_caller: None,
+        }
+    }
+}
+
+impl Into<RevokeCreditParams> for ICreditFacade::revokeCredit_2Call {
+    fn into(self) -> RevokeCreditParams {
+        let from: fvm_shared::address::Address = self.from.into_eth_address().into();
+        let to: fvm_shared::address::Address = self.to.into_eth_address().into();
+        let caller: fvm_shared::address::Address = self.caller.into_eth_address().into();
+        RevokeCreditParams {
+            from,
+            to,
+            for_caller: Some(caller),
+        }
+    }
+}
 
 impl_empty_returns!(
     ICreditFacade::setAccountSponsorCall,
