@@ -4,13 +4,14 @@ use std::collections::HashMap;
 use alloy_sol_types::SolInterface;
 use fvm_shared::bigint::Zero;
 use fvm_shared::clock::ChainEpoch;
-use fendermint_actor_bucket_shared::{AddParams, DeleteParams};
+use fendermint_actor_bucket_shared::{AddParams, DeleteParams, Object};
 use fil_actors_runtime::{actor_error, ActorError};
 use crate::bucket_facade::ibucketfacade::IBucketFacade;
 use crate::types::{try_into_hash, try_into_public_key, InputData, AbiEncodeReturns, TryAbiEncodeReturns, IntoEthAddress};
 use fvm_shared::address::{Address as FVMAddress, Address};
 use crate::impl_empty_returns;
 use alloy_sol_types::SolCall;
+use fendermint_actor_blobs_shared::state::Hash;
 
 pub fn can_handle(input_data: &InputData) -> bool {
     IBucketFacadeCalls::valid_selector(input_data.selector())
@@ -90,6 +91,47 @@ impl TryInto<DeleteParams> for IBucketFacade::deleteObjectCall {
         Ok(DeleteParams {
             key, from,
         })
+    }
+}
+
+impl From<Object> for IBucketFacade::ObjectValue {
+    fn from(object: Object) -> Self {
+        let metadata = object.metadata.into_iter().map(|(key, value)| {
+            IBucketFacade::KeyValue {
+                key,
+                value,
+            }
+        }).collect::<Vec<_>>();
+        IBucketFacade::ObjectValue {
+            blobHash: object.hash.into(),
+            recoveryHash: object.recovery_hash.into(),
+            size: object.size,
+            expiry: object.expiry as u64,
+            metadata,
+        }
+    }
+}
+
+impl Default for IBucketFacade::ObjectValue {
+    fn default() -> Self {
+        IBucketFacade::ObjectValue {
+            blobHash: Hash::default().into(),
+            recoveryHash: Hash::default().into(),
+            size: u64::default(),
+            expiry: u64::default(),
+            metadata: Vec::default(),
+        }
+    }
+}
+
+impl AbiEncodeReturns<Option<Object>> for IBucketFacade::getObjectCall {
+    fn returns(&self, value: Option<Object>) -> Vec<u8> {
+        let object_value = if let Some(value) = value {
+            IBucketFacade::ObjectValue::from(value)
+        } else {
+            IBucketFacade::ObjectValue::default()
+        };
+        Self::abi_encode_returns(&(object_value,))
     }
 }
 
