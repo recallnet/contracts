@@ -1,8 +1,21 @@
-use crate::bucket_facade::ibucketfacade::IBucketFacade::{
-    IBucketFacadeEvents, ObjectAdded, ObjectDeleted, ObjectMetadataUpdated,
-};
+use crate::bucket_facade::ibucketfacade::IBucketFacade::{IBucketFacadeCalls, IBucketFacadeEvents, ObjectAdded, ObjectDeleted, ObjectMetadataUpdated};
 use anyhow::Result;
 use std::collections::HashMap;
+use alloy_sol_types::SolInterface;
+use fil_actors_runtime::{actor_error, ActorError};
+use crate::types::InputData;
+
+pub fn can_handle(input_data: &InputData) -> bool {
+    IBucketFacadeCalls::valid_selector(input_data.selector())
+}
+
+pub fn parse_input(input: &InputData) -> Result<IBucketFacadeCalls, ActorError> {
+    IBucketFacadeCalls::abi_decode_raw(input.selector(), input.calldata(), true).map_err(|e| {
+        actor_error!(illegal_argument, format!("invalid call: {}", e))
+    })
+}
+
+pub type Calls = IBucketFacadeCalls;
 
 pub fn object_added(
     key: Vec<u8>,
