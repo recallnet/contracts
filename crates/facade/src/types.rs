@@ -12,6 +12,7 @@ use fvm_shared::{
     ActorID,
 };
 use fvm_shared::econ::TokenAmount;
+use fendermint_actor_blobs_shared::state::Credit;
 use fil_actors_runtime::ActorError;
 use fil_actors_evm_shared::address::EthAddress;
 
@@ -137,6 +138,12 @@ impl From<Address> for H160 {
 }
 
 pub struct BigUintWrapper(pub BigUint);
+
+impl Default for BigUintWrapper {
+    fn default() -> Self {
+        BigUintWrapper(BigUint::default())
+    }
+}
 
 impl From<BigUintWrapper> for U256 {
     fn from(value: BigUintWrapper) -> Self {

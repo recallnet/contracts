@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
+import "../../types/BlobTypes.sol";
+
 interface ICreditFacade {
     /// @dev Emitted when credit is purchased.
     /// @param from Credit purchaser.
@@ -25,6 +27,11 @@ interface ICreditFacade {
     /// @param numAccounts Number of accounts debited.
     /// @param moreAccounts Whether there are more accounts to debit for the current billing cycle.
     event CreditDebited(uint256 amount, uint256 numAccounts, bool moreAccounts);
+
+    /// @dev Get the credit account for an address.
+    /// @param addr The address of the account.
+    /// @return account The credit account for the address.
+    function getAccount(address addr) external view returns (Account memory account);
 
     /// @dev Set the credit sponsor for an account.
     /// @param from The address of the account.
