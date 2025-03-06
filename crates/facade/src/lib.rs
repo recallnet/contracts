@@ -224,32 +224,6 @@ pub mod credit {
     use anyhow::Result;
     use fvm_shared::{address::Address, bigint::BigUint};
 
-    pub fn credit_purchased(from: Address, amount: BigUint) -> Result<Event> {
-        let from: H160 = from.try_into()?;
-        Ok(Event::CreditPurchased(CreditPurchased {
-            from: from.into(),
-            amount: BigUintWrapper(amount).into(),
-        }))
-    }
-
-    pub fn credit_approved(
-        from: Address,
-        to: Address,
-        credit_limit: BigUint,
-        gas_fee_limit: BigUint,
-        expiry: u64,
-    ) -> Result<Event> {
-        let from: H160 = from.try_into()?;
-        let to: H160 = to.try_into()?;
-        Ok(Event::CreditApproved(CreditApproved {
-            from: from.into(),
-            to: to.into(),
-            creditLimit: BigUintWrapper(credit_limit).into(),
-            gasFeeLimit: BigUintWrapper(gas_fee_limit).into(),
-            expiry: U256::from(expiry),
-        }))
-    }
-
     pub fn credit_revoked(from: Address, to: Address) -> Result<Event> {
         let from: H160 = from.try_into()?;
         let to: H160 = to.try_into()?;
