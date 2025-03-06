@@ -11,47 +11,10 @@ pub mod types;
 mod blobreader_facade;
 #[cfg(feature = "blob-reader")]
 pub mod blob_reader {
-    use crate::blobreader_facade::iblobreaderfacade::IBlobReaderFacade::{
-        IBlobReaderFacadeEvents, ReadRequestClosed, ReadRequestOpened, ReadRequestPending,
-    };
-    use crate::types::H160;
-    use alloy_primitives::U256;
-    use anyhow::Result;
-    use fvm_shared::address::Address;
-    use fvm_shared::MethodNum;
-
-    pub fn read_request_opened(
-        id: &[u8; 32],
-        blob_hash: &[u8; 32],
-        read_offset: u64,
-        read_length: u64,
-        callback: Address,
-        method_num: MethodNum,
-    ) -> Result<IBlobReaderFacadeEvents> {
-        let callback: H160 = callback.try_into()?;
-        Ok(IBlobReaderFacadeEvents::ReadRequestOpened(
-            ReadRequestOpened {
-                id: id.into(),
-                blobHash: blob_hash.into(),
-                readOffset: U256::from(read_offset),
-                readLength: U256::from(read_length),
-                callbackAddress: callback.into(),
-                callbackMethod: U256::from(method_num),
-            },
-        ))
-    }
-
-    pub fn read_request_pending(id: &[u8; 32]) -> Result<IBlobReaderFacadeEvents> {
-        Ok(IBlobReaderFacadeEvents::ReadRequestPending(
-            ReadRequestPending { id: id.into() },
-        ))
-    }
-
-    pub fn read_request_closed(id: &[u8; 32]) -> Result<IBlobReaderFacadeEvents> {
-        Ok(IBlobReaderFacadeEvents::ReadRequestClosed(
-            ReadRequestClosed { id: id.into() },
-        ))
-    }
+    pub type Event = crate::blobreader_facade::iblobreaderfacade::IBlobReaderFacade::IBlobReaderFacadeEvents;
+    pub type ReadRequestClosed = crate::blobreader_facade::iblobreaderfacade::IBlobReaderFacade::ReadRequestClosed;
+    pub type ReadRequestOpened = crate::blobreader_facade::iblobreaderfacade::IBlobReaderFacade::ReadRequestOpened;
+    pub type ReadRequestPending = crate::blobreader_facade::iblobreaderfacade::IBlobReaderFacade::ReadRequestPending;
 }
 
 #[cfg(feature = "blobs")]
@@ -106,7 +69,6 @@ pub mod gas {
 
 #[cfg(feature = "machine")]
 mod machine_facade;
-
 #[cfg(feature = "machine")]
 pub mod machine {
     pub type Event = crate::machine_facade::imachinefacade::IMachineFacade::IMachineFacadeEvents;
@@ -116,7 +78,6 @@ pub mod machine {
 
 #[cfg(feature = "timehub")]
 mod timehub_facade;
-
 #[cfg(feature = "timehub")]
 pub mod timehub {
     pub type Event = crate::timehub_facade::itimehubfacade::ITimehubFacade::ITimehubFacadeEvents;
