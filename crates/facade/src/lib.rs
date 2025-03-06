@@ -173,20 +173,17 @@ pub mod bucket {
 mod config_facade;
 #[cfg(feature = "config")]
 pub mod config {
+    pub type Event = crate::config_facade::iconfigfacade::IConfigFacade::IConfigFacadeEvents;
+    pub type ConfigAdminSet = crate::config_facade::iconfigfacade::IConfigFacade::ConfigAdminSet;
+    pub type ConfigSet = crate::config_facade::iconfigfacade::IConfigFacade::ConfigSet;
+
     use crate::config_facade::iconfigfacade::IConfigFacade::{
-        ConfigAdminSet, ConfigSet, IConfigFacadeEvents,
+        IConfigFacadeEvents,
     };
     use crate::types::{BigUintWrapper, H160};
     use alloy_primitives::U256;
     use anyhow::Result;
     use fvm_shared::{address::Address, bigint::BigUint};
-
-    pub fn config_admin_set(admin: Address) -> Result<IConfigFacadeEvents> {
-        let admin: H160 = admin.try_into()?;
-        Ok(IConfigFacadeEvents::ConfigAdminSet(ConfigAdminSet {
-            admin: admin.into(),
-        }))
-    }
 
     pub fn config_set(
         blob_capacity: u64,
