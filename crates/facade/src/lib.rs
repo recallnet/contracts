@@ -218,32 +218,6 @@ pub mod credit {
     pub type CreditDebited = crate::credit_facade::icreditfacade::ICreditFacade::CreditDebited;
     pub type CreditPurchased = crate::credit_facade::icreditfacade::ICreditFacade::CreditPurchased;
     pub type CreditRevoked = crate::credit_facade::icreditfacade::ICreditFacade::CreditRevoked;
-
-    use crate::types::{BigUintWrapper, H160};
-    use alloy_primitives::U256;
-    use anyhow::Result;
-    use fvm_shared::{address::Address, bigint::BigUint};
-
-    pub fn credit_revoked(from: Address, to: Address) -> Result<Event> {
-        let from: H160 = from.try_into()?;
-        let to: H160 = to.try_into()?;
-        Ok(Event::CreditRevoked(CreditRevoked {
-            from: from.into(),
-            to: to.into(),
-        }))
-    }
-
-    pub fn credit_debited(
-        amount: BigUint,
-        num_accounts: u64,
-        more_accounts: bool,
-    ) -> Result<Event> {
-        Ok(Event::CreditDebited(CreditDebited {
-            amount: BigUintWrapper(amount).into(),
-            numAccounts: U256::from(num_accounts),
-            moreAccounts: more_accounts,
-        }))
-    }
 }
 
 #[cfg(feature = "gas")]
