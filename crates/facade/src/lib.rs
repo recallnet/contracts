@@ -294,39 +294,12 @@ pub mod gas {
 
 #[cfg(feature = "machine")]
 mod machine_facade;
+
 #[cfg(feature = "machine")]
 pub mod machine {
-    use crate::machine_facade::imachinefacade::IMachineFacade::{
-        IMachineFacadeEvents, MachineCreated, MachineInitialized,
-    };
-    use crate::types::H160;
-    use anyhow::Result;
-    use fvm_shared::address::Address;
-    use std::collections::HashMap;
-
-    pub fn machine_created(
-        kind: u8,
-        owner: Address,
-        metadata: &HashMap<String, String>,
-    ) -> Result<IMachineFacadeEvents> {
-        let owner: H160 = owner.try_into()?;
-        let metadata = fvm_ipld_encoding::to_vec(metadata)?;
-        Ok(IMachineFacadeEvents::MachineCreated(MachineCreated {
-            kind,
-            owner: owner.into(),
-            metadata: metadata.into(),
-        }))
-    }
-
-    pub fn machine_initialized(kind: u8, machine_address: Address) -> Result<IMachineFacadeEvents> {
-        let machine_address: H160 = machine_address.try_into()?;
-        Ok(IMachineFacadeEvents::MachineInitialized(
-            MachineInitialized {
-                kind,
-                machineAddress: machine_address.into(),
-            },
-        ))
-    }
+    pub type Event = crate::machine_facade::imachinefacade::IMachineFacade::IMachineFacadeEvents;
+    pub type MachineCreated = crate::machine_facade::imachinefacade::IMachineFacade::MachineCreated;
+    pub type MachineInitialized = crate::machine_facade::imachinefacade::IMachineFacade::MachineInitialized;
 }
 
 #[cfg(feature = "timehub")]
