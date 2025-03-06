@@ -307,17 +307,6 @@ mod timehub_facade;
 
 #[cfg(feature = "timehub")]
 pub mod timehub {
-    use crate::timehub_facade::itimehubfacade::ITimehubFacade::{
-        EventPushed, ITimehubFacadeEvents,
-    };
-    use alloy_primitives::U256;
-    use anyhow::Result;
-
-    pub fn event_pushed(index: u64, timestamp: u64, cid: Vec<u8>) -> Result<ITimehubFacadeEvents> {
-        Ok(ITimehubFacadeEvents::EventPushed(EventPushed {
-            index: U256::from(index),
-            timestamp: U256::from(timestamp),
-            cid: cid.into(),
-        }))
-    }
+    pub type Event = crate::timehub_facade::itimehubfacade::ITimehubFacade::ITimehubFacadeEvents;
+    pub type EventPushed = crate::timehub_facade::itimehubfacade::ITimehubFacade::EventPushed;
 }
