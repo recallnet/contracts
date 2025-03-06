@@ -176,34 +176,6 @@ pub mod config {
     pub type Event = crate::config_facade::iconfigfacade::IConfigFacade::IConfigFacadeEvents;
     pub type ConfigAdminSet = crate::config_facade::iconfigfacade::IConfigFacade::ConfigAdminSet;
     pub type ConfigSet = crate::config_facade::iconfigfacade::IConfigFacade::ConfigSet;
-
-    use crate::config_facade::iconfigfacade::IConfigFacade::{
-        IConfigFacadeEvents,
-    };
-    use crate::types::{BigUintWrapper, H160};
-    use alloy_primitives::U256;
-    use anyhow::Result;
-    use fvm_shared::{address::Address, bigint::BigUint};
-
-    pub fn config_set(
-        blob_capacity: u64,
-        token_credit_rate: BigUint,
-        blob_credit_debit_interval: u64,
-        blob_min_ttl: u64,
-        blob_default_ttl: u64,
-        blob_delete_batch_size: u64,
-        account_debit_batch_size: u64,
-    ) -> Result<IConfigFacadeEvents> {
-        Ok(IConfigFacadeEvents::ConfigSet(ConfigSet {
-            blobCapacity: U256::from(blob_capacity),
-            tokenCreditRate: BigUintWrapper(token_credit_rate).into(),
-            blobCreditDebitInterval: U256::from(blob_credit_debit_interval),
-            blobMinTtl: U256::from(blob_min_ttl),
-            blobDefaultTtl: U256::from(blob_default_ttl),
-            blobDeleteBatchSize: U256::from(blob_delete_batch_size),
-            accountDebitBatchSize: U256::from(account_debit_batch_size),
-        }))
-    }
 }
 
 #[cfg(feature = "credit")]
