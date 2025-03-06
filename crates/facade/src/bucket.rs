@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use alloy_sol_types::SolInterface;
 use fvm_shared::bigint::Zero;
 use fvm_shared::clock::ChainEpoch;
-use fendermint_actor_bucket_shared::{AddParams, DeleteParams, ListObjectsReturn, ListParams, Object};
+use fendermint_actor_bucket_shared::{AddParams, DeleteParams, ListObjectsReturn, ListParams, Object, UpdateObjectMetadataParams};
 use fil_actors_runtime::{actor_error, ActorError};
 use crate::bucket_facade::ibucketfacade::IBucketFacade;
 use crate::types::{try_into_hash, try_into_public_key, InputData, AbiEncodeReturns, TryAbiEncodeReturns, IntoEthAddress, AbiEncodeError};
@@ -28,7 +28,8 @@ pub type Calls = IBucketFacadeCalls;
 impl_empty_returns!(
     IBucketFacade::addObject_0Call,
     IBucketFacade::addObject_1Call,
-    IBucketFacade::deleteObjectCall
+    IBucketFacade::deleteObjectCall,
+    IBucketFacade::updateObjectMetadataCall
 );
 
 impl TryInto<AddParams> for IBucketFacade::addObject_0Call {
@@ -94,7 +95,7 @@ impl TryInto<DeleteParams> for IBucketFacade::deleteObjectCall {
     }
 }
 
-fn convert_metadata(metadata: HashMap<String, String>) -> Vec<IBucketFacade::KeyValue> {
+fn convert_metadata_to_solidity(metadata: HashMap<String, String>) -> Vec<IBucketFacade::KeyValue> {
     metadata.into_iter().map(|(key, value)| {
         IBucketFacade::KeyValue {
             key,
@@ -110,7 +111,7 @@ impl From<Object> for IBucketFacade::ObjectValue {
             recoveryHash: object.recovery_hash.into(),
             size: object.size,
             expiry: object.expiry as u64,
-            metadata: convert_metadata(object.metadata),
+            metadata: convert_metadata_to_solidity(object.metadata),
         }
     }
 }
@@ -158,7 +159,7 @@ fn convert_list_objects_to_query(list: ListObjectsReturn) -> Result<IBucketFacad
             state: IBucketFacade::ObjectState {
                 blobHash: state.hash.into(),
                 size: state.size,
-                metadata: convert_metadata(state.metadata.clone()),
+                metadata: convert_metadata_to_solidity(state.metadata.clone()),
             },
         })
     }).collect::<Result<Vec<_>, anyhow::Error>>()?;
@@ -256,6 +257,23 @@ impl TryAbiEncodeReturns<ListObjectsReturn> for IBucketFacade::queryObjects_4Cal
     fn try_returns(&self, value: ListObjectsReturn) -> Result<Vec<u8>, AbiEncodeError> {
         let query = convert_list_objects_to_query(value)?;
         Ok(Self::abi_encode_returns(&(query,)))
+    }
+}
+
+impl Into<UpdateObjectMetadataParams> for IBucketFacade::updateObjectMetadataCall {
+    fn into(self) -> UpdateObjectMetadataParams {
+        let key = self.key.into_bytes();
+        let from: Address = self.from.into_eth_address().into();
+        let metadata = HashMap::from_iter(self.metadata.iter().map(|kv| {
+            let value = if kv.value.is_empty() { None } else { Some(kv.value.clone()) };
+            let key = kv.key.clone();
+            (key, value)
+        }));
+        UpdateObjectMetadataParams {
+            key,
+            metadata,
+            from
+        }
     }
 }
 
