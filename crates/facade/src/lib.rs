@@ -133,19 +133,6 @@ pub mod bucket {
     pub type ObjectAdded = crate::bucket_facade::ibucketfacade::IBucketFacade::ObjectAdded;
     pub type ObjectDeleted = crate::bucket_facade::ibucketfacade::IBucketFacade::ObjectDeleted;
     pub type ObjectMetadataUpdated = crate::bucket_facade::ibucketfacade::IBucketFacade::ObjectMetadataUpdated;
-
-    use crate::bucket_facade::ibucketfacade::IBucketFacade::{
-        IBucketFacadeEvents,
-    };
-    use anyhow::Result;
-    use std::collections::HashMap;
-
-    pub fn object_deleted(key: Vec<u8>, blob_hash: &[u8; 32]) -> Result<IBucketFacadeEvents> {
-        Ok(IBucketFacadeEvents::ObjectDeleted(ObjectDeleted {
-            key: key.into(),
-            blobHash: blob_hash.into(),
-        }))
-    }
 }
 
 #[cfg(feature = "config")]
