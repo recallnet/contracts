@@ -63,54 +63,6 @@ pub mod blobs {
     pub type BlobDeleted = crate::blobs_facade::iblobsfacade::IBlobsFacade::BlobDeleted;
     pub type BlobFinalized = crate::blobs_facade::iblobsfacade::IBlobsFacade::BlobFinalized;
     pub type BlobPending = crate::blobs_facade::iblobsfacade::IBlobsFacade::BlobPending;
-    use crate::blobs_facade::iblobsfacade::IBlobsFacade::{
-        IBlobsFacadeEvents,
-    };
-    use crate::types::H160;
-    use alloy_primitives::U256;
-    use anyhow::Result;
-    use fvm_shared::address::Address;
-
-    pub fn blob_pending(
-        subscriber: Address,
-        hash: &[u8; 32],
-        source_id: &[u8; 32],
-    ) -> Result<IBlobsFacadeEvents> {
-        let subscriber: H160 = subscriber.try_into()?;
-        Ok(IBlobsFacadeEvents::BlobPending(BlobPending {
-            subscriber: subscriber.into(),
-            hash: hash.into(),
-            sourceId: source_id.into(),
-        }))
-    }
-
-    pub fn blob_finalized(
-        subscriber: Address,
-        hash: &[u8; 32],
-        resolved: bool,
-    ) -> Result<IBlobsFacadeEvents> {
-        let subscriber: H160 = subscriber.try_into()?;
-        Ok(IBlobsFacadeEvents::BlobFinalized(BlobFinalized {
-            subscriber: subscriber.into(),
-            hash: hash.into(),
-            resolved,
-        }))
-    }
-
-    pub fn blob_deleted(
-        subscriber: Address,
-        hash: &[u8; 32],
-        size: u64,
-        bytes_released: u64,
-    ) -> Result<IBlobsFacadeEvents> {
-        let subscriber: H160 = subscriber.try_into()?;
-        Ok(IBlobsFacadeEvents::BlobDeleted(BlobDeleted {
-            subscriber: subscriber.into(),
-            hash: hash.into(),
-            size: U256::from(size),
-            bytesReleased: U256::from(bytes_released),
-        }))
-    }
 }
 
 #[cfg(feature = "bucket")]
