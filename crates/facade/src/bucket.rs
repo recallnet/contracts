@@ -4,10 +4,10 @@ use std::collections::HashMap;
 use alloy_sol_types::SolInterface;
 use fvm_shared::bigint::Zero;
 use fvm_shared::clock::ChainEpoch;
-use fendermint_actor_bucket_shared::{AddParams, DeleteParams, ListParams, Object};
+use fendermint_actor_bucket_shared::{AddParams, DeleteParams, ListObjectsReturn, ListParams, Object};
 use fil_actors_runtime::{actor_error, ActorError};
 use crate::bucket_facade::ibucketfacade::IBucketFacade;
-use crate::types::{try_into_hash, try_into_public_key, InputData, AbiEncodeReturns, TryAbiEncodeReturns, IntoEthAddress};
+use crate::types::{try_into_hash, try_into_public_key, InputData, AbiEncodeReturns, TryAbiEncodeReturns, IntoEthAddress, AbiEncodeError};
 use fvm_shared::address::{Address as FVMAddress, Address};
 use crate::impl_empty_returns;
 use alloy_sol_types::SolCall;
@@ -94,20 +94,23 @@ impl TryInto<DeleteParams> for IBucketFacade::deleteObjectCall {
     }
 }
 
+fn convert_metadata(metadata: HashMap<String, String>) -> Vec<IBucketFacade::KeyValue> {
+    metadata.into_iter().map(|(key, value)| {
+        IBucketFacade::KeyValue {
+            key,
+            value,
+        }
+    }).collect::<Vec<_>>()
+}
+
 impl From<Object> for IBucketFacade::ObjectValue {
     fn from(object: Object) -> Self {
-        let metadata = object.metadata.into_iter().map(|(key, value)| {
-            IBucketFacade::KeyValue {
-                key,
-                value,
-            }
-        }).collect::<Vec<_>>();
         IBucketFacade::ObjectValue {
             blobHash: object.hash.into(),
             recoveryHash: object.recovery_hash.into(),
             size: object.size,
             expiry: object.expiry as u64,
-            metadata,
+            metadata: convert_metadata(object.metadata),
         }
     }
 }
@@ -143,6 +146,39 @@ impl Into<ListParams> for IBucketFacade::queryObjects_0Call {
             start_key: Some(self.startKey.into_bytes()),
             limit: self.limit,
         }
+    }
+}
+
+impl TryAbiEncodeReturns<ListObjectsReturn> for IBucketFacade::queryObjects_0Call {
+    fn try_returns(&self, value: ListObjectsReturn) -> Result<Vec<u8>, AbiEncodeError> {
+        let objects = value.objects.iter().map(|(key, state)| {
+           Ok(IBucketFacade::Object {
+               key: String::from_utf8(key.clone()).map_err(|e| {
+                   anyhow::Error::new(e)
+               })?,
+               state: IBucketFacade::ObjectState {
+                   blobHash: state.hash.into(),
+                   size: state.size,
+                   metadata: convert_metadata(state.metadata.clone()),
+               },
+           })
+        }).collect::<Result<Vec<_>, anyhow::Error>>()?;
+        let common_prefixes = value.common_prefixes.iter().map(|v| {
+            String::from_utf8(v.clone()).map_err(|e| {
+                anyhow::Error::new(e)
+            })
+        }).collect::<Result<Vec<_>, anyhow::Error>>()?;
+        let next_key = value.next_key.map(|bytes| {
+            String::from_utf8(bytes.clone()).map_err(|e| {
+                anyhow::Error::new(e)
+            })
+        }).transpose()?.unwrap_or_default();
+        let query = IBucketFacade::Query {
+            objects,
+            commonPrefixes: common_prefixes,
+            nextKey: next_key,
+        };
+        Ok(Self::abi_encode_returns(&(query,)))
     }
 }
 
