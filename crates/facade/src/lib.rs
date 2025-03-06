@@ -58,30 +58,18 @@ pub mod blob_reader {
 mod blobs_facade;
 #[cfg(feature = "blobs")]
 pub mod blobs {
+    pub type Event = crate::blobs_facade::iblobsfacade::IBlobsFacade::IBlobsFacadeEvents;
+    pub type BlobAdded = crate::blobs_facade::iblobsfacade::IBlobsFacade::BlobAdded;
+    pub type BlobDeleted = crate::blobs_facade::iblobsfacade::IBlobsFacade::BlobDeleted;
+    pub type BlobFinalized = crate::blobs_facade::iblobsfacade::IBlobsFacade::BlobFinalized;
+    pub type BlobPending = crate::blobs_facade::iblobsfacade::IBlobsFacade::BlobPending;
     use crate::blobs_facade::iblobsfacade::IBlobsFacade::{
-        BlobAdded, BlobDeleted, BlobFinalized, BlobPending, IBlobsFacadeEvents,
+        IBlobsFacadeEvents,
     };
     use crate::types::H160;
     use alloy_primitives::U256;
     use anyhow::Result;
     use fvm_shared::address::Address;
-
-    pub fn blob_added(
-        subscriber: Address,
-        hash: &[u8; 32],
-        size: u64,
-        expiry: u64,
-        bytes_used: u64,
-    ) -> Result<IBlobsFacadeEvents> {
-        let subscriber: H160 = subscriber.try_into()?;
-        Ok(IBlobsFacadeEvents::BlobAdded(BlobAdded {
-            subscriber: subscriber.into(),
-            hash: hash.into(),
-            size: U256::from(size),
-            expiry: U256::from(expiry),
-            bytesUsed: U256::from(bytes_used),
-        }))
-    }
 
     pub fn blob_pending(
         subscriber: Address,
