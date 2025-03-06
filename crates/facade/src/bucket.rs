@@ -149,35 +149,58 @@ impl Into<ListParams> for IBucketFacade::queryObjects_0Call {
     }
 }
 
+fn convert_list_objects_to_query(list: ListObjectsReturn) -> Result<IBucketFacade::Query, AbiEncodeError> {
+    let objects = list.objects.iter().map(|(key, state)| {
+        Ok(IBucketFacade::Object {
+            key: String::from_utf8(key.clone()).map_err(|e| {
+                anyhow::Error::new(e)
+            })?,
+            state: IBucketFacade::ObjectState {
+                blobHash: state.hash.into(),
+                size: state.size,
+                metadata: convert_metadata(state.metadata.clone()),
+            },
+        })
+    }).collect::<Result<Vec<_>, anyhow::Error>>()?;
+    let common_prefixes = list.common_prefixes.iter().map(|v| {
+        String::from_utf8(v.clone()).map_err(|e| {
+            anyhow::Error::new(e)
+        })
+    }).collect::<Result<Vec<_>, anyhow::Error>>()?;
+    let next_key = list.next_key.map(|bytes| {
+        String::from_utf8(bytes.clone()).map_err(|e| {
+            anyhow::Error::new(e)
+        })
+    }).transpose()?.unwrap_or_default();
+    let query = IBucketFacade::Query {
+        objects,
+        commonPrefixes: common_prefixes,
+        nextKey: next_key,
+    };
+    Ok(query)
+}
+
 impl TryAbiEncodeReturns<ListObjectsReturn> for IBucketFacade::queryObjects_0Call {
     fn try_returns(&self, value: ListObjectsReturn) -> Result<Vec<u8>, AbiEncodeError> {
-        let objects = value.objects.iter().map(|(key, state)| {
-           Ok(IBucketFacade::Object {
-               key: String::from_utf8(key.clone()).map_err(|e| {
-                   anyhow::Error::new(e)
-               })?,
-               state: IBucketFacade::ObjectState {
-                   blobHash: state.hash.into(),
-                   size: state.size,
-                   metadata: convert_metadata(state.metadata.clone()),
-               },
-           })
-        }).collect::<Result<Vec<_>, anyhow::Error>>()?;
-        let common_prefixes = value.common_prefixes.iter().map(|v| {
-            String::from_utf8(v.clone()).map_err(|e| {
-                anyhow::Error::new(e)
-            })
-        }).collect::<Result<Vec<_>, anyhow::Error>>()?;
-        let next_key = value.next_key.map(|bytes| {
-            String::from_utf8(bytes.clone()).map_err(|e| {
-                anyhow::Error::new(e)
-            })
-        }).transpose()?.unwrap_or_default();
-        let query = IBucketFacade::Query {
-            objects,
-            commonPrefixes: common_prefixes,
-            nextKey: next_key,
-        };
+        let query = convert_list_objects_to_query(value)?;
+        Ok(Self::abi_encode_returns(&(query,)))
+    }
+}
+
+impl Into<ListParams> for IBucketFacade::queryObjects_1Call {
+    fn into(self) -> ListParams {
+        ListParams {
+            prefix: self.prefix.into_bytes(),
+            delimiter: self.delimiter.into_bytes(),
+            start_key: Some(self.startKey.into_bytes()),
+            limit: 0,
+        }
+    }
+}
+
+impl TryAbiEncodeReturns<ListObjectsReturn> for IBucketFacade::queryObjects_1Call {
+    fn try_returns(&self, value: ListObjectsReturn) -> Result<Vec<u8>, AbiEncodeError> {
+        let query = convert_list_objects_to_query(value)?;
         Ok(Self::abi_encode_returns(&(query,)))
     }
 }
