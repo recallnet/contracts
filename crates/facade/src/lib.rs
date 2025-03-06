@@ -273,23 +273,9 @@ pub mod credit {
 mod gas_facade;
 #[cfg(feature = "gas")]
 pub mod gas {
-    use crate::gas_facade::igasfacade::IGasFacade::{
-        GasSponsorSet, GasSponsorUnset, IGasFacadeEvents,
-    };
-    use crate::types::H160;
-    use anyhow::Result;
-    use fvm_shared::address::Address;
-
-    pub fn gas_sponsor_set(sponsor: Address) -> Result<IGasFacadeEvents> {
-        let sponsor: H160 = sponsor.try_into()?;
-        Ok(IGasFacadeEvents::GasSponsorSet(GasSponsorSet {
-            sponsor: sponsor.into(),
-        }))
-    }
-
-    pub fn gas_sponsor_unset() -> Result<IGasFacadeEvents> {
-        Ok(IGasFacadeEvents::GasSponsorUnset(GasSponsorUnset {}))
-    }
+    pub type Event = crate::gas_facade::igasfacade::IGasFacade::IGasFacadeEvents;
+    pub type GasSponsorSet = crate::gas_facade::igasfacade::IGasFacade::GasSponsorSet;
+    pub type GasSponsorUnset = crate::gas_facade::igasfacade::IGasFacade::GasSponsorUnset;
 }
 
 #[cfg(feature = "machine")]
