@@ -1,6 +1,7 @@
 // Copyright 2025 Recall Contributors
 // SPDX-License-Identifier: Apache-2.0, MIT
 
+use std::collections::HashMap;
 use std::fmt;
 
 use alloy_primitives::{Address, Sign, I256, U256};

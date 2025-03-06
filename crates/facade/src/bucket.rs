@@ -1,4 +1,4 @@
-use crate::bucket_facade::ibucketfacade::IBucketFacade::{IBucketFacadeCalls, IBucketFacadeEvents, ObjectAdded, ObjectDeleted, ObjectMetadataUpdated};
+use crate::bucket_facade::ibucketfacade::IBucketFacade::{IBucketFacadeCalls, IBucketFacadeEvents, KeyValue, ObjectAdded, ObjectDeleted, ObjectMetadataUpdated};
 use anyhow::Result;
 use std::collections::HashMap;
 use alloy_sol_types::SolInterface;
