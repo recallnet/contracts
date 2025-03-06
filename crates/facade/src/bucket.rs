@@ -223,6 +223,24 @@ impl TryAbiEncodeReturns<ListObjectsReturn> for IBucketFacade::queryObjects_2Cal
     }
 }
 
+impl Into<ListParams> for IBucketFacade::queryObjects_3Call {
+    fn into(self) -> ListParams {
+        ListParams {
+            prefix: "".to_string().into_bytes(),
+            delimiter: "/".to_string().into_bytes(),
+            start_key: None,
+            limit: 0,
+        }
+    }
+}
+
+impl TryAbiEncodeReturns<ListObjectsReturn> for IBucketFacade::queryObjects_3Call {
+    fn try_returns(&self, value: ListObjectsReturn) -> Result<Vec<u8>, AbiEncodeError> {
+        let query = convert_list_objects_to_query(value)?;
+        Ok(Self::abi_encode_returns(&(query,)))
+    }
+}
+
 pub fn object_added(
     key: Vec<u8>,
     blob_hash: &[u8; 32],
