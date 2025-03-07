@@ -48,9 +48,9 @@ interface IBlobsFacade {
     /// @param subscriptionId Identifier used to differentiate blob additions for the same subscriber.
     /// @return status The status of the blob: Pending, Resolved or Failed.
     function getBlobStatus(address subscriber, string memory blobHash, string memory subscriptionId)
-    external
-    view
-    returns (BlobStatus status);
+        external
+        view
+        returns (BlobStatus status);
 
     /// @dev Get a list of pending blobs.
     /// @param size Maximum number of pending blobs to return.
@@ -88,7 +88,7 @@ interface IBlobsFacade {
     /// @param subscriptionId Identifier used to differentiate blob additions for the same subscriber.
     /// @param from The address of the account that is deleting the blob.
     function deleteBlob(address subscriber, string memory blobHash, string memory subscriptionId, address from)
-    external;
+        external;
 
     /// @dev Overwrite a blob in storage.
     /// @param oldHash The blake3 hash of the blob to be deleted.
