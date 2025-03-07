@@ -14,7 +14,6 @@ use fvm_shared::{
 
 pub use alloy_sol_types::SolCall;
 pub use alloy_sol_types::SolInterface;
-use fvm_shared::bigint::ToBigUint;
 
 const EAM_ACTOR_ID: ActorID = 10;
 
@@ -51,13 +50,21 @@ impl H160 {
     pub fn is_null(&self) -> bool {
         self.0 == [0; 20]
     }
+
+    pub fn as_option(&self) -> Option<H160> {
+        if self.is_null() {
+            None
+        } else {
+            Some(H160(self.0.clone()))
+        }
+    }
 }
 
 impl TryFrom<&[u8]> for H160 {
     type Error = anyhow::Error;
     fn try_from(slice: &[u8]) -> Result<Self, Self::Error> {
         if slice.len() != 20 {
-            anyhow!("slice length must be exactly 20 bytes");
+            return Err(anyhow!("slice length must be exactly 20 bytes"));
         }
         let mut buf = [0u8; 20];
         buf.copy_from_slice(slice);
@@ -87,16 +94,15 @@ impl TryFrom<FvmAddress> for H160 {
     }
 }
 
-impl TryInto<FvmAddress> for H160 {
-    type Error = anyhow::Error;
-    fn try_into(self) -> Result<FvmAddress, anyhow::Error> {
+impl Into<FvmAddress> for H160 {
+    fn into(self) -> FvmAddress {
         // Copied from fil_actors_evm_shared
         let bytes = self.to_fixed_bytes();
         if bytes[0] == 0xff && bytes[1..12].iter().all(|&b| b == 0x00) {
-            let id = u64::from_be_bytes(bytes[12..].try_into()?);
-            Ok(FvmAddress::new_id(id))
+            let id = u64::from_be_bytes(bytes[12..].try_into().unwrap());
+            FvmAddress::new_id(id)
         } else {
-            Ok(FvmAddress::new_delegated(EAM_ACTOR_ID, bytes.as_slice())?)
+            FvmAddress::new_delegated(EAM_ACTOR_ID, bytes.as_slice()).unwrap()
         }
     }
 }
@@ -147,42 +153,5 @@ impl From<BigIntWrapper> for I256 {
             (n, false) => n,
             (_, true) => I256::MAX,
         }
-    }
-}
-
-pub mod base32 {
-    pub fn encode<T: AsRef<[u8]>>(data: T) -> String {
-        data_encoding::BASE32_NOPAD.encode(data.as_ref()).into()
-    }
-
-    pub fn decode(data: &[u8]) -> Result<Vec<u8>, anyhow::Error> {
-        data_encoding::BASE32_NOPAD.decode(data).map_err(Into::into)
-    }
-}
-
-pub struct Base32(Vec<u8>);
-
-impl Base32 {
-    pub fn from_slice(slice: &[u8]) -> Self {
-        Base32(slice.to_vec())
-    }
-    pub fn encode(&self) -> String {
-        data_encoding::BASE32.encode(self.0.as_slice())
-    }
-    pub fn decode(data: &[u8]) -> Result<Base32, anyhow::Error> {
-        let vec = data_encoding::BASE32.decode(data).map_err(anyhow::Error::msg)?;
-        Ok(Base32(vec))
-    }
-}
-
-impl Default for Base32 {
-    fn default() -> Self {
-        Base32(Vec::default())
-    }
-}
-
-impl AsRef<[u8]> for Base32 {
-    fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
     }
 }
