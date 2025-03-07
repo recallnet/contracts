@@ -11,6 +11,7 @@ use fvm_shared::{
     ActorID,
 };
 
+pub use alloy_sol_types::SolCall;
 pub use alloy_sol_types::SolInterface;
 
 const EAM_ACTOR_ID: ActorID = 10;
