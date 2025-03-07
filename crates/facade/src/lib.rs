@@ -35,6 +35,7 @@ pub mod blobs {
     pub type getStorageStatsCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::getStorageStatsCall;
     pub type addBlobCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::addBlobCall;
     pub type deleteBlobCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::deleteBlobCall;
+    pub type getBlobCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::getBlobCall;
 
     pub type getPendingBytesCountCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::getPendingBytesCountCall;
     pub type getStorageUsageCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::getStorageUsageCall;
@@ -43,6 +44,10 @@ pub mod blobs {
     pub type BlobTuple = crate::blobs_facade::iblobsfacade::IBlobsFacade::BlobTuple;
     pub type BlobSourceInfo = crate::blobs_facade::iblobsfacade::IBlobsFacade::BlobSourceInfo;
     pub type StorageStats = crate::blobs_facade::iblobsfacade::IBlobsFacade::StorageStats;
+    pub type SubscriptionGroup = crate::blobs_facade::iblobsfacade::IBlobsFacade::SubscriptionGroup;
+    pub type Subscription = crate::blobs_facade::iblobsfacade::IBlobsFacade::Subscription;
+    pub type Subscriber = crate::blobs_facade::iblobsfacade::IBlobsFacade::Subscriber;
+    pub type Blob = crate::blobs_facade::iblobsfacade::IBlobsFacade::Blob;
 }
 
 #[cfg(feature = "bucket")]

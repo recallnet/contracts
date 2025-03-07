@@ -19,6 +19,12 @@ const EAM_ACTOR_ID: ActorID = 10;
 /// Fixed-size uninterpreted hash type with 20 bytes (160 bits) size.
 pub struct H160([u8; 20]);
 
+impl Default for H160 {
+    fn default() -> Self {
+        Self([0u8; 20])
+    }
+}
+
 impl H160 {
     pub fn from_slice(slice: &[u8]) -> Self {
         if slice.len() != 20 {
@@ -42,6 +48,18 @@ impl H160 {
 
     pub fn is_null(&self) -> bool {
         self.0 == [0; 20]
+    }
+}
+
+impl TryFrom<&[u8]> for H160 {
+    type Error = anyhow::Error;
+    fn try_from(slice: &[u8]) -> Result<Self, Self::Error> {
+        if slice.len() != 20 {
+            anyhow!("slice length must be exactly 20 bytes");
+        }
+        let mut buf = [0u8; 20];
+        buf.copy_from_slice(slice);
+        Ok(H160(buf))
     }
 }
 
@@ -135,12 +153,21 @@ pub mod base32 {
 pub struct Base32(Vec<u8>);
 
 impl Base32 {
+    pub fn from_slice(slice: &[u8]) -> Self {
+        Base32(slice.to_vec())
+    }
     pub fn encode(&self) -> String {
         data_encoding::BASE32.encode(self.0.as_slice())
     }
     pub fn decode(data: &[u8]) -> Result<Base32, anyhow::Error> {
         let vec = data_encoding::BASE32.decode(data).map_err(anyhow::Error::msg)?;
         Ok(Base32(vec))
+    }
+}
+
+impl Default for Base32 {
+    fn default() -> Self {
+        Base32(Vec::default())
     }
 }
 
