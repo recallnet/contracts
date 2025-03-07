@@ -97,3 +97,23 @@ impl From<BigIntWrapper> for I256 {
         }
     }
 }
+
+pub struct Base32String(String);
+
+impl<T: AsRef<[u8]>> From<T> for Base32String {
+    fn from(value: T) -> Self {
+        Base32String(data_encoding::BASE32_NOPAD.encode(value.as_ref()).into())
+    }
+}
+
+// impl<T: for<'a> Into<&'a [u8]>> From<T> for Base32String {
+//     fn from(value: T) -> Self {
+//          Base32String(data_encoding::BASE32_NOPAD.encode(value.into()).into())
+//     }
+// }
+
+impl Into<String> for Base32String {
+    fn into(self) -> String {
+        self.0
+    }
+}
