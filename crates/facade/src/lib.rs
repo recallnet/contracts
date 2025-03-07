@@ -38,7 +38,7 @@ pub mod blobs {
     pub type getBlobCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::getBlobCall;
     pub type getStorageUsageCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::getStorageUsageCall;
     pub type getSubnetStatsCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::getSubnetStatsCall;
-
+    pub type overwriteBlobCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::overwriteBlobCall;
     pub type getPendingBytesCountCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::getPendingBytesCountCall;
 
 
