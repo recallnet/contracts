@@ -63,6 +63,26 @@ impl TryFrom<FvmAddress> for H160 {
     }
 }
 
+impl TryInto<FvmAddress> for H160 {
+    type Error = anyhow::Error;
+    fn try_into(self) -> Result<FvmAddress, anyhow::Error> {
+        // Copied from fil_actors_evm_shared
+        let bytes = self.to_fixed_bytes();
+        if bytes[0] == 0xff && bytes[1..12].iter().all(|&b| b == 0x00) {
+            let id = u64::from_be_bytes(bytes[12..].try_into()?);
+            Ok(FvmAddress::new_id(id))
+        } else {
+            Ok(FvmAddress::new_delegated(EAM_ACTOR_ID, bytes.as_slice())?)
+        }
+    }
+}
+
+impl From<Address> for H160 {
+    fn from(address: Address) -> Self {
+        H160::from_slice(address.as_slice())
+    }
+}
+
 impl From<H160> for Address {
     fn from(value: H160) -> Self {
         Address::from(value.to_fixed_bytes())
@@ -98,22 +118,12 @@ impl From<BigIntWrapper> for I256 {
     }
 }
 
-pub struct Base32String(String);
-
-impl<T: AsRef<[u8]>> From<T> for Base32String {
-    fn from(value: T) -> Self {
-        Base32String(data_encoding::BASE32_NOPAD.encode(value.as_ref()).into())
+pub mod base32 {
+    pub fn encode<T: AsRef<[u8]>>(data: T) -> String {
+        data_encoding::BASE32_NOPAD.encode(data.as_ref()).into()
     }
-}
 
-// impl<T: for<'a> Into<&'a [u8]>> From<T> for Base32String {
-//     fn from(value: T) -> Self {
-//          Base32String(data_encoding::BASE32_NOPAD.encode(value.into()).into())
-//     }
-// }
-
-impl Into<String> for Base32String {
-    fn into(self) -> String {
-        self.0
+    pub fn decode(data: &[u8]) -> Result<Vec<u8>, anyhow::Error> {
+        data_encoding::BASE32_NOPAD.decode(data).map_err(Into::into)
     }
 }
