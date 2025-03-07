@@ -39,6 +39,10 @@ impl H160 {
     pub fn to_fixed_bytes(&self) -> [u8; 20] {
         self.0
     }
+
+    pub fn is_null(&self) -> bool {
+        self.0 == [0; 20]
+    }
 }
 
 impl fmt::Debug for H160 {
@@ -79,7 +83,7 @@ impl TryInto<FvmAddress> for H160 {
 
 impl From<Address> for H160 {
     fn from(address: Address) -> Self {
-        H160::from_slice(address.as_slice())
+        H160::from_slice(address.as_ref())
     }
 }
 
@@ -125,5 +129,23 @@ pub mod base32 {
 
     pub fn decode(data: &[u8]) -> Result<Vec<u8>, anyhow::Error> {
         data_encoding::BASE32_NOPAD.decode(data).map_err(Into::into)
+    }
+}
+
+pub struct Base32(Vec<u8>);
+
+impl Base32 {
+    pub fn encode(&self) -> String {
+        data_encoding::BASE32.encode(self.0.as_slice())
+    }
+    pub fn decode(data: &[u8]) -> Result<Base32, anyhow::Error> {
+        let vec = data_encoding::BASE32.decode(data).map_err(anyhow::Error::msg)?;
+        Ok(Base32(vec))
+    }
+}
+
+impl AsRef<[u8]> for Base32 {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
     }
 }
