@@ -11,6 +11,8 @@ use fvm_shared::{
     ActorID,
 };
 
+pub use alloy_sol_types::SolInterface;
+
 const EAM_ACTOR_ID: ActorID = 10;
 
 /// Fixed-size uninterpreted hash type with 20 bytes (160 bits) size.

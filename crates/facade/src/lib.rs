@@ -26,6 +26,7 @@ pub mod blobs {
     pub type BlobDeleted = crate::blobs_facade::iblobsfacade::IBlobsFacade::BlobDeleted;
     pub type BlobFinalized = crate::blobs_facade::iblobsfacade::IBlobsFacade::BlobFinalized;
     pub type BlobPending = crate::blobs_facade::iblobsfacade::IBlobsFacade::BlobPending;
+    pub type Calls = crate::blobs_facade::iblobsfacade::IBlobsFacade::IBlobsFacadeCalls;
 }
 
 #[cfg(feature = "bucket")]
