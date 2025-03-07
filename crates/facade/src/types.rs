@@ -8,11 +8,13 @@ use anyhow::anyhow;
 use fvm_shared::{
     address::{Address as FvmAddress, Payload},
     bigint::{BigInt, BigUint, Sign as BigSign},
+    econ::TokenAmount,
     ActorID,
 };
 
 pub use alloy_sol_types::SolCall;
 pub use alloy_sol_types::SolInterface;
+use fvm_shared::bigint::ToBigUint;
 
 const EAM_ACTOR_ID: ActorID = 10;
 
@@ -112,6 +114,14 @@ impl From<H160> for Address {
 }
 
 pub struct BigUintWrapper(pub BigUint);
+
+impl From<TokenAmount> for BigUintWrapper {
+    fn from(value: TokenAmount) -> Self {
+        let signed: BigInt = value.atto().clone();
+        let unsigned = signed.to_biguint().unwrap_or_default();
+        BigUintWrapper(unsigned)
+    }
+}
 
 impl From<BigUintWrapper> for U256 {
     fn from(value: BigUintWrapper) -> Self {

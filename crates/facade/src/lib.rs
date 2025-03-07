@@ -37,6 +37,7 @@ pub mod blobs {
     pub type deleteBlobCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::deleteBlobCall;
     pub type getBlobCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::getBlobCall;
     pub type getStorageUsageCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::getStorageUsageCall;
+    pub type getSubnetStatsCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::getSubnetStatsCall;
 
     pub type getPendingBytesCountCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::getPendingBytesCountCall;
 
@@ -48,6 +49,7 @@ pub mod blobs {
     pub type Subscription = crate::blobs_facade::iblobsfacade::IBlobsFacade::Subscription;
     pub type Subscriber = crate::blobs_facade::iblobsfacade::IBlobsFacade::Subscriber;
     pub type Blob = crate::blobs_facade::iblobsfacade::IBlobsFacade::Blob;
+    pub type SubnetStats = crate::blobs_facade::iblobsfacade::IBlobsFacade::SubnetStats;
 }
 
 #[cfg(feature = "bucket")]
