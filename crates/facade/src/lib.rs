@@ -34,6 +34,7 @@ pub mod blobs {
     pub type getPendingBlobsCountCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::getPendingBlobsCountCall;
     pub type getStorageStatsCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::getStorageStatsCall;
     pub type addBlobCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::addBlobCall;
+    pub type deleteBlobCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::deleteBlobCall;
 
     pub type getPendingBytesCountCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::getPendingBytesCountCall;
     pub type getStorageUsageCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::getStorageUsageCall;
