@@ -16,7 +16,6 @@ alloy-primitives = { version = "0.8.19", features = ["std"] }
 alloy-sol-types = { version = "0.8.19", features = ["std"] }
 fvm_ipld_encoding = "0.4.0"
 fvm_shared = { version = "4.4.0" }
-data-encoding = { version = "2.3.3" }
 
 [build-dependencies]
 alloy-primitives = { version = "0.8.19" }
