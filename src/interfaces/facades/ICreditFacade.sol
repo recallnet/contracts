@@ -58,7 +58,7 @@ interface ICreditFacade {
     /// @param ttl Optional credit approval time-to-live epochs. Minimum value is 3600 (1 hour). Use zero if
     /// unused, indicating a null value.
     function approveCredit(address to, address[] memory caller, uint256 creditLimit, uint256 gasFeeLimit, uint64 ttl)
-    external;
+        external;
 
     /// @dev Revoke credits for an account. Assumes `msg.sender` is the owner of the credits.
     /// @param to The address of the account to revoke credits for.
