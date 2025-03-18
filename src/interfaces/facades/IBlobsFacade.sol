@@ -74,7 +74,8 @@ struct Subscription {
 /// @dev Params for trimming blob expiries.
 /// @param subscriber (address): Address to trim blob expiries for.
 /// @param startingHash (bytes32): Starting hash to trim expiries from. 0x00 means "None".
-/// @param limit (uint64): Maximum number of blobs that will be examined for trimming. 0 means "no limit" or rather max of uint64.
+/// @param limit (uint64): Maximum number of blobs that will be examined for trimming.
+/// 0 means "no limit" or rather max of uint64.
 struct TrimBlobExpiriesParams {
     address subscriber;
     bytes32 startingHash;
@@ -128,8 +129,7 @@ interface IBlobsFacade {
     /// @param subscriber The address of the subscriber.
     /// @param blobHash Blob blake3 hash to delete.
     /// @param subscriptionId Identifier used to differentiate blob additions for the same subscriber.
-    function deleteBlob(address subscriber, bytes32 blobHash, string memory subscriptionId)
-    external;
+    function deleteBlob(address subscriber, bytes32 blobHash, string memory subscriptionId) external;
 
     /// @dev Overwrite a blob in storage.
     /// @param oldHash The blake3 hash of the blob to be deleted.
