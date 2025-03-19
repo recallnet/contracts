@@ -36,9 +36,9 @@ contract DeployScript is Script {
         return recall;
     }
 
-    function setDefaultRoles(address proxy, address admin, address minter, address pauser) public {
+    function setDefaultRoles(address proxyToken, address admin, address minter, address pauser) public {
         vm.startBroadcast();
-        Recall recall = Recall(proxy);
+        Recall recall = Recall(proxyToken);
 
         // Only grant new roles if different from current
         // Grant new roles and revoke old ones if different
