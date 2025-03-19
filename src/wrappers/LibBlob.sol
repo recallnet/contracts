@@ -112,9 +112,8 @@ library LibBlob {
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
         approvals = new Approval[](decoded.length);
         for (uint256 i = 0; i < decoded.length; i++) {
-            // The `addr` value is an delegated address string, like `f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq`, so
-            // we need to convert it to an address
-            approvals[i].addr = decoded[i][0].decodeCborDelegatedAddressStringToAddress();
+            // The `addr` value is an delegated address as bytes like `040A14DC79964DA2C08B23698B3D3CC7CA32193D9955`
+            approvals[i].addr = decoded[i][0].decodeCborAddress();
             approvals[i].approval = decodeCreditApproval(decoded[i][1]);
         }
     }

@@ -16,7 +16,7 @@ struct Account {
     uint256 creditCommitted;
     address creditSponsor;
     uint64 lastDebitEpoch;
-    // Note: this is a nested array that emulates a Rust `HashMap<String, CreditApproval>`
+    // Note: this is a nested array that emulates a Rust `HashMap<Address, CreditApproval>`
     Approval[] approvalsTo;
     Approval[] approvalsFrom;
     uint64 maxTtl;
