@@ -25,17 +25,17 @@ contract LibBlobTest is Test {
 
     function testDecodeSubnetStats() public view {
         bytes memory data =
-            hex"8d4b000a968163e7859f54fdc01b000009fffffffffa06520092efd1b8d0cf37be5aa1cae500000000004b00db8d0a662e2c080000004b00046a9b247c2d1ae00000a16472617465820184001ab34b9f101a7bc907151a00c097ce0a0100000000";
+            hex"8d4b000a96b8e6cac7bd69c1f71b000009fffffffff50b520092f2d4180abe5bdab16ef96140000000004c00021142cb3f19fe361000004b0001ece0d8c484fb900000a1647261746584001ab34b9f101a7bc907151a00c097ce0a0600000000";
         SubnetStats memory stats = data.decodeSubnetStats();
-        assertEq(stats.balance, 49999999989967561752000);
-        assertEq(stats.capacityFree, 10995116277754);
-        assertEq(stats.capacityUsed, 6);
-        assertEq(stats.creditSold, 50000000000000000000000000000000000000000);
-        assertEq(stats.creditCommitted, 1036800000000000000000000);
-        assertEq(stats.creditDebited, 20856000000000000000000);
+        assertEq(stats.balance, 50003999999259732197879);
+        assertEq(stats.capacityFree, 10995116277749);
+        assertEq(stats.capacityUsed, 11);
+        assertEq(stats.creditSold, 50004000000000000000000000000000000000000);
+        assertEq(stats.creditCommitted, 2499364000000000000000000);
+        assertEq(stats.creditDebited, 9092000000000000000000);
         assertEq(stats.tokenCreditRate, 1000000000000000000000000000000000000);
         assertEq(stats.numAccounts, 10);
-        assertEq(stats.numBlobs, 1);
+        assertEq(stats.numBlobs, 6);
         assertEq(stats.numAdded, 0);
         assertEq(stats.bytesAdded, 0);
         assertEq(stats.numResolving, 0);

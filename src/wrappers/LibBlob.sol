@@ -230,8 +230,8 @@ library LibBlob {
     /// @return rate The decoded token credit rate.
     function decodeTokenCreditRate(bytes memory data) internal view returns (uint256) {
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
-        // The TokenCreditRate mapping is `{inner: <value>}`, so we grab the value
-        return decoded[0][1].decodeCborBigIntToUint256();
+        // The TokenCreditRate mapping is `{rate: <value>}`, so we grab the value
+        return decoded[0][1].decodeCborBigUintToUint256();
     }
 
     /// @dev Helper function to encode approve credit params.
