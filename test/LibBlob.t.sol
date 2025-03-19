@@ -278,7 +278,7 @@ contract LibBlobTest is Test {
     }
 
     function testDecodeTokenCreditRate() public view {
-        bytes memory data = hex"a16472617465820184001ab34b9f101a7bc907151a00c097ce";
+        bytes memory data = hex"a1647261746584001ab34b9f101a7bc907151a00c097ce";
         uint256 rate = LibBlob.decodeTokenCreditRate(data);
         assertEq(rate, 1000000000000000000000000000000000000);
     }
