@@ -275,7 +275,7 @@ if [ "$output" = "0x" ]; then
     echo "queryObjects failed"
     exit 1
 fi
-DECODED_QUERY=$(cast abi-decode "queryObjects(address)(((string,(string,uint64,(string,string)[]))[],string[],string))" $output)
+DECODED_QUERY=$(cast abi-decode "queryObjects(address)(((string,(string,uint64,uint64,(string,string)[]))[],string[],string))" $output)
 echo "Basic query: $DECODED_QUERY"
 
 # Query with prefix
@@ -285,7 +285,7 @@ if [ "$output" = "0x" ]; then
     echo "queryObjects with prefix failed"
     exit 1
 fi
-DECODED_QUERY_PREFIX=$(cast abi-decode "queryObjects(address,string)(((string,(string,uint64,(string,string)[]))[],string[],string))" $output)
+DECODED_QUERY_PREFIX=$(cast abi-decode "queryObjects(address,string)(((string,(string,uint64,uint64,(string,string)[]))[],string[],string))" $output)
 echo "Query with prefix: $DECODED_QUERY_PREFIX"
 
 # Test deleteObject

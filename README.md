@@ -853,7 +853,7 @@ struct KeyValue {
 We'll continue using the same `BUCKET_ADDR` from the previous examples.
 
 ```sh
-cast abi-decode "queryObjects(address)(((string,(string,uint64,(string,string)[]))[],string[],string))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(address)" $BUCKET_ADDR)
+cast abi-decode "queryObjects(address)(((string,(string,uint64,uint64,(string,string)[]))[],string[],string))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(address)" $BUCKET_ADDR)
 ```
 
 This will return the following `Query` output:
@@ -882,7 +882,7 @@ export PREFIX="hello/"
 Now, we can query for these objects with the following command:
 
 ```sh
-cast abi-decode "queryObjects(address,string)(((string,(string,uint64,(string,string)[]))[],string[],string))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(address,string)" $BUCKET_ADDR $PREFIX)
+cast abi-decode "queryObjects(address,string)(((string,(string,uint64,uint64,(string,string)[]))[],string[],string))" $(cast call --rpc-url $ETH_RPC_URL $BUCKETS "queryObjects(address,string)" $BUCKET_ADDR $PREFIX)
 ```
 
 This will return the following `Query` output:

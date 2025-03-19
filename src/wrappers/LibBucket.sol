@@ -107,7 +107,8 @@ library LibBucket {
         value = ObjectState({
             blobHash: string(decoded[0][1].decodeCborBlobHashOrNodeId()),
             size: decoded[1][1].decodeCborBytesToUint64(),
-            metadata: decodeMetadata(decoded[2][1])
+            expiry: decoded[2][1].decodeCborBytesToUint64(),
+            metadata: decodeMetadata(decoded[3][1])
         });
     }
 
