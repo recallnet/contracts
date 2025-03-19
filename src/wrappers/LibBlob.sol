@@ -176,9 +176,8 @@ library LibBlob {
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
         subscribers = new Subscriber[](decoded.length);
         for (uint256 i = 0; i < decoded.length; i++) {
-            // The `subscriber` value is an ID address string, like `f0123`, so we convert it to an address
-            subscribers[i].subscriber = decoded[i][0].decodeCborActorIdStringToAddress();
-            subscribers[i].subscriptionGroup = decodeSubscriptionGroup(decoded[i][1]);
+            subscribers[i].subscriptionId = decodeSubscriptionId(decoded[i][0]);
+            subscribers[i].expiry = decoded[i][1].decodeCborBytesToUint64();
         }
     }
 
