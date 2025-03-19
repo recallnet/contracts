@@ -112,9 +112,8 @@ library LibBlob {
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
         approvals = new Approval[](decoded.length);
         for (uint256 i = 0; i < decoded.length; i++) {
-            // The `addr` value is an delegated address string, like `f410fsd3zx5xlfrhyoa3f46czqlq7capjhoighmzagaq`, so
-            // we need to convert it to an address
-            approvals[i].addr = decoded[i][0].decodeCborDelegatedAddressStringToAddress();
+            // The `addr` value is an delegated address as bytes like `040A14DC79964DA2C08B23698B3D3CC7CA32193D9955`
+            approvals[i].addr = decoded[i][0].decodeCborAddress();
             approvals[i].approval = decodeCreditApproval(decoded[i][1]);
         }
     }
@@ -230,8 +229,8 @@ library LibBlob {
     /// @return rate The decoded token credit rate.
     function decodeTokenCreditRate(bytes memory data) internal view returns (uint256) {
         bytes[2][] memory decoded = data.decodeCborMappingToBytes();
-        // The TokenCreditRate mapping is `{inner: <value>}`, so we grab the value
-        return decoded[0][1].decodeCborBigIntToUint256();
+        // The TokenCreditRate mapping is `{rate: <value>}`, so we grab the value
+        return decoded[0][1].decodeCborBigUintToUint256();
     }
 
     /// @dev Helper function to encode approve credit params.

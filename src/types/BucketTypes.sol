@@ -42,10 +42,12 @@ struct Object {
 /// @dev The state of an object.
 /// @param blobHash (string): The object blake3 hash.
 /// @param size (uint64): The object size.
+/// @param expiry (uint64): The expiry block.
 /// @param metadata (KeyValue[]): The user-defined object metadata (e.g., last modified timestamp, etc.).
 struct ObjectState {
     string blobHash;
     uint64 size;
+    uint64 expiry;
     KeyValue[] metadata;
 }
 

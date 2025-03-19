@@ -52,11 +52,12 @@ contract LibBucketTest is Test {
 
         // 1 object (with custom metadata), no common prefixes nor next key
         query = LibBucket.decodeQuery(
-            hex"8381828b18681865186c186c186f182f1877186f1872186c1864a364686173689820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a18996473697a6506686d65746164617461a263666f6f636261726c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d80f6"
+            hex"8381828b18681865186c186c186f182f1877186f1872186c1864a46468617368982018cf185d188418a1182f189818ec18fd18a518b71882183618cf18b51884187e1872183418c0185d18c518de18f2184618e51857182e18d7181d18b60118a96473697a6506666578706972791a00015e8d686d65746164617461a263666f6f636261726c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d80f6"
         );
         assertEq(query.objects[0].key, "hello/world");
-        assertEq(query.objects[0].state.blobHash, "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq");
+        assertEq(query.objects[0].state.blobHash, "z5oyjijptdwp3jnxqi3m7nmepzzdjqc5yxpperxfk4xnohnwaguq");
         assertEq(query.objects[0].state.size, 6);
+        assertEq(query.objects[0].state.expiry, 89741);
         assertEq(query.objects[0].state.metadata[0].key, "foo");
         assertEq(query.objects[0].state.metadata[0].value, "bar");
         assertEq(query.objects[0].state.metadata[1].key, "content-type");
@@ -66,26 +67,28 @@ contract LibBucketTest is Test {
 
         // 2 objects, 1 common prefixes, null next key
         query = LibBucket.decodeQuery(
-            hex"8382828b18681865186c186c186f182f1877186f1872186c1864a364686173689820188e184c187c181b189918db18fd185018e718a91851188518fe18ad185e18e11844188f18a90418a218fd18d7187818ea18f518f218db18fd1862189a18996473697a6506686d65746164617461a16c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d828a18681865186c186c186f182f1874186518731874a36468617368982018b618e1100c185318b918c518f218881878185e18811854187e183b18da18a60e186c182d182518f218b8185418ad184c186518bc186a183118af18b36473697a650c686d65746164617461a16c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d818c18681865186c186c186f182f1877186f1872186c1864182ff6"
+            hex"8382828b18681865186c186c186f182f1877186f1872186c1864a46468617368982018cf185d188418a1182f189818ec18fd18a518b71882183618cf18b51884187e1872183418c0185d18c518de18f2184618e51857182e18d7181d18b60118a96473697a6506666578706972791a00015e8d686d65746164617461a263666f6f636261726c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d828a18681865186c186c186f182f1874186518731874a46468617368982018ed1830189318bf183318b318bc187601187a0e0818a618fa189318201820101881183918d718d9185418a5184f18b208183918d71873186818ae6473697a6506666578706972791a00015ef2686d65746164617461a16c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d818c18681865186c186c186f182f1877186f1872186c1864182ff6"
         );
         assertEq(query.objects[0].key, "hello/world");
-        assertEq(query.objects[0].state.blobHash, "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq");
+        assertEq(query.objects[0].state.blobHash, "z5oyjijptdwp3jnxqi3m7nmepzzdjqc5yxpperxfk4xnohnwaguq");
         assertEq(query.objects[0].state.size, 6);
-        assertEq(query.objects[0].state.metadata.length, 1); // Always has `content-type` metadata
+        assertEq(query.objects[0].state.expiry, 89741);
+        assertEq(query.objects[0].state.metadata.length, 2);
         assertEq(query.objects[1].key, "hello/test");
-        assertEq(query.objects[1].state.blobHash, "w3qradctxhc7fcdyl2avi7r33kta43bnexzlqvfnjrs3y2rrv6zq");
-        assertEq(query.objects[1].state.size, 12);
-        assertEq(query.objects[1].state.metadata.length, 1);
+        assertEq(query.objects[1].state.blobHash, "5uyjhpztwo6hmal2byekn6uteaqbbajz27mvjjkpwiedtv3tncxa");
+        assertEq(query.objects[1].state.size, 6);
+        assertEq(query.objects[1].state.expiry, 89842);
+        assertEq(query.objects[1].state.metadata.length, 1); // Always has `content-type` metadata
         assertEq(query.commonPrefixes[0], "hello/world/");
         assertEq(query.nextKey, "");
 
-        // Query with `hello/test/` as next key; 1 object, 1 common prefix, null next key
+        // Query with `hello/test/` as start key and prefix `hello/`; 1 object, 1 common prefix, null next key
         query = LibBucket.decodeQuery(
-            hex"8381828a18681865186c186c186f182f1874186518731874a36468617368982018b618e1100c185318b918c518f218881878185e18811854187e183b18da18a60e186c182d182518f218b8185418ad184c186518bc186a183118af18b36473697a650c686d65746164617461a16c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d818c18681865186c186c186f182f1877186f1872186c1864182ff6"
+            hex"8381828a18681865186c186c186f182f1874186518731874a46468617368982018ed1830189318bf183318b318bc187601187a0e0818a618fa189318201820101881183918d718d9185418a5184f18b208183918d71873186818ae6473697a6506666578706972791a00015ef2686d65746164617461a16c636f6e74656e742d7479706578186170706c69636174696f6e2f6f637465742d73747265616d818c18681865186c186c186f182f1877186f1872186c1864182ff6"
         );
         assertEq(query.objects[0].key, "hello/test");
-        assertEq(query.objects[0].state.blobHash, "w3qradctxhc7fcdyl2avi7r33kta43bnexzlqvfnjrs3y2rrv6zq");
-        assertEq(query.objects[0].state.size, 12);
+        assertEq(query.objects[0].state.blobHash, "5uyjhpztwo6hmal2byekn6uteaqbbajz27mvjjkpwiedtv3tncxa");
+        assertEq(query.objects[0].state.size, 6);
         assertEq(query.objects[0].state.metadata.length, 1);
         assertEq(query.commonPrefixes[0], "hello/world/");
         assertEq(query.nextKey, "");
