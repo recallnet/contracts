@@ -156,8 +156,8 @@ struct AddBlobParams {
 /// @dev Blob information and status.
 /// @param size (uint64): The size of the blob content in bytes.
 /// @param metadataHash (string): Blob metadata hash that contains information for block recovery.
-/// @param subscribers (bytes): Active subscribers (accounts) that are paying for the blob, encoded as HashMap<Address,
-/// SubscriptionGroup>.
+/// @param subscribers (bytes): Active subscribers (accounts) that are paying for the blob, encoded as
+/// a `HashMap<SubscriptionId, ChainEpoch>`.
 /// @param status (bytes): Current status of the blob.
 struct Blob {
     uint64 size;
@@ -179,11 +179,11 @@ enum BlobStatus {
 }
 
 /// @dev A subscriber and their subscription groups.
-/// @param subscriber (address): The subscriber address.
-/// @param subscriptionGroup (SubscriptionGroup[]): The subscription groups. See {SubscriptionGroup} for more details.
+/// @param subscriptionId (string): The subscription ID.
+/// @param expiry (uint64): The block number when the subscription will expire.
 struct Subscriber {
-    address subscriber;
-    SubscriptionGroup[] subscriptionGroup;
+    string subscriptionId;
+    uint64 expiry;
 }
 
 /// @dev Pending subscription information.

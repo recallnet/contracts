@@ -1056,13 +1056,13 @@ This will emit an `OverwriteBlob` event and overwrite the blob in the network.
 ##### Get a blob
 
 ```sh
-cast abi-decode "getBlob(string)((uint64,string,(address,(string,(uint64,uint64,string,address,bool))[])[],uint8))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
+cast abi-decode "getBlob(string)((uint64,string,(string,uint64)[],uint8))" $(cast call --rpc-url $ETH_RPC_URL $BLOBS "getBlob(string)" "rzghyg4z3p6vbz5jkgc75lk64fci7kieul65o6hk6xznx7lctkmq")
 ```
 
 This will return the following response:
 
 ```sh
-(6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", [(0x90F79bf6EB2c4f870365E785982E1f101E93b906, [("foo", (4825, 91225 [9.122e4], "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq", 0x0000000000000000000000000000000000000000, false))])], 2)
+6, "utiakbxaag7udhsriu6dm64cgr7bk4zahiudaaiwuk6rfv43r3rq", [("1bce5a746a1134bf082baac80be951906bb406787e14c9fee0d7d8db0fc0b7f4", 98266 [9.826e4])], 2)
 ```
 
 Which maps to the `Blob` struct:
@@ -1076,21 +1076,8 @@ struct Blob {
 }
 
 struct Subscriber {
-    address subscriber; // 0x90F79bf6EB2c4f870365E785982E1f101E93b906
-    SubscriptionGroup[] subscriptionGroup; // See `SubscriptionGroup` struct below
-}
-
-struct SubscriptionGroup {
-    string subscriptionId; // "foo"
-    Subscription subscription; // See `Subscription` struct below
-}
-
-struct Subscription {
-    uint64 added; // 4825
-    uint64 expiry; // 91225
-    string source; // "cydkrslhbj4soqppzc66u6lzwxgjwgbhdlxmyeahytzqrh65qtjq"
-    address delegate; // 0x0000000000000000000000000000000000000000
-    bool failed; // false
+    string subscriptionId; // "1bce5a746a1134bf082baac80be951906bb406787e14c9fee0d7d8db0fc0b7f4"
+    uint64 expiry; // 98266
 }
 ```
 
