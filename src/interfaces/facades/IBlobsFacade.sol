@@ -32,43 +32,16 @@ struct AddBlobParams {
 struct Blob {
     uint64 size;
     bytes32 metadataHash;
-    Subscriber[] subscribers;
+    Subscription[] subscriptions;
     BlobStatus status;
 }
 
-/// @dev A subscriber and their subscription groups.
-/// @param subscriber (address): The subscriber address.
-/// @param subscriptionGroup (SubscriptionGroup[]): The subscription groups. See {SubscriptionGroup} for more details.
-struct Subscriber {
-    address subscriber;
-    SubscriptionGroup[] subscriptionGroup;
-}
-
-/// @dev Pending subscription information.
-/// @param subscriptionId (string): The subscription ID.
-/// @param publicKey (bytes): The public key.
-struct SubscriptionGroup {
-    // TODO: the blobs solidity logic assumes a string key. But, a blob added when pushing to a bucket will serialize
-    // the key as the blake3(Vec<bucket_address + object_key>). We should probably make this value a bytes type, but all
-    // of the encoding/decoding logic works...except you might see odd decoding with a bucket-backed blob, like a
-    // subscription ID of `��0������䣱p�V�%���?��:\u{8}4T�~��V`.
-    string subscriptionId;
-    Subscription subscription;
-}
-
-/// @dev A subscription to a blob.
-/// @param added (uint64): The block number when the subscription was added.
-/// @param expiry (uint64): The block number when the subscription will expire.
-/// @param source (string): The source Iroh node ID used for ingestion.
-/// @param delegate (address): The delegate origin that may have created the subscription via a credit approval.
-/// approval (else, zero address if null)
-/// @param failed (bool): Whether the subscription failed due to an issue resolving the target blob.
+/// @dev Subscription info.
+/// @param subscriptionId (string): Id of the subscription.
+/// @param expiry (uint64): Block number of when the subscription expires.
 struct Subscription {
-    uint64 added;
+    string subscriptionId;
     uint64 expiry;
-    bytes32 source;
-    address delegate;
-    bool failed;
 }
 
 /// @dev Params for trimming blob expiries.
