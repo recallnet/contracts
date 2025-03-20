@@ -41,9 +41,7 @@ pub mod blobs {
     #[allow(non_camel_case_types)]
     pub type trimBlobExpiriesCall = crate::blobs_facade::iblobsfacade::IBlobsFacade::trimBlobExpiriesCall;
 
-    pub type SubscriptionGroup = crate::blobs_facade::iblobsfacade::IBlobsFacade::SubscriptionGroup;
     pub type Subscription = crate::blobs_facade::iblobsfacade::IBlobsFacade::Subscription;
-    pub type Subscriber = crate::blobs_facade::iblobsfacade::IBlobsFacade::Subscriber;
     pub type Blob = crate::blobs_facade::iblobsfacade::IBlobsFacade::Blob;
     pub type SubnetStats = crate::blobs_facade::iblobsfacade::IBlobsFacade::SubnetStats;
     pub type TrimBlobExpiries = crate::blobs_facade::iblobsfacade::IBlobsFacade::TrimBlobExpiries;

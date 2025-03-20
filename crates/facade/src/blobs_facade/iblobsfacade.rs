@@ -16,7 +16,7 @@ interface IBlobsFacade {
     struct Blob {
         uint64 size;
         bytes32 metadataHash;
-        Subscriber[] subscribers;
+        Subscription[] subscriptions;
         BlobStatus status;
     }
     struct SubnetStats {
@@ -34,20 +34,9 @@ interface IBlobsFacade {
         uint64 numResolving;
         uint64 bytesResolving;
     }
-    struct Subscriber {
-        address subscriber;
-        SubscriptionGroup[] subscriptionGroup;
-    }
     struct Subscription {
-        uint64 added;
-        uint64 expiry;
-        bytes32 source;
-        address delegate;
-        bool failed;
-    }
-    struct SubscriptionGroup {
         string subscriptionId;
-        Subscription subscription;
+        uint64 expiry;
     }
     struct TrimBlobExpiries {
         uint32 processed;
@@ -176,58 +165,19 @@ interface IBlobsFacade {
             "internalType": "bytes32"
           },
           {
-            "name": "subscribers",
+            "name": "subscriptions",
             "type": "tuple[]",
-            "internalType": "struct Subscriber[]",
+            "internalType": "struct Subscription[]",
             "components": [
               {
-                "name": "subscriber",
-                "type": "address",
-                "internalType": "address"
+                "name": "subscriptionId",
+                "type": "string",
+                "internalType": "string"
               },
               {
-                "name": "subscriptionGroup",
-                "type": "tuple[]",
-                "internalType": "struct SubscriptionGroup[]",
-                "components": [
-                  {
-                    "name": "subscriptionId",
-                    "type": "string",
-                    "internalType": "string"
-                  },
-                  {
-                    "name": "subscription",
-                    "type": "tuple",
-                    "internalType": "struct Subscription",
-                    "components": [
-                      {
-                        "name": "added",
-                        "type": "uint64",
-                        "internalType": "uint64"
-                      },
-                      {
-                        "name": "expiry",
-                        "type": "uint64",
-                        "internalType": "uint64"
-                      },
-                      {
-                        "name": "source",
-                        "type": "bytes32",
-                        "internalType": "bytes32"
-                      },
-                      {
-                        "name": "delegate",
-                        "type": "address",
-                        "internalType": "address"
-                      },
-                      {
-                        "name": "failed",
-                        "type": "bool",
-                        "internalType": "bool"
-                      }
-                    ]
-                  }
-                ]
+                "name": "expiry",
+                "type": "uint64",
+                "internalType": "uint64"
               }
             ]
           },
@@ -1033,7 +983,7 @@ struct AddBlobParams { address sponsor; bytes32 source; bytes32 blobHash; bytes3
         }
     };
     /**```solidity
-struct Blob { uint64 size; bytes32 metadataHash; Subscriber[] subscribers; BlobStatus status; }
+struct Blob { uint64 size; bytes32 metadataHash; Subscription[] subscriptions; BlobStatus status; }
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
@@ -1043,8 +993,8 @@ struct Blob { uint64 size; bytes32 metadataHash; Subscriber[] subscribers; BlobS
         #[allow(missing_docs)]
         pub metadataHash: ::alloy_sol_types::private::FixedBytes<32>,
         #[allow(missing_docs)]
-        pub subscribers: ::alloy_sol_types::private::Vec<
-            <Subscriber as ::alloy_sol_types::SolType>::RustType,
+        pub subscriptions: ::alloy_sol_types::private::Vec<
+            <Subscription as ::alloy_sol_types::SolType>::RustType,
         >,
         #[allow(missing_docs)]
         pub status: <BlobStatus as ::alloy_sol_types::SolType>::RustType,
@@ -1061,7 +1011,7 @@ struct Blob { uint64 size; bytes32 metadataHash; Subscriber[] subscribers; BlobS
         type UnderlyingSolTuple<'a> = (
             ::alloy_sol_types::sol_data::Uint<64>,
             ::alloy_sol_types::sol_data::FixedBytes<32>,
-            ::alloy_sol_types::sol_data::Array<Subscriber>,
+            ::alloy_sol_types::sol_data::Array<Subscription>,
             BlobStatus,
         );
         #[doc(hidden)]
@@ -1069,7 +1019,7 @@ struct Blob { uint64 size; bytes32 metadataHash; Subscriber[] subscribers; BlobS
             u64,
             ::alloy_sol_types::private::FixedBytes<32>,
             ::alloy_sol_types::private::Vec<
-                <Subscriber as ::alloy_sol_types::SolType>::RustType,
+                <Subscription as ::alloy_sol_types::SolType>::RustType,
             >,
             <BlobStatus as ::alloy_sol_types::SolType>::RustType,
         );
@@ -1088,7 +1038,7 @@ struct Blob { uint64 size; bytes32 metadataHash; Subscriber[] subscribers; BlobS
         #[doc(hidden)]
         impl ::core::convert::From<Blob> for UnderlyingRustTuple<'_> {
             fn from(value: Blob) -> Self {
-                (value.size, value.metadataHash, value.subscribers, value.status)
+                (value.size, value.metadataHash, value.subscriptions, value.status)
             }
         }
         #[automatically_derived]
@@ -1098,7 +1048,7 @@ struct Blob { uint64 size; bytes32 metadataHash; Subscriber[] subscribers; BlobS
                 Self {
                     size: tuple.0,
                     metadataHash: tuple.1,
-                    subscribers: tuple.2,
+                    subscriptions: tuple.2,
                     status: tuple.3,
                 }
             }
@@ -1119,8 +1069,8 @@ struct Blob { uint64 size; bytes32 metadataHash; Subscriber[] subscribers; BlobS
                         32,
                     > as alloy_sol_types::SolType>::tokenize(&self.metadataHash),
                     <::alloy_sol_types::sol_data::Array<
-                        Subscriber,
-                    > as alloy_sol_types::SolType>::tokenize(&self.subscribers),
+                        Subscription,
+                    > as alloy_sol_types::SolType>::tokenize(&self.subscriptions),
                     <BlobStatus as alloy_sol_types::SolType>::tokenize(&self.status),
                 )
             }
@@ -1196,7 +1146,7 @@ struct Blob { uint64 size; bytes32 metadataHash; Subscriber[] subscribers; BlobS
             #[inline]
             fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
                 alloy_sol_types::private::Cow::Borrowed(
-                    "Blob(uint64 size,bytes32 metadataHash,Subscriber[] subscribers,uint8 status)",
+                    "Blob(uint64 size,bytes32 metadataHash,Subscription[] subscriptions,uint8 status)",
                 )
             }
             #[inline]
@@ -1206,11 +1156,11 @@ struct Blob { uint64 size; bytes32 metadataHash; Subscriber[] subscribers; BlobS
                 let mut components = alloy_sol_types::private::Vec::with_capacity(1);
                 components
                     .push(
-                        <Subscriber as alloy_sol_types::SolStruct>::eip712_root_type(),
+                        <Subscription as alloy_sol_types::SolStruct>::eip712_root_type(),
                     );
                 components
                     .extend(
-                        <Subscriber as alloy_sol_types::SolStruct>::eip712_components(),
+                        <Subscription as alloy_sol_types::SolStruct>::eip712_components(),
                     );
                 components
             }
@@ -1226,8 +1176,8 @@ struct Blob { uint64 size; bytes32 metadataHash; Subscriber[] subscribers; BlobS
                     > as alloy_sol_types::SolType>::eip712_data_word(&self.metadataHash)
                         .0,
                     <::alloy_sol_types::sol_data::Array<
-                        Subscriber,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.subscribers)
+                        Subscription,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.subscriptions)
                         .0,
                     <BlobStatus as alloy_sol_types::SolType>::eip712_data_word(
                             &self.status,
@@ -1251,9 +1201,9 @@ struct Blob { uint64 size; bytes32 metadataHash; Subscriber[] subscribers; BlobS
                         &rust.metadataHash,
                     )
                     + <::alloy_sol_types::sol_data::Array<
-                        Subscriber,
+                        Subscription,
                     > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.subscribers,
+                        &rust.subscriptions,
                     )
                     + <BlobStatus as alloy_sol_types::EventTopic>::topic_preimage_length(
                         &rust.status,
@@ -1280,9 +1230,9 @@ struct Blob { uint64 size; bytes32 metadataHash; Subscriber[] subscribers; BlobS
                     out,
                 );
                 <::alloy_sol_types::sol_data::Array<
-                    Subscriber,
+                    Subscription,
                 > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.subscribers,
+                    &rust.subscriptions,
                     out,
                 );
                 <BlobStatus as alloy_sol_types::EventTopic>::encode_topic_preimage(
@@ -1805,254 +1755,15 @@ struct SubnetStats { uint256 balance; uint64 capacityFree; uint64 capacityUsed; 
         }
     };
     /**```solidity
-struct Subscriber { address subscriber; SubscriptionGroup[] subscriptionGroup; }
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct Subscriber {
-        #[allow(missing_docs)]
-        pub subscriber: ::alloy_sol_types::private::Address,
-        #[allow(missing_docs)]
-        pub subscriptionGroup: ::alloy_sol_types::private::Vec<
-            <SubscriptionGroup as ::alloy_sol_types::SolType>::RustType,
-        >,
-    }
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use ::alloy_sol_types as alloy_sol_types;
-        #[doc(hidden)]
-        type UnderlyingSolTuple<'a> = (
-            ::alloy_sol_types::sol_data::Address,
-            ::alloy_sol_types::sol_data::Array<SubscriptionGroup>,
-        );
-        #[doc(hidden)]
-        type UnderlyingRustTuple<'a> = (
-            ::alloy_sol_types::private::Address,
-            ::alloy_sol_types::private::Vec<
-                <SubscriptionGroup as ::alloy_sol_types::SolType>::RustType,
-            >,
-        );
-        #[cfg(test)]
-        #[allow(dead_code, unreachable_patterns)]
-        fn _type_assertion(
-            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-        ) {
-            match _t {
-                alloy_sol_types::private::AssertTypeEq::<
-                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                >(_) => {}
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<Subscriber> for UnderlyingRustTuple<'_> {
-            fn from(value: Subscriber) -> Self {
-                (value.subscriber, value.subscriptionGroup)
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Subscriber {
-            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                Self {
-                    subscriber: tuple.0,
-                    subscriptionGroup: tuple.1,
-                }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolValue for Subscriber {
-            type SolType = Self;
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::private::SolTypeValue<Self> for Subscriber {
-            #[inline]
-            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
-                (
-                    <::alloy_sol_types::sol_data::Address as alloy_sol_types::SolType>::tokenize(
-                        &self.subscriber,
-                    ),
-                    <::alloy_sol_types::sol_data::Array<
-                        SubscriptionGroup,
-                    > as alloy_sol_types::SolType>::tokenize(&self.subscriptionGroup),
-                )
-            }
-            #[inline]
-            fn stv_abi_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
-            }
-            #[inline]
-            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
-                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
-            }
-            #[inline]
-            fn stv_abi_encode_packed_to(
-                &self,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
-            }
-            #[inline]
-            fn stv_abi_packed_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolType for Subscriber {
-            type RustType = Self;
-            type Token<'a> = <UnderlyingSolTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
-            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::ENCODED_SIZE;
-            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
-            #[inline]
-            fn valid_token(token: &Self::Token<'_>) -> bool {
-                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
-            }
-            #[inline]
-            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
-                let tuple = <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::detokenize(token);
-                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolStruct for Subscriber {
-            const NAME: &'static str = "Subscriber";
-            #[inline]
-            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
-                alloy_sol_types::private::Cow::Borrowed(
-                    "Subscriber(address subscriber,SubscriptionGroup[] subscriptionGroup)",
-                )
-            }
-            #[inline]
-            fn eip712_components() -> alloy_sol_types::private::Vec<
-                alloy_sol_types::private::Cow<'static, str>,
-            > {
-                let mut components = alloy_sol_types::private::Vec::with_capacity(1);
-                components
-                    .push(
-                        <SubscriptionGroup as alloy_sol_types::SolStruct>::eip712_root_type(),
-                    );
-                components
-                    .extend(
-                        <SubscriptionGroup as alloy_sol_types::SolStruct>::eip712_components(),
-                    );
-                components
-            }
-            #[inline]
-            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
-                [
-                    <::alloy_sol_types::sol_data::Address as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.subscriber,
-                        )
-                        .0,
-                    <::alloy_sol_types::sol_data::Array<
-                        SubscriptionGroup,
-                    > as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.subscriptionGroup,
-                        )
-                        .0,
-                ]
-                    .concat()
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::EventTopic for Subscriber {
-            #[inline]
-            fn topic_preimage_length(rust: &Self::RustType) -> usize {
-                0usize
-                    + <::alloy_sol_types::sol_data::Address as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.subscriber,
-                    )
-                    + <::alloy_sol_types::sol_data::Array<
-                        SubscriptionGroup,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.subscriptionGroup,
-                    )
-            }
-            #[inline]
-            fn encode_topic_preimage(
-                rust: &Self::RustType,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                out.reserve(
-                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
-                );
-                <::alloy_sol_types::sol_data::Address as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.subscriber,
-                    out,
-                );
-                <::alloy_sol_types::sol_data::Array<
-                    SubscriptionGroup,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.subscriptionGroup,
-                    out,
-                );
-            }
-            #[inline]
-            fn encode_topic(
-                rust: &Self::RustType,
-            ) -> alloy_sol_types::abi::token::WordToken {
-                let mut out = alloy_sol_types::private::Vec::new();
-                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    rust,
-                    &mut out,
-                );
-                alloy_sol_types::abi::token::WordToken(
-                    alloy_sol_types::private::keccak256(out),
-                )
-            }
-        }
-    };
-    /**```solidity
-struct Subscription { uint64 added; uint64 expiry; bytes32 source; address delegate; bool failed; }
+struct Subscription { string subscriptionId; uint64 expiry; }
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
     pub struct Subscription {
         #[allow(missing_docs)]
-        pub added: u64,
+        pub subscriptionId: ::alloy_sol_types::private::String,
         #[allow(missing_docs)]
         pub expiry: u64,
-        #[allow(missing_docs)]
-        pub source: ::alloy_sol_types::private::FixedBytes<32>,
-        #[allow(missing_docs)]
-        pub delegate: ::alloy_sol_types::private::Address,
-        #[allow(missing_docs)]
-        pub failed: bool,
     }
     #[allow(
         non_camel_case_types,
@@ -2064,20 +1775,11 @@ struct Subscription { uint64 added; uint64 expiry; bytes32 source; address deleg
         use ::alloy_sol_types as alloy_sol_types;
         #[doc(hidden)]
         type UnderlyingSolTuple<'a> = (
+            ::alloy_sol_types::sol_data::String,
             ::alloy_sol_types::sol_data::Uint<64>,
-            ::alloy_sol_types::sol_data::Uint<64>,
-            ::alloy_sol_types::sol_data::FixedBytes<32>,
-            ::alloy_sol_types::sol_data::Address,
-            ::alloy_sol_types::sol_data::Bool,
         );
         #[doc(hidden)]
-        type UnderlyingRustTuple<'a> = (
-            u64,
-            u64,
-            ::alloy_sol_types::private::FixedBytes<32>,
-            ::alloy_sol_types::private::Address,
-            bool,
-        );
+        type UnderlyingRustTuple<'a> = (::alloy_sol_types::private::String, u64);
         #[cfg(test)]
         #[allow(dead_code, unreachable_patterns)]
         fn _type_assertion(
@@ -2093,7 +1795,7 @@ struct Subscription { uint64 added; uint64 expiry; bytes32 source; address deleg
         #[doc(hidden)]
         impl ::core::convert::From<Subscription> for UnderlyingRustTuple<'_> {
             fn from(value: Subscription) -> Self {
-                (value.added, value.expiry, value.source, value.delegate, value.failed)
+                (value.subscriptionId, value.expiry)
             }
         }
         #[automatically_derived]
@@ -2101,11 +1803,8 @@ struct Subscription { uint64 added; uint64 expiry; bytes32 source; address deleg
         impl ::core::convert::From<UnderlyingRustTuple<'_>> for Subscription {
             fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                 Self {
-                    added: tuple.0,
+                    subscriptionId: tuple.0,
                     expiry: tuple.1,
-                    source: tuple.2,
-                    delegate: tuple.3,
-                    failed: tuple.4,
                 }
             }
         }
@@ -2118,21 +1817,12 @@ struct Subscription { uint64 added; uint64 expiry; bytes32 source; address deleg
             #[inline]
             fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
                 (
-                    <::alloy_sol_types::sol_data::Uint<
-                        64,
-                    > as alloy_sol_types::SolType>::tokenize(&self.added),
+                    <::alloy_sol_types::sol_data::String as alloy_sol_types::SolType>::tokenize(
+                        &self.subscriptionId,
+                    ),
                     <::alloy_sol_types::sol_data::Uint<
                         64,
                     > as alloy_sol_types::SolType>::tokenize(&self.expiry),
-                    <::alloy_sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.source),
-                    <::alloy_sol_types::sol_data::Address as alloy_sol_types::SolType>::tokenize(
-                        &self.delegate,
-                    ),
-                    <::alloy_sol_types::sol_data::Bool as alloy_sol_types::SolType>::tokenize(
-                        &self.failed,
-                    ),
                 )
             }
             #[inline]
@@ -2207,7 +1897,7 @@ struct Subscription { uint64 added; uint64 expiry; bytes32 source; address deleg
             #[inline]
             fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
                 alloy_sol_types::private::Cow::Borrowed(
-                    "Subscription(uint64 added,uint64 expiry,bytes32 source,address delegate,bool failed)",
+                    "Subscription(string subscriptionId,uint64 expiry)",
                 )
             }
             #[inline]
@@ -2223,25 +1913,13 @@ struct Subscription { uint64 added; uint64 expiry; bytes32 source; address deleg
             #[inline]
             fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
                 [
-                    <::alloy_sol_types::sol_data::Uint<
-                        64,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.added)
+                    <::alloy_sol_types::sol_data::String as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.subscriptionId,
+                        )
                         .0,
                     <::alloy_sol_types::sol_data::Uint<
                         64,
                     > as alloy_sol_types::SolType>::eip712_data_word(&self.expiry)
-                        .0,
-                    <::alloy_sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.source)
-                        .0,
-                    <::alloy_sol_types::sol_data::Address as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.delegate,
-                        )
-                        .0,
-                    <::alloy_sol_types::sol_data::Bool as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.failed,
-                        )
                         .0,
                 ]
                     .concat()
@@ -2252,265 +1930,13 @@ struct Subscription { uint64 added; uint64 expiry; bytes32 source; address deleg
             #[inline]
             fn topic_preimage_length(rust: &Self::RustType) -> usize {
                 0usize
-                    + <::alloy_sol_types::sol_data::Uint<
-                        64,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(&rust.added)
+                    + <::alloy_sol_types::sol_data::String as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.subscriptionId,
+                    )
                     + <::alloy_sol_types::sol_data::Uint<
                         64,
                     > as alloy_sol_types::EventTopic>::topic_preimage_length(
                         &rust.expiry,
-                    )
-                    + <::alloy_sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.source,
-                    )
-                    + <::alloy_sol_types::sol_data::Address as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.delegate,
-                    )
-                    + <::alloy_sol_types::sol_data::Bool as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.failed,
-                    )
-            }
-            #[inline]
-            fn encode_topic_preimage(
-                rust: &Self::RustType,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                out.reserve(
-                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
-                );
-                <::alloy_sol_types::sol_data::Uint<
-                    64,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.added,
-                    out,
-                );
-                <::alloy_sol_types::sol_data::Uint<
-                    64,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.expiry,
-                    out,
-                );
-                <::alloy_sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.source,
-                    out,
-                );
-                <::alloy_sol_types::sol_data::Address as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.delegate,
-                    out,
-                );
-                <::alloy_sol_types::sol_data::Bool as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.failed,
-                    out,
-                );
-            }
-            #[inline]
-            fn encode_topic(
-                rust: &Self::RustType,
-            ) -> alloy_sol_types::abi::token::WordToken {
-                let mut out = alloy_sol_types::private::Vec::new();
-                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    rust,
-                    &mut out,
-                );
-                alloy_sol_types::abi::token::WordToken(
-                    alloy_sol_types::private::keccak256(out),
-                )
-            }
-        }
-    };
-    /**```solidity
-struct SubscriptionGroup { string subscriptionId; Subscription subscription; }
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct SubscriptionGroup {
-        #[allow(missing_docs)]
-        pub subscriptionId: ::alloy_sol_types::private::String,
-        #[allow(missing_docs)]
-        pub subscription: <Subscription as ::alloy_sol_types::SolType>::RustType,
-    }
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use ::alloy_sol_types as alloy_sol_types;
-        #[doc(hidden)]
-        type UnderlyingSolTuple<'a> = (
-            ::alloy_sol_types::sol_data::String,
-            Subscription,
-        );
-        #[doc(hidden)]
-        type UnderlyingRustTuple<'a> = (
-            ::alloy_sol_types::private::String,
-            <Subscription as ::alloy_sol_types::SolType>::RustType,
-        );
-        #[cfg(test)]
-        #[allow(dead_code, unreachable_patterns)]
-        fn _type_assertion(
-            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-        ) {
-            match _t {
-                alloy_sol_types::private::AssertTypeEq::<
-                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                >(_) => {}
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<SubscriptionGroup> for UnderlyingRustTuple<'_> {
-            fn from(value: SubscriptionGroup) -> Self {
-                (value.subscriptionId, value.subscription)
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<UnderlyingRustTuple<'_>> for SubscriptionGroup {
-            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                Self {
-                    subscriptionId: tuple.0,
-                    subscription: tuple.1,
-                }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolValue for SubscriptionGroup {
-            type SolType = Self;
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::private::SolTypeValue<Self> for SubscriptionGroup {
-            #[inline]
-            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
-                (
-                    <::alloy_sol_types::sol_data::String as alloy_sol_types::SolType>::tokenize(
-                        &self.subscriptionId,
-                    ),
-                    <Subscription as alloy_sol_types::SolType>::tokenize(
-                        &self.subscription,
-                    ),
-                )
-            }
-            #[inline]
-            fn stv_abi_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
-            }
-            #[inline]
-            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
-                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
-            }
-            #[inline]
-            fn stv_abi_encode_packed_to(
-                &self,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
-            }
-            #[inline]
-            fn stv_abi_packed_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolType for SubscriptionGroup {
-            type RustType = Self;
-            type Token<'a> = <UnderlyingSolTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
-            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::ENCODED_SIZE;
-            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
-            #[inline]
-            fn valid_token(token: &Self::Token<'_>) -> bool {
-                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
-            }
-            #[inline]
-            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
-                let tuple = <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::detokenize(token);
-                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolStruct for SubscriptionGroup {
-            const NAME: &'static str = "SubscriptionGroup";
-            #[inline]
-            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
-                alloy_sol_types::private::Cow::Borrowed(
-                    "SubscriptionGroup(string subscriptionId,Subscription subscription)",
-                )
-            }
-            #[inline]
-            fn eip712_components() -> alloy_sol_types::private::Vec<
-                alloy_sol_types::private::Cow<'static, str>,
-            > {
-                let mut components = alloy_sol_types::private::Vec::with_capacity(1);
-                components
-                    .push(
-                        <Subscription as alloy_sol_types::SolStruct>::eip712_root_type(),
-                    );
-                components
-                    .extend(
-                        <Subscription as alloy_sol_types::SolStruct>::eip712_components(),
-                    );
-                components
-            }
-            #[inline]
-            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
-                [
-                    <::alloy_sol_types::sol_data::String as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.subscriptionId,
-                        )
-                        .0,
-                    <Subscription as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.subscription,
-                        )
-                        .0,
-                ]
-                    .concat()
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::EventTopic for SubscriptionGroup {
-            #[inline]
-            fn topic_preimage_length(rust: &Self::RustType) -> usize {
-                0usize
-                    + <::alloy_sol_types::sol_data::String as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.subscriptionId,
-                    )
-                    + <Subscription as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.subscription,
                     )
             }
             #[inline]
@@ -2525,8 +1951,10 @@ struct SubscriptionGroup { string subscriptionId; Subscription subscription; }
                     &rust.subscriptionId,
                     out,
                 );
-                <Subscription as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.subscription,
+                <::alloy_sol_types::sol_data::Uint<
+                    64,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.expiry,
                     out,
                 );
             }
