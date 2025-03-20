@@ -8,13 +8,23 @@ use anyhow::anyhow;
 use fvm_shared::{
     address::{Address as FvmAddress, Payload},
     bigint::{BigInt, BigUint, Sign as BigSign},
+    econ::TokenAmount,
     ActorID,
 };
+
+pub use alloy_sol_types::SolCall;
+pub use alloy_sol_types::SolInterface;
 
 const EAM_ACTOR_ID: ActorID = 10;
 
 /// Fixed-size uninterpreted hash type with 20 bytes (160 bits) size.
 pub struct H160([u8; 20]);
+
+impl Default for H160 {
+    fn default() -> Self {
+        Self([0u8; 20])
+    }
+}
 
 impl H160 {
     pub fn from_slice(slice: &[u8]) -> Self {
@@ -35,6 +45,31 @@ impl H160 {
 
     pub fn to_fixed_bytes(&self) -> [u8; 20] {
         self.0
+    }
+
+    /// Return true if it is a "0x00" address.
+    pub fn is_null(&self) -> bool {
+        self.0 == [0; 20]
+    }
+
+    pub fn as_option(&self) -> Option<H160> {
+        if self.is_null() {
+            None
+        } else {
+            Some(H160(self.0.clone()))
+        }
+    }
+}
+
+impl TryFrom<&[u8]> for H160 {
+    type Error = anyhow::Error;
+    fn try_from(slice: &[u8]) -> Result<Self, Self::Error> {
+        if slice.len() != 20 {
+            return Err(anyhow!("slice length must be exactly 20 bytes"));
+        }
+        let mut buf = [0u8; 20];
+        buf.copy_from_slice(slice);
+        Ok(H160(buf))
     }
 }
 
@@ -60,6 +95,25 @@ impl TryFrom<FvmAddress> for H160 {
     }
 }
 
+impl Into<FvmAddress> for H160 {
+    fn into(self) -> FvmAddress {
+        // Copied from fil_actors_evm_shared
+        let bytes = self.to_fixed_bytes();
+        if bytes[0] == 0xff && bytes[1..12].iter().all(|&b| b == 0x00) {
+            let id = u64::from_be_bytes(bytes[12..].try_into().unwrap());
+            FvmAddress::new_id(id)
+        } else {
+            FvmAddress::new_delegated(EAM_ACTOR_ID, bytes.as_slice()).unwrap()
+        }
+    }
+}
+
+impl From<Address> for H160 {
+    fn from(address: Address) -> Self {
+        H160::from_slice(address.as_ref())
+    }
+}
+
 impl From<H160> for Address {
     fn from(value: H160) -> Self {
         Address::from(value.to_fixed_bytes())
@@ -67,6 +121,32 @@ impl From<H160> for Address {
 }
 
 pub struct BigUintWrapper(pub BigUint);
+
+impl Default for BigUintWrapper {
+    fn default() -> Self {
+        Self(BigUint::default())
+    }
+}
+
+impl From<TokenAmount> for BigUintWrapper {
+    fn from(value: TokenAmount) -> Self {
+        let signed: BigInt = value.atto().clone();
+        let unsigned = signed.to_biguint().unwrap_or_default();
+        BigUintWrapper(unsigned)
+    }
+}
+
+impl From<U256> for BigUintWrapper {
+    fn from(value: U256) -> Self {
+        BigUintWrapper(BigUint::from_bytes_be(&value.to_be_bytes::<{U256::BYTES}>()))
+    }
+}
+
+impl From<BigUintWrapper> for TokenAmount {
+    fn from(value: BigUintWrapper) -> Self {
+        TokenAmount::from_atto(value.0)
+    }
+}
 
 impl From<BigUintWrapper> for U256 {
     fn from(value: BigUintWrapper) -> Self {
