@@ -67,4 +67,57 @@ contract FaucetTest is Test {
 
         assertEq(faucet.supply(), MINT_AMOUNT / 2 + 100);
     }
+
+    function testUnauthorizedDripFails() public {
+        vm.prank(wallet.addr);
+        vm.expectRevert(abi.encodeWithSelector(Faucet.UnauthorizedCaller.selector, wallet.addr));
+        faucet.drip(payable(TESTER), keys);
+    }
+
+    function testAuthorizeCaller() public {
+        // Authorize wallet
+        vm.prank(owner);
+        faucet.authorizeCaller(wallet.addr);
+
+        // Should now be able to drip
+        vm.prank(wallet.addr);
+        faucet.drip(payable(TESTER), keys);
+
+        assertEq(TESTER.balance, faucet.dripAmount());
+    }
+
+    function testDeauthorizeCaller() public {
+        // First authorize wallet
+        vm.prank(owner);
+        faucet.authorizeCaller(wallet.addr);
+
+        // Then deauthorize wallet
+        vm.prank(owner);
+        faucet.deauthorizeCaller(wallet.addr);
+
+        // Should fail to drip
+        vm.prank(wallet.addr);
+        vm.expectRevert(abi.encodeWithSelector(Faucet.UnauthorizedCaller.selector, wallet.addr));
+        faucet.drip(payable(TESTER), keys);
+    }
+
+    function testOnlyOwnerCanAuthorize() public {
+        vm.prank(wallet.addr);
+        vm.expectRevert("Ownable: caller is not the owner");
+        faucet.authorizeCaller(TESTER);
+    }
+
+    function testOnlyOwnerCanDeauthorize() public {
+        vm.prank(wallet.addr);
+        vm.expectRevert("Ownable: caller is not the owner");
+        faucet.deauthorizeCaller(TESTER);
+    }
+
+    function testOwnerCanAlwaysDrip() public {
+        // Owner should be able to drip without being explicitly authorized
+        vm.prank(owner);
+        faucet.drip(payable(TESTER), keys);
+
+        assertEq(TESTER.balance, faucet.dripAmount());
+    }
 }
