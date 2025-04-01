@@ -85,7 +85,7 @@ contract Faucet is Ownable {
         if (!_authorizedCallers[msg.sender] && owner() != msg.sender) {
             revert UnauthorizedCaller(msg.sender);
         }
-        
+
         uint256 amount = _dripAmount;
 
         if (address(this).balance < amount) {
