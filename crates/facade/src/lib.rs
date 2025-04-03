@@ -150,6 +150,22 @@ pub mod machine {
     pub type Events = crate::machine_facade::imachinefacade::IMachineFacade::IMachineFacadeEvents;
     pub type MachineCreated = crate::machine_facade::imachinefacade::IMachineFacade::MachineCreated;
     pub type MachineInitialized = crate::machine_facade::imachinefacade::IMachineFacade::MachineInitialized;
+
+    pub type Calls = crate::machine_facade::imachinefacade::IMachineFacade::IMachineFacadeCalls;
+    #[allow(non_camel_case_types)]
+    pub type createBucket_0Call = crate::machine_facade::imachinefacade::IMachineFacade::createBucket_0Call;
+    #[allow(non_camel_case_types)]
+    pub type createBucket_1Call = crate::machine_facade::imachinefacade::IMachineFacade::createBucket_1Call;
+    #[allow(non_camel_case_types)]
+    pub type createBucket_2Call = crate::machine_facade::imachinefacade::IMachineFacade::createBucket_2Call;
+    #[allow(non_camel_case_types)]
+    pub type listBuckets_0Call = crate::machine_facade::imachinefacade::IMachineFacade::listBuckets_0Call;
+    #[allow(non_camel_case_types)]
+    pub type listBuckets_1Call = crate::machine_facade::imachinefacade::IMachineFacade::listBuckets_1Call;
+
+    pub type Machine = crate::machine_facade::imachinefacade::IMachineFacade::Machine;
+    pub type Kind = crate::machine_facade::imachinefacade::IMachineFacade::Kind;
+    pub type KeyValue = crate::machine_facade::imachinefacade::IMachineFacade::KeyValue;
 }
 
 #[cfg(feature = "timehub")]
