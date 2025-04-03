@@ -116,8 +116,24 @@ interface IBucketFacade {
     function addObject(bytes32 source, string memory key, bytes32 hash, bytes32 recoveryHash, uint64 size) external;
 
     /// @dev Add an object to a bucket.
-    /// @param params The add object params. See {AddObjectParams} for more details.
-    function addObject(AddObjectParams memory params) external;
+    /// @param source The source Iroh node ID used for ingestion.
+    /// @param key The object key.
+    /// @param hash The object blake3 hash.
+    /// @param recoveryHash Blake3 hash of the metadata to use for object recovery.
+    /// @param size The object size.
+    /// @param ttl The object time-to-live epochs.
+    /// @param metadata The object metadata.
+    /// @param overwrite Whether to overwrite a key if it already exists.
+    function addObject(
+        bytes32 source,
+        string calldata key,
+        bytes32 hash,
+        bytes32 recoveryHash,
+        uint64 size,
+        uint64 ttl,
+        KeyValue[] calldata metadata,
+        bool overwrite
+    ) external;
 
     /// @dev Delete an object from a bucket.
     /// @param key The key.

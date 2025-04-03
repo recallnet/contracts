@@ -3,26 +3,6 @@ pragma solidity ^0.8.26;
 
 import {BlobStatus, BlobTuple, StorageStats, SubnetStats} from "../../types/BlobTypes.sol";
 
-/// @dev Parameters for adding a raw blob.
-/// @param sponsor  Optional sponsor address.
-/// @param source Source Iroh node ID used for ingestion.
-/// @param blobHash Blob blake3 hash.
-/// @param metadataHash  Blake3 hash of the metadata to use for blob recovery.
-/// @param subscriptionId Identifier used to differentiate blob additions for the same subscriber.
-/// @param size Blob size.
-/// @param ttl Blob time-to-live epochs. If not specified, the auto-debitor maintains about one hour of credits as an
-/// ongoing commitment.
-/// @param from Address of the entity adding the blob.
-struct AddBlobParams {
-    address sponsor;
-    bytes32 source;
-    bytes32 blobHash;
-    bytes32 metadataHash;
-    string subscriptionId;
-    uint64 size;
-    uint64 ttl;
-}
-
 /// @dev Blob information and status.
 /// @param size (uint64): The size of the blob content in bytes.
 /// @param metadataHash (string): Blob metadata hash that contains information for block recovery.
@@ -42,17 +22,6 @@ struct Blob {
 struct Subscription {
     string subscriptionId;
     uint64 expiry;
-}
-
-/// @dev Params for trimming blob expiries.
-/// @param subscriber (address): Address to trim blob expiries for.
-/// @param startingHash (bytes32): Starting hash to trim expiries from. 0x00 means "None".
-/// @param limit (uint64): Maximum number of blobs that will be examined for trimming.
-/// 0 means "no limit" or rather max of uint64.
-struct TrimBlobExpiriesParams {
-    address subscriber;
-    bytes32 startingHash;
-    uint32 limit;
 }
 
 struct TrimBlobExpiries {
@@ -90,8 +59,24 @@ interface IBlobsFacade {
     event BlobDeleted(address indexed subscriber, bytes32 hash, uint256 size, uint256 bytesReleased);
 
     /// @dev Add a new blob to storage.
-    /// @param params Parameters for adding the blob including sponsor, source, hashes, size and TTL.
-    function addBlob(AddBlobParams memory params) external;
+    /// @param sponsor  Optional sponsor address.
+    /// @param source Source Iroh node ID used for ingestion.
+    /// @param blobHash Blob blake3 hash.
+    /// @param metadataHash  Blake3 hash of the metadata to use for blob recovery.
+    /// @param subscriptionId Identifier used to differentiate blob additions for the same subscriber.
+    /// @param size Blob size.
+    /// @param ttl Blob time-to-live epochs. If not specified, the auto-debitor maintains about one hour of credits as
+    /// an
+    /// ongoing commitment.
+    function addBlob(
+        address sponsor,
+        bytes32 source,
+        bytes32 blobHash,
+        bytes32 metadataHash,
+        string calldata subscriptionId,
+        uint64 size,
+        uint64 ttl
+    ) external;
 
     /// @dev Get information about a specific blob.
     /// @param blobHash Blob blake3 hash.
@@ -106,14 +91,36 @@ interface IBlobsFacade {
 
     /// @dev Overwrite a blob in storage.
     /// @param oldHash The blake3 hash of the blob to be deleted.
-    /// @param params The parameters for adding a blob.
-    function overwriteBlob(bytes32 oldHash, AddBlobParams memory params) external;
+    /// @param sponsor  Optional sponsor address.
+    /// @param source Source Iroh node ID used for ingestion.
+    /// @param blobHash Blob blake3 hash.
+    /// @param metadataHash  Blake3 hash of the metadata to use for blob recovery.
+    /// @param subscriptionId Identifier used to differentiate blob additions for the same subscriber.
+    /// @param size Blob size.
+    /// @param ttl Blob time-to-live epochs. If not specified, the auto-debitor maintains about one hour of credits as
+    /// an
+    /// ongoing commitment.
+    function overwriteBlob(
+        bytes32 oldHash,
+        address sponsor,
+        bytes32 source,
+        bytes32 blobHash,
+        bytes32 metadataHash,
+        string calldata subscriptionId,
+        uint64 size,
+        uint64 ttl
+    ) external;
 
     /// @dev Get the subnet stats.
     /// @return stats The stats including balance, capacity, credit metrics and counts.
     function getStats() external view returns (SubnetStats memory stats);
 
     /// @dev Trims the subscription expiries for an account based on its current maximum allowed blob TTL.
-    /// @param params Options for trimming.
-    function trimBlobExpiries(TrimBlobExpiriesParams memory params) external returns (TrimBlobExpiries memory);
+    /// @param subscriber (address): Address to trim blob expiries for.
+    /// @param startingHash (bytes32): Starting hash to trim expiries from. 0x00 means "None".
+    /// @param limit (uint64): Maximum number of blobs that will be examined for trimming.
+    /// 0 means "no limit" or rather max of uint64.
+    function trimBlobExpiries(address subscriber, bytes32 startingHash, uint32 limit)
+        external
+        returns (TrimBlobExpiries memory);
 }
