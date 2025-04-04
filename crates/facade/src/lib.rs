@@ -55,6 +55,34 @@ pub mod bucket {
     pub type ObjectAdded = crate::bucket_facade::ibucketfacade::IBucketFacade::ObjectAdded;
     pub type ObjectDeleted = crate::bucket_facade::ibucketfacade::IBucketFacade::ObjectDeleted;
     pub type ObjectMetadataUpdated = crate::bucket_facade::ibucketfacade::IBucketFacade::ObjectMetadataUpdated;
+
+    pub type Calls = crate::bucket_facade::ibucketfacade::IBucketFacade::IBucketFacadeCalls;
+    #[allow(non_camel_case_types)]
+    pub type addObject_0Call = crate::bucket_facade::ibucketfacade::IBucketFacade::addObject_0Call;
+    #[allow(non_camel_case_types)]
+    pub type addObject_1Call = crate::bucket_facade::ibucketfacade::IBucketFacade::addObject_1Call;
+    #[allow(non_camel_case_types)]
+    pub type deleteObjectCall = crate::bucket_facade::ibucketfacade::IBucketFacade::deleteObjectCall;
+    #[allow(non_camel_case_types)]
+    pub type getObjectCall = crate::bucket_facade::ibucketfacade::IBucketFacade::getObjectCall;
+    #[allow(non_camel_case_types)]
+    pub type queryObjects_0Call = crate::bucket_facade::ibucketfacade::IBucketFacade::queryObjects_0Call;
+    #[allow(non_camel_case_types)]
+    pub type queryObjects_1Call = crate::bucket_facade::ibucketfacade::IBucketFacade::queryObjects_1Call;
+    #[allow(non_camel_case_types)]
+    pub type queryObjects_2Call = crate::bucket_facade::ibucketfacade::IBucketFacade::queryObjects_2Call;
+    #[allow(non_camel_case_types)]
+    pub type queryObjects_3Call = crate::bucket_facade::ibucketfacade::IBucketFacade::queryObjects_3Call;
+    #[allow(non_camel_case_types)]
+    pub type queryObjects_4Call = crate::bucket_facade::ibucketfacade::IBucketFacade::queryObjects_4Call;
+    #[allow(non_camel_case_types)]
+    pub type updateObjectMetadataCall = crate::bucket_facade::ibucketfacade::IBucketFacade::updateObjectMetadataCall;
+
+    pub type ObjectValue = crate::bucket_facade::ibucketfacade::IBucketFacade::ObjectValue;
+    pub type KeyValue = crate::bucket_facade::ibucketfacade::IBucketFacade::KeyValue;
+    pub type Query = crate::bucket_facade::ibucketfacade::IBucketFacade::Query;
+    pub type Object = crate::bucket_facade::ibucketfacade::IBucketFacade::Object;
+    pub type ObjectState = crate::bucket_facade::ibucketfacade::IBucketFacade::ObjectState;
 }
 
 #[cfg(feature = "config")]
