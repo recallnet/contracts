@@ -62,7 +62,7 @@ fn main() {
         };
         binder
             .run()
-            .expect(format!("failed to generate {} bindings", facade).as_str());
+            .unwrap_or_else(|_| panic!("failed to generate {} bindings", facade));
     }
 }
 

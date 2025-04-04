@@ -3,7 +3,7 @@
 
 use std::fmt;
 
-use alloy_primitives::{Address, Sign, I256, U256};
+use alloy_primitives::{Sign, I256, U256};
 use anyhow::anyhow;
 use fvm_shared::{
     address::{Address as FvmAddress, Payload},
@@ -14,17 +14,13 @@ use fvm_shared::{
 
 pub use alloy_sol_types::SolCall;
 pub use alloy_sol_types::SolInterface;
+pub use alloy_primitives::Address;
 
 const EAM_ACTOR_ID: ActorID = 10;
 
 /// Fixed-size uninterpreted hash type with 20 bytes (160 bits) size.
+#[derive(Default)]
 pub struct H160([u8; 20]);
-
-impl Default for H160 {
-    fn default() -> Self {
-        Self([0u8; 20])
-    }
-}
 
 impl H160 {
     pub fn from_slice(slice: &[u8]) -> Self {
@@ -56,7 +52,7 @@ impl H160 {
         if self.is_null() {
             None
         } else {
-            Some(H160(self.0.clone()))
+            Some(H160(self.0))
         }
     }
 }
@@ -95,10 +91,10 @@ impl TryFrom<FvmAddress> for H160 {
     }
 }
 
-impl Into<FvmAddress> for H160 {
-    fn into(self) -> FvmAddress {
+impl From<H160> for FvmAddress {
+    fn from(value: H160) -> Self {
         // Copied from fil_actors_evm_shared
-        let bytes = self.to_fixed_bytes();
+        let bytes = value.to_fixed_bytes();
         if bytes[0] == 0xff && bytes[1..12].iter().all(|&b| b == 0x00) {
             let id = u64::from_be_bytes(bytes[12..].try_into().unwrap());
             FvmAddress::new_id(id)
@@ -120,13 +116,8 @@ impl From<H160> for Address {
     }
 }
 
+#[derive(Default)]
 pub struct BigUintWrapper(pub BigUint);
-
-impl Default for BigUintWrapper {
-    fn default() -> Self {
-        Self(BigUint::default())
-    }
-}
 
 impl From<TokenAmount> for BigUintWrapper {
     fn from(value: TokenAmount) -> Self {
