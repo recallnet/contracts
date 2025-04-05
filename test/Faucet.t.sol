@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Test, Vm} from "forge-std/Test.sol";
-import {console2 as console} from "forge-std/console2.sol";
 
 import {DeployScript as FaucetDeployer} from "../script/Faucet.s.sol";
 import {DeployScript as TokenDeployer} from "../script/Recall.s.sol";
@@ -13,9 +13,9 @@ import {Recall} from "../src/token/Recall.sol";
 contract FaucetTest is Test {
     Faucet internal faucet;
     Vm.Wallet internal wallet;
+    Vm.Wallet internal wallet2;
     Vm.Wallet internal chain;
     address internal owner;
-    address internal constant TESTER = address(0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38);
     uint256 internal constant MINT_AMOUNT = 1000 * 10 ** 18;
     string[] internal keys = ["test1", "test2"];
     Recall internal token;
@@ -24,6 +24,7 @@ contract FaucetTest is Test {
         chain = vm.createWallet("chain");
         vm.deal(chain.addr, MINT_AMOUNT);
         wallet = vm.createWallet("user");
+        wallet2 = vm.createWallet("user2");
         FaucetDeployer faucetDeployer = new FaucetDeployer();
         faucet = faucetDeployer.run(MINT_AMOUNT / 2);
         owner = faucet.owner();
@@ -66,5 +67,58 @@ contract FaucetTest is Test {
         faucet.fund{value: 100}();
 
         assertEq(faucet.supply(), MINT_AMOUNT / 2 + 100);
+    }
+
+    function testUnauthorizedDripFails() public {
+        vm.prank(wallet.addr);
+        vm.expectRevert(abi.encodeWithSelector(Faucet.UnauthorizedCaller.selector, wallet.addr));
+        faucet.drip(payable(wallet2.addr), keys);
+    }
+
+    function testAuthorizeCaller() public {
+        // Authorize wallet
+        vm.prank(owner);
+        faucet.authorizeCaller(wallet.addr);
+
+        // Should now be able to drip
+        vm.prank(wallet.addr);
+        faucet.drip(payable(wallet2.addr), keys);
+
+        assertEq(wallet2.addr.balance, faucet.dripAmount());
+    }
+
+    function testDeauthorizeCaller() public {
+        // First authorize wallet
+        vm.prank(owner);
+        faucet.authorizeCaller(wallet.addr);
+
+        // Then deauthorize wallet
+        vm.prank(owner);
+        faucet.deauthorizeCaller(wallet.addr);
+
+        // Should fail to drip
+        vm.prank(wallet.addr);
+        vm.expectRevert(abi.encodeWithSelector(Faucet.UnauthorizedCaller.selector, wallet.addr));
+        faucet.drip(payable(wallet2.addr), keys);
+    }
+
+    function testOnlyOwnerCanAuthorize() public {
+        vm.prank(wallet.addr);
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, wallet.addr));
+        faucet.authorizeCaller(wallet2.addr);
+    }
+
+    function testOnlyOwnerCanDeauthorize() public {
+        vm.prank(wallet.addr);
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, wallet.addr));
+        faucet.deauthorizeCaller(wallet2.addr);
+    }
+
+    function testOwnerCanAlwaysDrip() public {
+        // Owner should be able to drip without being explicitly authorized
+        vm.prank(owner);
+        faucet.drip(payable(wallet.addr), keys);
+
+        assertEq(wallet.addr.balance, faucet.dripAmount());
     }
 }

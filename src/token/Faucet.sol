@@ -27,11 +27,17 @@ error TransferFailed(address recipient);
 /// @title Faucet Contract
 /// @dev A simple faucet contract for distributing tokens
 contract Faucet is Ownable {
+    /// @dev Mapping to store authorized callers
+    mapping(address => bool) internal _authorizedCallers;
+
     /// @dev Mapping to store the next allowed request time for each key
     mapping(string => uint256) internal _nextRequestAt;
 
     /// @dev Amount of tokens to drip per request
     uint256 internal _dripAmount = 5 ether;
+
+    /// @dev Error thrown when caller is not authorized
+    error UnauthorizedCaller(address caller);
 
     /// @dev Initializes the Faucet contract
     /// @dev Sets the contract deployer as the initial owner
@@ -59,11 +65,27 @@ contract Faucet is Ownable {
         emit Funding(msg.sender, msg.value);
     }
 
+    /// @dev Authorizes a caller to use the drip function
+    /// @param caller The address to authorize
+    function authorizeCaller(address caller) external onlyOwner {
+        _authorizedCallers[caller] = true;
+    }
+
+    /// @dev Removes authorization from a caller
+    /// @param caller The address to deauthorize
+    function deauthorizeCaller(address caller) external onlyOwner {
+        _authorizedCallers[caller] = false;
+    }
+
     /// @dev Distributes tokens to the specified recipient
-    /// @dev Reverts if the recipient has requested tokens too recently
+    /// @dev Reverts if the caller is neither the owner nor authorized
     /// @param recipient The address to receive the tokens
     /// @param keys Array of keys to identify the recipient used in the _nextRequestAt mapping
-    function drip(address payable recipient, string[] calldata keys) external onlyOwner {
+    function drip(address payable recipient, string[] calldata keys) external {
+        if (!_authorizedCallers[msg.sender] && owner() != msg.sender) {
+            revert UnauthorizedCaller(msg.sender);
+        }
+
         uint256 amount = _dripAmount;
 
         if (address(this).balance < amount) {
