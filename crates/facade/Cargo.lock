@@ -419,24 +419,10 @@ checksum = "fd94671561e36e4e7de75f753f577edafb0e7c05d6e4547229fdf7938fbcd2c3"
 dependencies = [
  "core2",
  "multibase",
- "multihash 0.18.1",
+ "multihash",
  "serde",
  "serde_bytes",
- "unsigned-varint 0.7.2",
-]
-
-[[package]]
-name = "cid"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3147d8272e8fa0ccd29ce51194dd98f79ddfb8191ba9e3409884e751798acf3a"
-dependencies = [
- "core2",
- "multibase",
- "multihash 0.19.3",
- "serde",
- "serde_bytes",
- "unsigned-varint 0.8.0",
+ "unsigned-varint",
 ]
 
 [[package]]
@@ -765,19 +751,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d064b957420f5ecc137a153baaa6c32e2eb19b674135317200b6f2537eabdbfd"
 dependencies = [
  "anyhow",
- "cid 0.10.1",
- "multihash 0.18.1",
-]
-
-[[package]]
-name = "fvm_ipld_blockstore"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97b8b31e022f71b73440054f7e5171231a1ebc745adf075014d5aa8ea78ea283"
-dependencies = [
- "anyhow",
- "cid 0.11.1",
- "multihash-codetable",
+ "cid",
+ "multihash",
 ]
 
 [[package]]
@@ -787,28 +762,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90608092e31d9a06236268c58f7c36668ab4b2a48afafe3a97e08f094ad7ae50"
 dependencies = [
  "anyhow",
- "cid 0.10.1",
- "fvm_ipld_blockstore 0.2.1",
- "multihash 0.18.1",
+ "cid",
+ "fvm_ipld_blockstore",
+ "multihash",
  "serde",
- "serde_ipld_dagcbor 0.4.2",
- "serde_repr",
- "serde_tuple",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "fvm_ipld_encoding"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "723294d1574e0126a9e16069ef6581a2ee3c06eb7d6edc33eb2a976057747bfb"
-dependencies = [
- "anyhow",
- "cid 0.11.1",
- "fvm_ipld_blockstore 0.3.1",
- "multihash-codetable",
- "serde",
- "serde_ipld_dagcbor 0.6.1",
+ "serde_ipld_dagcbor",
  "serde_repr",
  "serde_tuple",
  "thiserror 1.0.69",
@@ -816,18 +774,19 @@ dependencies = [
 
 [[package]]
 name = "fvm_shared"
-version = "4.5.3"
+version = "4.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ae590927cdaefbf803c43952885cf172e4d8159464f1c82cad8dce22dc09b7b"
+checksum = "9d3355d3bd2eb159a734a06d67dbb21b067a99540f5aefaf7d0d26503ccc73e3"
 dependencies = [
  "anyhow",
  "bitflags",
  "blake2b_simd",
- "cid 0.11.1",
+ "cid",
  "data-encoding",
  "data-encoding-macro",
- "fvm_ipld_encoding 0.5.1",
+ "fvm_ipld_encoding",
  "lazy_static",
+ "multihash",
  "num-bigint",
  "num-derive",
  "num-integer",
@@ -835,7 +794,7 @@ dependencies = [
  "serde",
  "serde_tuple",
  "thiserror 1.0.69",
- "unsigned-varint 0.8.0",
+ "unsigned-varint",
 ]
 
 [[package]]
@@ -955,17 +914,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ipld-core"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4ede82a79e134f179f4b29b5fdb1eb92bd1b38c4dfea394c539051150a21b9b"
-dependencies = [
- "cid 0.11.1",
- "serde",
- "serde_bytes",
-]
-
-[[package]]
 name = "itertools"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1061,32 +1009,10 @@ checksum = "cfd8a792c1694c6da4f68db0a9d707c72bd260994da179e6030a5dcee00bb815"
 dependencies = [
  "blake2b_simd",
  "core2",
- "multihash-derive 0.8.1",
+ "multihash-derive",
  "serde",
  "serde-big-array",
- "unsigned-varint 0.7.2",
-]
-
-[[package]]
-name = "multihash"
-version = "0.19.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b430e7953c29dd6a09afc29ff0bb69c6e306329ee6794700aee27b76a1aea8d"
-dependencies = [
- "core2",
- "serde",
- "unsigned-varint 0.8.0",
-]
-
-[[package]]
-name = "multihash-codetable"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67996849749d25f1da9f238e8ace2ece8f9d6bdf3f9750aaf2ae7de3a5cad8ea"
-dependencies = [
- "blake2b_simd",
- "core2",
- "multihash-derive 0.9.1",
+ "unsigned-varint",
 ]
 
 [[package]]
@@ -1100,31 +1026,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
- "synstructure 0.12.6",
-]
-
-[[package]]
-name = "multihash-derive"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f1b7edab35d920890b88643a765fc9bd295cf0201f4154dda231bef9b8404eb"
-dependencies = [
- "core2",
- "multihash 0.19.3",
- "multihash-derive-impl",
-]
-
-[[package]]
-name = "multihash-derive-impl"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3dc7141bd06405929948754f0628d247f5ca1865be745099205e5086da957cb"
-dependencies = [
- "proc-macro-crate 3.2.0",
- "proc-macro2",
- "quote",
- "syn 2.0.96",
- "synstructure 0.13.1",
+ "synstructure",
 ]
 
 [[package]]
@@ -1415,7 +1317,7 @@ dependencies = [
 
 [[package]]
 name = "recall_sol_facade"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-macro-expander",
@@ -1424,7 +1326,7 @@ dependencies = [
  "anyhow",
  "dunce",
  "eyre",
- "fvm_ipld_encoding 0.4.0",
+ "fvm_ipld_encoding",
  "fvm_shared",
  "prettyplease",
  "proc-macro2",
@@ -1683,19 +1585,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8e880e0b1f9c7a8db874642c1217f7e19b29e325f24ab9f0fcb11818adec7f01"
 dependencies = [
  "cbor4ii",
- "cid 0.10.1",
- "scopeguard",
- "serde",
-]
-
-[[package]]
-name = "serde_ipld_dagcbor"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ded35fbe4ab8fdec1f1d14b4daff2206b1eada4d6e708cb451d464d2d965f493"
-dependencies = [
- "cbor4ii",
- "ipld-core",
+ "cid",
  "scopeguard",
  "serde",
 ]
@@ -1860,17 +1750,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "synstructure"
-version = "0.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c8af7666ab7b6390ab78131fb5b0fce11d6b7a6951602017c35fa82800708971"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.96",
-]
-
-[[package]]
 name = "tap"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2012,12 +1891,6 @@ name = "unsigned-varint"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6889a77d49f1f013504cec6bf97a2c730394adedaeb1deb5ea08949a50541105"
-
-[[package]]
-name = "unsigned-varint"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb066959b24b5196ae73cb057f45598450d2c5f71460e98c49b738086eff9c06"
 
 [[package]]
 name = "valuable"
