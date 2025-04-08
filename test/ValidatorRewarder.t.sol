@@ -4,12 +4,37 @@ pragma solidity ^0.8.26;
 import {DeployScript as RecallDeployScript} from "../script/Recall.s.sol";
 import {DeployScript as ValidatorRewarderDeployScript} from "../script/ValidatorRewarder.s.sol";
 import {Recall} from "../src/token/Recall.sol";
-import {ValidatorRewarder} from "../src/token/ValidatorRewarder.sol";
+import {BottomUpCheckpoint, ISubnetActorGetter, ValidatorRewarder} from "../src/token/ValidatorRewarder.sol";
 
 import {Consensus, SubnetID} from "../src/types/CommonTypes.sol";
 import {SubnetIDHelper} from "../src/util/SubnetIDHelper.sol";
 import {Test} from "forge-std/Test.sol";
-import {console2} from "forge-std/console2.sol";
+
+
+// Mock implementation of the ISubnetActorGetter interface for testing
+contract MockSubnetActor is ISubnetActorGetter {
+    mapping(uint64 => BottomUpCheckpoint) internal checkpoints;
+
+    function setCheckpoint(uint64 epoch, uint64 blocksCommitted) external {
+        checkpoints[epoch].activity.consensus.stats.totalNumBlocksCommitted = blocksCommitted;
+    }
+
+    function bottomUpCheckpointAtEpoch(uint64 epoch)
+        external
+        view
+        override
+        returns (bool exists, BottomUpCheckpoint memory checkpoint)
+    {
+        if (checkpoints[epoch].activity.consensus.stats.totalNumBlocksCommitted > 0) {
+            return (true, checkpoints[epoch]);
+        }
+
+        // Default to returning checkpoint data with the epoch as the number of blocks
+        BottomUpCheckpoint memory defaultCheckpoint;
+        defaultCheckpoint.activity.consensus.stats.totalNumBlocksCommitted = 600; // Default to CHECKPOINT_PERIOD
+        return (true, defaultCheckpoint);
+    }
+}
 
 // Base contract with common setup and helper functions
 abstract contract ValidatorRewarderTestBase is Test {
@@ -19,15 +44,20 @@ abstract contract ValidatorRewarderTestBase is Test {
     address internal rewarderOwner;
     Recall internal token;
     address internal subnetActor;
+    MockSubnetActor internal mockSubnetActor;
 
     // Constants
     uint64 internal constant ROOTNET_CHAINID = 123;
     address internal constant SUBNET_ROUTE = address(101);
-    uint256 internal constant CHECKPOINT_PERIOD = 600;
     uint256 internal constant INFLATION_RATE = 928_276_004_952;
 
     function setUp() public virtual {
-        subnetActor = address(0x456);
+        // Deploy mock subnet actor
+        mockSubnetActor = new MockSubnetActor();
+        subnetActor = address(mockSubnetActor);
+
+        // Override the SUBNET_ROUTE for tests
+        vm.etch(SUBNET_ROUTE, address(mockSubnetActor).code);
 
         // Deploy Recall token
         RecallDeployScript recallDeployer = new RecallDeployScript();
@@ -40,6 +70,7 @@ abstract contract ValidatorRewarderTestBase is Test {
         ValidatorRewarderDeployScript rewarderDeployer = new ValidatorRewarderDeployScript();
         rewarder = rewarderDeployer.run(address(token));
         rewarderOwner = rewarder.owner();
+
         // Grant MINTER_ROLE to Rewarder for Recall tokens
         vm.startPrank(token.deployer());
         token.grantRole(token.MINTER_ROLE(), address(rewarder));
@@ -47,14 +78,17 @@ abstract contract ValidatorRewarderTestBase is Test {
 
         // Set up rewarder configuration
         vm.startPrank(rewarderOwner);
-        rewarder.setSubnet(subnet, 600);
+        rewarder.setSubnet(subnet);
         vm.stopPrank();
+
+        // Set up checkpoint data for tests
+        MockSubnetActor(SUBNET_ROUTE).setCheckpoint(600, 600);
+        MockSubnetActor(SUBNET_ROUTE).setCheckpoint(1200, 600);
+        MockSubnetActor(SUBNET_ROUTE).setCheckpoint(1800, 600);
 
         // Mint initial supply of Recall tokens to a random address
         vm.startPrank(rewarderOwner);
         token.mint(address(0x888), 1000e18);
-        // Set subnet
-        rewarder.setSubnet(subnet, 600);
         vm.stopPrank();
     }
 
@@ -115,28 +149,13 @@ contract ValidatorRewarderSubnetTest is ValidatorRewarderTestBase {
     function testInitialSubnetSetup() public view {
         SubnetID memory expectedSubnet = createSubnet();
         assertEq(rewarder.subnet(), expectedSubnet.root);
-        assertEq(rewarder.checkpointPeriod(), CHECKPOINT_PERIOD);
-    }
-
-    function testInitializeWithInvalidPeriod() public {
-        // Deploy a new instance without initialization
-        ValidatorRewarderDeployScript rewarderDeployer = new ValidatorRewarderDeployScript();
-        ValidatorRewarder newRewarder = rewarderDeployer.run(address(token));
-        SubnetID memory subnet = createSubnet();
-
-        // Try to set subnet with invalid period
-        address newRewarderOwner = newRewarder.owner();
-        vm.startPrank(newRewarderOwner);
-        vm.expectRevert(abi.encodeWithSelector(ValidatorRewarder.InvalidCheckpointPeriod.selector, 0));
-        newRewarder.setSubnet(subnet, 0);
-        vm.stopPrank();
     }
 
     function testSetSubnetNotOwner() public {
         SubnetID memory subnet = createSubnet();
         vm.startPrank(address(0x789));
         vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", address(0x789)));
-        rewarder.setSubnet(subnet, CHECKPOINT_PERIOD);
+        rewarder.setSubnet(subnet);
         vm.stopPrank();
     }
 
@@ -324,5 +343,83 @@ contract ValidatorRewarderComplexClaimTest is ValidatorRewarderTestBase {
         uint256 expectedTotalReward = 300 ether;
         assertApproxEqAbs(token.balanceOf(claimant), expectedTotalReward, 1000);
         assertEq(token.totalSupply() - initialSupply, expectedTotalReward);
+    }
+
+    // Test for checkpoint periods smaller than 600 blocks
+    function testSmallerCheckpointPeriods() public {
+        address claimant1 = address(0x999);
+        address claimant2 = address(0x998);
+
+        // Define checkpoint sizes to test
+        uint64 checkpointSize = 300;
+
+        // Validator commits all blocks
+        uint256 initialSupply = token.totalSupply();
+
+        // Setup test environment
+        uint64 checkpointHeight = 1000; // Unique checkpoint heights
+
+        // Set mock to return the correct blocks for this checkpoint
+        MockSubnetActor(SUBNET_ROUTE).setCheckpoint(checkpointHeight, checkpointSize);
+
+        // Create validator that committed 100% of blocks
+        Consensus.ValidatorData memory validatorData1 = createValidatorData(claimant1, checkpointSize / 2);
+        Consensus.ValidatorData memory validatorData2 = createValidatorData(claimant2, checkpointSize / 2);
+
+        // Capture balance before claim
+        uint256 balanceBefore1 = token.balanceOf(claimant1);
+        uint256 balanceBefore2 = token.balanceOf(claimant2);
+
+        // Claim rewards
+        vm.startPrank(SUBNET_ROUTE);
+        rewarder.notifyValidClaim(createSubnet(), checkpointHeight, validatorData1);
+        rewarder.notifyValidClaim(createSubnet(), checkpointHeight, validatorData2);
+        vm.stopPrank();
+
+        // Expected tokens for full participation
+        // Tokens = blocks / BLOCKS_PER_TOKEN
+        // uint256 expectedReward = ;
+        uint256 actualReward1 = token.balanceOf(claimant1) - balanceBefore1;
+        uint256 actualReward2 = token.balanceOf(claimant2) - balanceBefore2;
+
+        // Verify rewards
+        assertEq(actualReward1, actualReward2);
+        assertEq(actualReward1, 50 ether);
+        assertEq(actualReward2, 50 ether);
+        assertEq(token.totalSupply() - initialSupply, 100 ether);
+    }
+
+    // Test for checkpoint periods with partial validator participation
+    function testSmallerCheckpointPeriodsWithPartialParticipation() public {
+        address claimant = address(0x999);
+
+        // Define checkpoint sizes to test
+        uint64 checkpointSize = 300;
+        uint256 initialSupply = token.totalSupply();
+
+        // Setup test environment
+        uint64 checkpointHeight = 2000;
+        uint64 blocksInCheckpoint = checkpointSize;
+        uint64 blocksCommitted = blocksInCheckpoint / 2; // 50% participation
+
+        // Set mock to return the correct blocks for this checkpoint
+        MockSubnetActor(SUBNET_ROUTE).setCheckpoint(checkpointHeight, blocksInCheckpoint);
+
+        // Create validator that committed 50% of blocks
+        Consensus.ValidatorData memory validatorData = createValidatorData(claimant, blocksCommitted);
+        uint256 balanceBefore = token.balanceOf(claimant);
+
+        // Claim rewards
+        vm.startPrank(SUBNET_ROUTE);
+        rewarder.notifyValidClaim(createSubnet(), checkpointHeight, validatorData);
+        vm.stopPrank();
+
+        // Expected tokens for 50% participation
+        // Total tokens = blocksInCheckpoint / BLOCKS_PER_TOKEN
+        // Validator share = Total tokens * (blocksCommitted / blocksInCheckpoint)
+        uint256 expectedReward = 50 ether;
+        uint256 actualReward = token.balanceOf(claimant) - balanceBefore;
+        assertEq(actualReward, expectedReward);
+        assertEq(token.totalSupply() - initialSupply, 50 ether);
     }
 }

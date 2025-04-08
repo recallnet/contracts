@@ -4,8 +4,10 @@ pragma solidity ^0.8.26;
 import {IValidatorRewarder} from "../interfaces/IValidatorRewarder.sol";
 
 import {Consensus, SubnetID} from "../types/CommonTypes.sol";
-import {Recall} from "./Recall.sol";
 
+import {BottomUpCheckpoint} from "../types/CommonTypes.sol";
+import {SubnetIDHelper} from "../util/SubnetIDHelper.sol";
+import {Recall} from "./Recall.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
@@ -16,6 +18,8 @@ import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 /// @dev The rewarder is responsible for distributing the inflation to the validators.
 /// @dev The rewarder is called by the subnet actor when a validator claims rewards.
 contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgradeable {
+    using SubnetIDHelper for SubnetID;
+
     // ========== STATE VARIABLES ==========
 
     /// @notice Indicates whether the rewarder is active or not
@@ -27,17 +31,13 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @notice The token that this rewarder mints
     Recall public token;
 
-    /// @notice The bottomup checkpoint period for the subnet.
-    /// @dev The checkpoint period is set when the subnet is created.
-    uint256 public checkpointPeriod;
-
     /// @notice The number of blocks required to generate 1 new token (with 18 decimals)
     uint256 public constant BLOCKS_PER_TOKEN = 3;
 
     // ========== EVENTS & ERRORS ==========
 
     event ActiveStateChange(bool active, address account);
-    event SubnetUpdated(SubnetID subnet, uint256 checkpointPeriod);
+    event SubnetUpdated(SubnetID subnet);
     /// @notice Emitted when a validator claims their rewards for a checkpoint
     /// @param checkpointHeight The height of the checkpoint for which rewards are claimed
     /// @param validator The address of the validator claiming rewards
@@ -71,17 +71,12 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
         token = Recall(recallToken);
     }
 
-    /// @notice Sets the subnet and checkpoint period
-    /// @dev Only the owner can set the subnet and period
+    /// @notice Sets the subnet
+    /// @dev Only the owner can set the subnet
     /// @param subnetId The subnet ID
-    /// @param period The bottomup checkpoint period for the subnet
-    function setSubnet(SubnetID calldata subnetId, uint256 period) external onlyOwner {
-        if (period == 0) {
-            revert InvalidCheckpointPeriod(period);
-        }
+    function setSubnet(SubnetID calldata subnetId) external onlyOwner {
         subnet = subnetId;
-        checkpointPeriod = period;
-        emit SubnetUpdated(subnetId, period);
+        emit SubnetUpdated(subnetId);
     }
 
     // ========== PUBLIC FUNCTIONS ==========
@@ -136,8 +131,8 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
         }
 
         // Calculate rewards for this checkpoint
-        uint256 newTokens = calculateNewTokensForCheckpoint();
-        uint256 validatorShare = calculateValidatorShare(data.blocksCommitted, newTokens);
+        uint256 newTokens = calculateNewTokensForCheckpoint(claimedCheckpointHeight);
+        uint256 validatorShare = calculateValidatorShare(claimedCheckpointHeight, data.blocksCommitted, newTokens);
 
         // Mint the validator's share
         token.mint(data.validator, validatorShare);
@@ -148,12 +143,12 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
 
     /// @notice Calculates the total number of new tokens to be minted for a checkpoint
     /// @return The number of new tokens to be minted (in base units with 18 decimals)
-    function calculateNewTokensForCheckpoint() internal view returns (uint256) {
+    function calculateNewTokensForCheckpoint(uint64 claimedCheckpointHeight) internal view returns (uint256) {
         UD60x18 blocksPerToken = ud(BLOCKS_PER_TOKEN);
-        UD60x18 period = ud(checkpointPeriod);
+        UD60x18 period = ud(numBlocksInCheckpoint(claimedCheckpointHeight));
         UD60x18 oneToken = ud(1 ether);
 
-        // Calculate (checkpointPeriod * 1 ether) / BLOCKS_PER_TOKEN using fixed-point math
+        // Calculate (period * 1 ether) / BLOCKS_PER_TOKEN using fixed-point math
         return period.mul(oneToken).div(blocksPerToken).unwrap();
     }
 
@@ -161,10 +156,14 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @param blocksCommitted The number of blocks committed by the validator
     /// @param totalNewTokens The total number of new tokens for the checkpoint
     /// @return The validator's share of the new tokens
-    function calculateValidatorShare(uint256 blocksCommitted, uint256 totalNewTokens) internal view returns (uint256) {
+    function calculateValidatorShare(uint64 claimedCheckpointHeight, uint256 blocksCommitted, uint256 totalNewTokens)
+        internal
+        view
+        returns (uint256)
+    {
         UD60x18 blocks = ud(blocksCommitted);
         UD60x18 tokens = ud(totalNewTokens);
-        UD60x18 period = ud(checkpointPeriod);
+        UD60x18 period = ud(numBlocksInCheckpoint(claimedCheckpointHeight));
         UD60x18 share = blocks.div(period);
         UD60x18 result = share.mul(tokens);
         return result.unwrap();
@@ -174,12 +173,37 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @param claimedCheckpointHeight The height of the checkpoint that the validator is claiming for
     /// @return True if the checkpoint height is valid, false otherwise
     /// @dev Ensures the checkpoint height is a multiple of the checkpoint period
-    function validateCheckpointHeight(uint64 claimedCheckpointHeight) internal view returns (bool) {
-        return claimedCheckpointHeight > 0 && claimedCheckpointHeight % checkpointPeriod == 0;
+    function validateCheckpointHeight(uint64 claimedCheckpointHeight) internal pure returns (bool) {
+        return claimedCheckpointHeight > 0;
+    }
+
+    /// @notice Gets the number of blocks in a checkpoint
+    /// @param claimedCheckpointHeight The height on which the checkpoint was submitted
+    /// @return The number of blocks in the checkpoint
+    function numBlocksInCheckpoint(uint64 claimedCheckpointHeight) internal view returns (uint64) {
+        address subnetActor = subnet.getAddress();
+        (bool exists, BottomUpCheckpoint memory checkpoint) =
+            ISubnetActorGetter(subnetActor).bottomUpCheckpointAtEpoch(claimedCheckpointHeight);
+        if (!exists) {
+            revert InvalidCheckpointHeight(claimedCheckpointHeight);
+        }
+
+        uint64 totalNumBlocksCommitted = checkpoint.activity.consensus.stats.totalNumBlocksCommitted;
+        if (totalNumBlocksCommitted == 0) {
+            revert InvalidCheckpointHeight(claimedCheckpointHeight);
+        }
+        return totalNumBlocksCommitted;
     }
 
     /// @dev Function that should revert when `msg.sender` is not authorized to upgrade the contract
     /// @param newImplementation Address of the new implementation contract
     function _authorizeUpgrade(address newImplementation) internal view override onlyOwner {} // solhint-disable
         // no-empty-blocks
+}
+
+interface ISubnetActorGetter {
+    function bottomUpCheckpointAtEpoch(uint64 epoch)
+        external
+        view
+        returns (bool exists, BottomUpCheckpoint memory checkpoint);
 }
