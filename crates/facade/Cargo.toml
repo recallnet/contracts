@@ -7,7 +7,7 @@ homepage = "https://github.com/recallnet/contracts/"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/recallnet/contracts/"
 keywords = ["recall", "rust"]
-version = "0.1.1"
+version = "0.1.2"
 
 [dependencies]
 anyhow = "1.0.95"
