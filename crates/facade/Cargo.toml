@@ -3,19 +3,18 @@ name = "recall_sol_facade"
 authors = ["Recall Contributors"]
 description = "Rust bindings for the Recall Solidity Facades"
 edition = "2021"
-homepage = "https://github.com/hokunet/contracts/"
+homepage = "https://github.com/recallnet/contracts/"
 license = "MIT OR Apache-2.0"
-readme = "../README.md"
-repository = "https://github.com/hokunet/contracts/"
+repository = "https://github.com/recallnet/contracts/"
 keywords = ["recall", "rust"]
 version = "0.1.1"
 
 [dependencies]
 anyhow = "1.0.95"
-alloy-primitives = { version = "0.8.19", features = ["std"] }
-alloy-sol-types = { version = "0.8.19", features = ["std"] }
-fvm_ipld_encoding = "0.4.0"
-fvm_shared = { version = ">=4.3, <4.5" }
+alloy-primitives = { version = "~0.8.19", features = ["std"] }
+alloy-sol-types = { version = "~0.8.19", features = ["std"] }
+fvm_ipld_encoding = "~0.4.0"
+fvm_shared = { version = "~4.3.0" }
 
 [build-dependencies]
 alloy-primitives = { version = "0.8.19" }
