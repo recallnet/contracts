@@ -10,7 +10,6 @@ import {Consensus, SubnetID} from "../src/types/CommonTypes.sol";
 import {SubnetIDHelper} from "../src/util/SubnetIDHelper.sol";
 import {Test} from "forge-std/Test.sol";
 
-
 // Mock implementation of the ISubnetActorGetter interface for testing
 contract MockSubnetActor is ISubnetActorGetter {
     mapping(uint256 => BottomUpCheckpoint) internal checkpoints;

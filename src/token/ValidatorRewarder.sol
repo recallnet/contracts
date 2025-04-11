@@ -13,8 +13,6 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/pro
 
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 
-import {console2} from "forge-std/console2.sol";
-
 /// @title ValidatorRewarder
 /// @notice This contract is responsible for distributing rewards to validators.
 /// @dev The rewarder is responsible for distributing the inflation to the validators.
@@ -49,7 +47,6 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     error SubnetMismatch(SubnetID id);
     error InvalidClaimNotifier(address notifier);
     error InvalidCheckpointHeight(uint64 claimedCheckpointHeight);
-    error InvalidCheckpointPeriod(uint256 period);
     error InvalidTokenAddress(address token);
     error InvalidValidatorAddress(address validator);
     error ContractNotActive();
@@ -128,7 +125,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
         }
 
         // Check that the checkpoint height is valid
-        if (!validateCheckpointHeight(claimedCheckpointHeight)) {
+        if (claimedCheckpointHeight == 0) {
             revert InvalidCheckpointHeight(claimedCheckpointHeight);
         }
 
@@ -138,7 +135,6 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
 
         // Mint the validator's share
         token.mint(data.validator, validatorShare);
-        console2.log("====>>> NEW REWARDER CALLED!!!");
         emit RewardsClaimed(claimedCheckpointHeight, data.validator, validatorShare);
     }
 
@@ -172,34 +168,18 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
         return result.unwrap();
     }
 
-    /// @notice Validates that the claimed checkpoint height is valid
-    /// @param claimedCheckpointHeight The height of the checkpoint that the validator is claiming for
-    /// @return True if the checkpoint height is valid, false otherwise
-    /// @dev Ensures the checkpoint height is a multiple of the checkpoint period
-    function validateCheckpointHeight(uint64 claimedCheckpointHeight) internal pure returns (bool) {
-        return claimedCheckpointHeight > 0;
-    }
-
-    /// @notice Gets the number of blocks in a checkpoint
+    /// @notice Gets the number of blocks in a checkpoint from the subnet actor
     /// @param claimedCheckpointHeight The height on which the checkpoint was submitted
     /// @return The number of blocks in the checkpoint
     function numBlocksInCheckpoint(uint64 claimedCheckpointHeight) internal view returns (uint64) {
-        // TODO: This is subnet gateway address
-        // We need parent gateway address
         address subnetActor = subnet.getAddress();
-        console2.log("====>>> SUBNET ACTOR");
-        console2.log(subnetActor);
         (bool exists, BottomUpCheckpoint memory checkpoint) =
             ISubnetActorGetter(subnetActor).bottomUpCheckpointAtEpoch(claimedCheckpointHeight);
         if (!exists) {
             revert InvalidCheckpointHeight(claimedCheckpointHeight);
         }
 
-        uint64 totalNumBlocksCommitted = checkpoint.activity.consensus.stats.totalNumBlocksCommitted;
-        if (totalNumBlocksCommitted == 0) {
-            revert InvalidCheckpointHeight(claimedCheckpointHeight);
-        }
-        return totalNumBlocksCommitted;
+        return checkpoint.activity.consensus.stats.totalNumBlocksCommitted;
     }
 
     /// @dev Function that should revert when `msg.sender` is not authorized to upgrade the contract
