@@ -13,13 +13,13 @@ import {Test} from "forge-std/Test.sol";
 
 // Mock implementation of the ISubnetActorGetter interface for testing
 contract MockSubnetActor is ISubnetActorGetter {
-    mapping(uint64 => BottomUpCheckpoint) internal checkpoints;
+    mapping(uint256 => BottomUpCheckpoint) internal checkpoints;
 
-    function setCheckpoint(uint64 epoch, uint64 blocksCommitted) external {
+    function setCheckpoint(uint256 epoch, uint64 blocksCommitted) external {
         checkpoints[epoch].activity.consensus.stats.totalNumBlocksCommitted = blocksCommitted;
     }
 
-    function bottomUpCheckpointAtEpoch(uint64 epoch)
+    function bottomUpCheckpointAtEpoch(uint256 epoch)
         external
         view
         override
