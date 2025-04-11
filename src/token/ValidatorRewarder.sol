@@ -186,11 +186,8 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     function numBlocksInCheckpoint(uint64 claimedCheckpointHeight) internal view returns (uint64) {
         // TODO: This is subnet gateway address
         // We need parent gateway address
-        SubnetID memory parentSubnet = subnet.getParentSubnet();
-        console2.log("====>>>> PARENT SUBNET");
-        console2.log(parentSubnet.root);
-        address subnetActor = parentSubnet.getAddress();
-        console2.log("====>>>> SUBNET ACTOR");
+        address subnetActor = subnet.getAddress();
+        console2.log("====>>> SUBNET ACTOR");
         console2.log(subnetActor);
         (bool exists, BottomUpCheckpoint memory checkpoint) =
             ISubnetActorGetter(subnetActor).bottomUpCheckpointAtEpoch(claimedCheckpointHeight);
