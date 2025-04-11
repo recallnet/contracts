@@ -13,6 +13,8 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/contracts/pro
 
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 
+import {console2} from "forge-std/console2.sol";
+
 /// @title ValidatorRewarder
 /// @notice This contract is responsible for distributing rewards to validators.
 /// @dev The rewarder is responsible for distributing the inflation to the validators.
@@ -136,6 +138,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
 
         // Mint the validator's share
         token.mint(data.validator, validatorShare);
+        console2.log("====>>> NEW REWARDER CALLED!!!");
         emit RewardsClaimed(claimedCheckpointHeight, data.validator, validatorShare);
     }
 
@@ -181,7 +184,14 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
     /// @param claimedCheckpointHeight The height on which the checkpoint was submitted
     /// @return The number of blocks in the checkpoint
     function numBlocksInCheckpoint(uint64 claimedCheckpointHeight) internal view returns (uint64) {
-        address subnetActor = subnet.getAddress();
+        // TODO: This is subnet gateway address
+        // We need parent gateway address
+        SubnetID memory parentSubnet = subnet.getParentSubnet();
+        console2.log("====>>>> PARENT SUBNET");
+        console2.log(parentSubnet.root);
+        address subnetActor = parentSubnet.getAddress();
+        console2.log("====>>>> SUBNET ACTOR");
+        console2.log(subnetActor);
         (bool exists, BottomUpCheckpoint memory checkpoint) =
             ISubnetActorGetter(subnetActor).bottomUpCheckpointAtEpoch(claimedCheckpointHeight);
         if (!exists) {
