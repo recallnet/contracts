@@ -209,7 +209,7 @@ contract ValidatorRewarder is IValidatorRewarder, UUPSUpgradeable, OwnableUpgrad
 }
 
 interface ISubnetActorGetter {
-    function bottomUpCheckpointAtEpoch(uint64 epoch)
+    function bottomUpCheckpointAtEpoch(uint256 epoch)
         external
         view
         returns (bool exists, BottomUpCheckpoint memory checkpoint);
