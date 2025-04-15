@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.26;
 
-import {ValidatorRewarderTestBase} from "./ValidatorRewarder.t.sol";
+import {MockSubnetActor, ValidatorRewarderTestBase} from "./ValidatorRewarder.t.sol";
 import {console2} from "forge-std/console2.sol";
 
 // FFI reward calculation tests
@@ -38,6 +38,9 @@ contract ValidatorRewarderFFITest is ValidatorRewarderTestBase {
         // Process claims checkpoint by checkpoint
         for (uint256 i = 0; i < numCheckpoints; i++) {
             uint64 currentCheckpoint = uint64((i + 1) * checkpointPeriod);
+
+            // Update mock to return the correct number of blocks for this checkpoint
+            MockSubnetActor(SUBNET_ROUTE).setCheckpoint(currentCheckpoint, uint64(checkpointPeriod));
 
             // Calculate expected rewards for this checkpoint (in base units)
             uint256 checkpointTokens = (checkpointPeriod * 1 ether) / rewarder.BLOCKS_PER_TOKEN();

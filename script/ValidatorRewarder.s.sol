@@ -22,7 +22,7 @@ contract DeployScript is Script {
     function run(address recallToken) public returns (ValidatorRewarder) {
         vm.startBroadcast();
         proxyAddress = Upgrades.deployUUPSProxy(
-            "ValidatorRewarder.sol", abi.encodeCall(ValidatorRewarder.initialize, (recallToken))
+            "ValidatorRewarder.sol:ValidatorRewarder", abi.encodeCall(ValidatorRewarder.initialize, (recallToken))
         );
         vm.stopBroadcast();
 
@@ -52,9 +52,9 @@ contract UpgradeRewarderProxyScript is Script {
 
         // Upgrade proxy to new implementation
         Options memory opts;
-        opts.referenceContract = "ValidatorRewarder.sol";
+        opts.referenceContract = "ValidatorRewarder.sol:ValidatorRewarder";
         vm.startBroadcast(deployerPrivateKey);
-        Upgrades.upgradeProxy(proxy, "ValidatorRewarder.sol", "", opts);
+        Upgrades.upgradeProxy(proxy, "ValidatorRewarder.sol:ValidatorRewarder", "", opts);
         vm.stopBroadcast();
 
         // Check new implementation
