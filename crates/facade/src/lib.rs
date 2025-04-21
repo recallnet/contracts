@@ -174,4 +174,16 @@ mod timehub_facade;
 pub mod timehub {
     pub type Events = crate::timehub_facade::itimehubfacade::ITimehubFacade::ITimehubFacadeEvents;
     pub type EventPushed = crate::timehub_facade::itimehubfacade::ITimehubFacade::EventPushed;
+
+    pub type Calls = crate::timehub_facade::itimehubfacade::ITimehubFacade::ITimehubFacadeCalls;
+    #[allow(non_camel_case_types)]
+    pub type pushCall = crate::timehub_facade::itimehubfacade::ITimehubFacade::pushCall;
+    #[allow(non_camel_case_types)]
+    pub type getLeafAtCall = crate::timehub_facade::itimehubfacade::ITimehubFacade::getLeafAtCall;
+    #[allow(non_camel_case_types)]
+    pub type getRootCall = crate::timehub_facade::itimehubfacade::ITimehubFacade::getRootCall;
+    #[allow(non_camel_case_types)]
+    pub type getPeaksCall = crate::timehub_facade::itimehubfacade::ITimehubFacade::getPeaksCall;
+    #[allow(non_camel_case_types)]
+    pub type getCountCall = crate::timehub_facade::itimehubfacade::ITimehubFacade::getCountCall;
 }
