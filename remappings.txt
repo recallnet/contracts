@@ -8,3 +8,4 @@ forge-std/=lib/forge-std/src/
 @axelar-network/axelar-gmp-sdk-solidity/=lib/axelar-gmp-sdk-solidity/
 @prb/math/=lib/prb-math/src/
 solidity-cborutils/=lib/solidity-cborutils/
+@ipc/=lib/ipc/

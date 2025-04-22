@@ -28,3 +28,6 @@
 [submodule "lib/solidity-cborutils"]
 	path = lib/solidity-cborutils
 	url = https://github.com/smartcontractkit/solidity-cborutils
+[submodule "lib/ipc"]
+	path = lib/ipc
+	url = https://github.com/consensus-shipyard/ipc
