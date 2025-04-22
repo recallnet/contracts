@@ -38,15 +38,10 @@ struct SubnetID {
     address[] route;
 }
 
-/// Namespace for consensus-level activity summaries.
-library Consensus {
-    struct ValidatorData {
-        /// @dev The validator whose activity we're reporting about, identified by the Ethereum address corresponding
-        /// to its secp256k1 pubkey.
-        address validator;
-        /// @dev The number of blocks committed by this validator during the summarised period.
-        uint64 blocksCommitted;
-    }
+/// @notice The parent finality for IPC parent at certain height.
+struct ParentFinality {
+    uint256 height;
+    bytes32 blockHash;
 }
 
 /// @notice A bottom-up checkpoint type.
@@ -69,25 +64,17 @@ struct BottomUpCheckpoint {
     CompressedActivityRollup activity;
 }
 
-// Compressed representation of the activity summary that can be embedded in checkpoints to propagate up the hierarchy.
-struct CompressedActivityRollup {
-    CompressedSummary consensus;
+/// @notice A batch of bottom-up messages for execution.
+struct BottomUpMsgBatch {
+    SubnetID subnetID;
+    uint256 blockHeight;
+    IpcEnvelope[] msgs;
 }
 
-// Aggregated stats for consensus-level activity.
-struct AggregatedStats {
-    /// The total number of unique validators that have mined within this period.
-    uint64 totalActiveValidators;
-    /// The total number of blocks committed by all validators during this period.
-    uint64 totalNumBlocksCommitted;
-}
-
-// The compresed representation of the activity summary for consensus-level activity suitable for embedding in a
-// checkpoint.
-struct CompressedSummary {
-    AggregatedStats stats;
-    /// The commitment for the validator details, so that we don't have to transmit them in full.
-    bytes32 dataRootCommitment;
+/// @notice Tracks information about the last batch executed.
+struct BottomUpMsgBatchInfo {
+    uint256 blockHeight;
+    bytes32 hash;
 }
 
 /// @notice Type of cross-net messages currently supported
@@ -131,4 +118,87 @@ struct IpcEnvelope {
     IPCAddress from;
     /// @dev abi.encoded message
     bytes message;
+}
+
+/// @notice Message format used for `Transfer` and `Call` messages.
+struct CallMsg {
+    bytes method;
+    bytes params;
+}
+
+/// @notice Outcome type for cross message execution
+enum OutcomeType {
+    Ok,
+    SystemErr,
+    ActorErr
+}
+
+struct ResultMsg {
+    bytes32 id;
+    OutcomeType outcome;
+    bytes ret;
+}
+
+/// @notice Validator struct stored in the gateway.
+struct Validator {
+    uint256 weight;
+    address addr;
+    bytes metadata;
+}
+
+/// @notice Membership information stored in the gateway.
+struct Membership {
+    Validator[] validators;
+    uint64 configurationNumber;
+}
+
+/// @notice Defines token representation in subnet
+struct Asset {
+    AssetKind kind;
+    address tokenAddress;
+}
+
+/// @notice Token type used in the subnet
+enum AssetKind {
+    Native,
+    ERC20
+}
+
+// Activity related structs
+struct FullActivityRollup {
+    Consensus.FullSummary consensus;
+}
+
+struct CompressedActivityRollup {
+    Consensus.CompressedSummary consensus;
+}
+
+/// Namespace for consensus-level activity summaries.
+library Consensus {
+    type MerkleHash is bytes32;
+
+    struct AggregatedStats {
+        uint64 totalActiveValidators;
+        uint64 totalNumBlocksCommitted;
+    }
+
+    struct FullSummary {
+        AggregatedStats stats;
+        ValidatorData[] data;
+    }
+
+    struct CompressedSummary {
+        AggregatedStats stats;
+        MerkleHash dataRootCommitment;
+    }
+
+    struct ValidatorData {
+        address validator;
+        uint64 blocksCommitted;
+    }
+
+    struct ValidatorClaim {
+        ValidatorData data;
+        MerkleHash[] proof;
+    }
 }

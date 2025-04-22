@@ -3,9 +3,9 @@ pragma solidity ^0.8.26;
 
 import {InterchainTokenExecutable} from "@axelar-network/interchain-token-service/contracts/executable/InterchainTokenExecutable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SubnetID} from "@ipc/contracts/contracts/structs/Subnet.sol";
-import {FvmAddress} from "@ipc/contracts/contracts/structs/FvmAddress.sol";
-import {IGateway} from "@ipc/contracts/contracts/interfaces/IGateway.sol";
+import {SubnetID} from "../types/CommonTypes.sol";
+import {FvmAddress} from "../types/CommonTypes.sol";
+import {IGatewayManagerFacet} from "./IGatewayManagerFacet.sol";
 
 /// @title AutoDeposit
 /// @notice Handles automatic token deposits from Axelar to IPC subnets
@@ -16,7 +16,7 @@ contract AutoDeposit is InterchainTokenExecutable {
 
     SubnetID public recallSubnet;
     IERC20 public immutable RECALL_TOKEN;
-    IGateway public immutable RECALL_GATEWAY;
+    IGatewayManagerFacet public immutable RECALL_GATEWAY;
 
     /// @notice Initializes the contract with required addresses and subnet ID
     /// @param subnet The subnet ID where tokens will be deposited
@@ -31,7 +31,7 @@ contract AutoDeposit is InterchainTokenExecutable {
     ) InterchainTokenExecutable(interchainTokenService_) {
         recallSubnet = subnet;
         RECALL_TOKEN = IERC20(token);
-        RECALL_GATEWAY = IGateway(gateway);
+        RECALL_GATEWAY = IGatewayManagerFacet(gateway);
     }
 
     /// @inheritdoc InterchainTokenExecutable
