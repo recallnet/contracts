@@ -14,39 +14,82 @@ import {Script, console} from "forge-std/Script.sol";
  *
  * USAGE EXAMPLES:
  *
- * 1. Using environment variables:
+ * 1. Using environment variables with private key:
  *    PROXY_ADDR=0x... ROLE_TYPE=MINTER ACCOUNT=0x... \
  *    forge script script/RevokeRecallRole.s.sol:RevokeRoleScript \
  *      --rpc-url $RPC_URL \
  *      --broadcast \
  *      --private-key $PRIVATE_KEY
  *
- * 2. Using function parameters:
+ * 2. Using Ledger hardware wallet:
+ *    PROXY_ADDR=0x... ROLE_TYPE=MINTER ACCOUNT=0x... \
  *    forge script script/RevokeRecallRole.s.sol:RevokeRoleScript \
  *      --rpc-url $RPC_URL \
  *      --broadcast \
- *      --private-key $PRIVATE_KEY \
+ *      --ledger \
+ *      --sender 0xYOUR_LEDGER_ADDRESS
+ *
+ *    Note: You can also specify the HD derivation path:
+ *    --ledger --hd-paths "m/44'/60'/0'/0/0"
+ *
+ * 3. Using Trezor hardware wallet:
+ *    PROXY_ADDR=0x... ROLE_TYPE=MINTER ACCOUNT=0x... \
+ *    forge script script/RevokeRecallRole.s.sol:RevokeRoleScript \
+ *      --rpc-url $RPC_URL \
+ *      --broadcast \
+ *      --trezor \
+ *      --sender 0xYOUR_TREZOR_ADDRESS
+ *
+ * 4. Using function parameters with Ledger:
+ *    forge script script/RevokeRecallRole.s.sol:RevokeRoleScript \
+ *      --rpc-url $RPC_URL \
+ *      --broadcast \
+ *      --ledger \
+ *      --sender 0xYOUR_LEDGER_ADDRESS \
  *      -s "run(address,string,address)" \
  *      0xPROXY_ADDRESS "MINTER" 0xACCOUNT_ADDRESS
  *
- * 3. Batch revoke multiple roles from one account:
+ * 5. Batch revoke multiple roles from one account (with Ledger):
  *    forge script script/RevokeRecallRole.s.sol:BatchRevokeScript \
  *      --rpc-url $RPC_URL \
  *      --broadcast \
- *      --private-key $PRIVATE_KEY
+ *      --ledger \
+ *      --sender 0xYOUR_LEDGER_ADDRESS
  *
- * 4. Revoke one role from multiple accounts:
+ * 6. Revoke one role from multiple accounts (with Ledger):
  *    forge script script/RevokeRecallRole.s.sol:MultiAccountRevokeScript \
  *      --rpc-url $RPC_URL \
  *      --broadcast \
- *      --private-key $PRIVATE_KEY
+ *      --ledger \
+ *      --sender 0xYOUR_LEDGER_ADDRESS
+ *
+ * 7. Dry run (simulate without broadcasting) with Ledger:
+ *    PROXY_ADDR=0x... ROLE_TYPE=MINTER ACCOUNT=0x... \
+ *    forge script script/RevokeRecallRole.s.sol:RevokeRoleScript \
+ *      --rpc-url $RPC_URL \
+ *      --ledger \
+ *      --sender 0xYOUR_LEDGER_ADDRESS
+ *    (Note: omit --broadcast flag for simulation only)
  *
  * ENVIRONMENT VARIABLES:
  * - PROXY_ADDR: Address of the deployed Recall proxy contract (required)
  * - ROLE_TYPE: Role to revoke - "ADMIN", "MINTER", or "PAUSER" (required for single revoke)
  * - ACCOUNT: Address to revoke the role from (required for single revoke)
  * - ALLOW_SELF_ADMIN_REVOKE: Set to "true" to allow revoking ADMIN_ROLE from yourself (default: false)
- * - PRIVATE_KEY: Private key of account with ADMIN_ROLE (required for broadcast)
+ * - PRIVATE_KEY: Private key of account with ADMIN_ROLE (only if not using hardware wallet)
+ *
+ * HARDWARE WALLET SUPPORT:
+ * This script fully supports hardware wallets (Ledger, Trezor) via Foundry's built-in flags:
+ * - --ledger: Use Ledger hardware wallet
+ * - --trezor: Use Trezor hardware wallet
+ * - --sender: Specify the address from your hardware wallet (required with --ledger/--trezor)
+ * - --hd-paths: Specify custom HD derivation path (optional, default: "m/44'/60'/0'/0/0")
+ *
+ * When using a hardware wallet:
+ * 1. Connect your device and unlock it
+ * 2. Open the Ethereum app on your device
+ * 3. Run the script with --ledger or --trezor flag
+ * 4. Confirm the transaction on your device when prompted
  *
  * SAFETY FEATURES:
  * - Verifies caller has ADMIN_ROLE before attempting revocation
