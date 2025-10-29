@@ -143,13 +143,13 @@ contract RevokeRoleScript is Script {
         if (!recall.hasRole(recall.ADMIN_ROLE(), msg.sender)) {
             revert CallerNotAdmin(msg.sender);
         }
-        console.log("✓ Caller has ADMIN_ROLE");
+        console.log("[OK] Caller has ADMIN_ROLE");
 
         // Check if account has the role
         if (!recall.hasRole(role, account)) {
             revert AccountDoesNotHaveRole(account, role);
         }
-        console.log("✓ Account has the role");
+        console.log("[OK] Account has the role");
 
         // Safety check: prevent self-revocation of ADMIN_ROLE unless explicitly allowed
         if (role == recall.ADMIN_ROLE() && account == msg.sender) {
@@ -157,7 +157,7 @@ contract RevokeRoleScript is Script {
             if (!allowSelfRevoke) {
                 revert CannotRevokeSelfAdmin();
             }
-            console.log("⚠ WARNING: Revoking ADMIN_ROLE from yourself!");
+            console.log("[WARNING] Revoking ADMIN_ROLE from yourself!");
         }
 
         // Display current role status
@@ -171,7 +171,7 @@ contract RevokeRoleScript is Script {
         vm.stopBroadcast();
 
         console.log("");
-        console.log("✓ Role revoked successfully");
+        console.log("[OK] Role revoked successfully");
         console.log("");
         console.log("Updated Role Status:");
         displayRoleStatus(recall, account);
@@ -257,17 +257,17 @@ contract BatchRevokeScript is Script {
                 require(allowSelfRevoke, "Cannot revoke ADMIN_ROLE from yourself");
             }
             recall.revokeRole(recall.ADMIN_ROLE(), account);
-            console.log("✓ Revoked ADMIN_ROLE");
+            console.log("[OK] Revoked ADMIN_ROLE");
         }
 
         if (revokeMinter && recall.hasRole(recall.MINTER_ROLE(), account)) {
             recall.revokeRole(recall.MINTER_ROLE(), account);
-            console.log("✓ Revoked MINTER_ROLE");
+            console.log("[OK] Revoked MINTER_ROLE");
         }
 
         if (revokePauser && recall.hasRole(recall.PAUSER_ROLE(), account)) {
             recall.revokeRole(recall.PAUSER_ROLE(), account);
-            console.log("✓ Revoked PAUSER_ROLE");
+            console.log("[OK] Revoked PAUSER_ROLE");
         }
 
         vm.stopBroadcast();
@@ -327,21 +327,21 @@ contract MultiAccountRevokeScript is Script {
                 if (role == recall.ADMIN_ROLE() && account == msg.sender) {
                     bool allowSelfRevoke = vm.envOr("ALLOW_SELF_ADMIN_REVOKE", false);
                     if (!allowSelfRevoke) {
-                        console.log("  ⚠ Skipping: Cannot revoke ADMIN_ROLE from yourself");
+                        console.log("  [WARNING] Skipping: Cannot revoke ADMIN_ROLE from yourself");
                         continue;
                     }
                 }
 
                 recall.revokeRole(role, account);
-                console.log("  ✓ Role revoked");
+                console.log("  [OK] Role revoked");
             } else {
-                console.log("  ⚠ Skipping: Account does not have the role");
+                console.log("  [WARNING] Skipping: Account does not have the role");
             }
         }
 
         vm.stopBroadcast();
         console.log("");
-        console.log("✓ Multi-account revocation completed");
+        console.log("[OK] Multi-account revocation completed");
     }
 
     function getRoleHash(Recall recall, string memory roleType) internal view returns (bytes32) {
